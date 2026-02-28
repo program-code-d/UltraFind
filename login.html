@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script>
+        function signUp()
+        {
+            fetch("http://localhost:8080/signup", {
+                // Defines the HTTP verb as POST, which is used for sending data to a server.
+                method: 'POST',
+                headers: {
+                    // Informs the server that the data being sent is formatted as a JSON string.
+                    'Content-Type': 'application/json'
+                },
+                // Converts the JavaScript object into a standardized JSON string for transmission.
+                body: JSON.stringify({  })
+            })
+                .then(response => response.json())
+                .then((data) =>
+                {
+                    
+                })
+        }
+        function main()
+        {
+            drawLogin()
+        }
+    </script>
+</head>
+
+<body onload="main()">
+    <div id="login"> 
+        <div id="login-card">
+            
+        </div>
+    </div>
+</body>
+
+</html>
