@@ -1,0 +1,494 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UltraFind - Ultimate Mix</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <script>
+        if (localStorage.getItem('animation_watched') === 'true')
+        {
+            window.location.replace('login.html');
+        }
+    </script>
+    <style>
+        /* --- CORE --- */
+        :root {
+            --brand-orange: #FF5A1F;
+            --neon-purple: #B522ED;
+            --neon-blue: #00C6FF;
+            --brand-dark: #0a0a0a;
+            --snow-color: rgba(255, 255, 255, 0.8);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: #000;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* =========================================
+       1. REALISTIC SNOW SYSTEM (FROM MASSIVE EDITION)
+       ========================================= */
+        .snow-container {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 1;
+            /* Behind content */
+            opacity: 1;
+        }
+
+        .snow {
+            position: absolute;
+            top: 0;
+            left: 0;
+            border-radius: 50%;
+            background: white;
+            opacity: 0.8;
+        }
+
+        /* Snow Layers */
+        .snow-layer-1 {
+            width: 2px;
+            height: 2px;
+            box-shadow:
+                10vw 10vh 0 white, 20vw 80vh 0 white, 30vw 30vh 0 white, 40vw 50vh 0 white,
+                50vw 90vh 0 white, 60vw 20vh 0 white, 70vw 70vh 0 white, 80vw 40vh 0 white,
+                90vw 10vh 0 white, 15vw 60vh 0 white, 25vw 20vh 0 white, 35vw 90vh 0 white,
+                45vw 40vh 0 white, 55vw 10vh 0 white, 65vw 80vh 0 white, 75vw 30vh 0 white,
+                85vw 70vh 0 white, 95vw 50vh 0 white, 5vw 30vh 0 white, 98vw 98vh 0 white,
+                12vw 15vh 0 white, 22vw 85vh 0 white, 32vw 35vh 0 white, 42vw 55vh 0 white,
+                52vw 95vh 0 white, 62vw 25vh 0 white, 72vw 75vh 0 white, 82vw 45vh 0 white;
+            animation: fall 10s linear infinite;
+        }
+
+        .snow-layer-2 {
+            width: 4px;
+            height: 4px;
+            box-shadow:
+                15vw 15vh 0 rgba(255, 255, 255, 0.6), 35vw 85vh 0 rgba(255, 255, 255, 0.6),
+                55vw 35vh 0 rgba(255, 255, 255, 0.6), 75vw 55vh 0 rgba(255, 255, 255, 0.6),
+                95vw 25vh 0 rgba(255, 255, 255, 0.6), 5vw 75vh 0 rgba(255, 255, 255, 0.6),
+                10vw 10vh 0 rgba(255, 255, 255, 0.6), 30vw 80vh 0 rgba(255, 255, 255, 0.6),
+                50vw 30vh 0 rgba(255, 255, 255, 0.6), 70vw 50vh 0 rgba(255, 255, 255, 0.6),
+                90vw 20vh 0 rgba(255, 255, 255, 0.6);
+            animation: fall 15s linear infinite reverse;
+            filter: blur(1px);
+        }
+
+        .snow-layer-3 {
+            width: 6px;
+            height: 6px;
+            box-shadow:
+                10vw 90vh 0 rgba(255, 255, 255, 0.4), 40vw 20vh 0 rgba(255, 255, 255, 0.4),
+                80vw 60vh 0 rgba(255, 255, 255, 0.4);
+            animation: fall 20s linear infinite;
+            filter: blur(3px);
+        }
+
+        @keyframes fall {
+            from {
+                transform: translateY(-100vh) translateX(0);
+            }
+
+            to {
+                transform: translateY(100vh) translateX(20px);
+            }
+        }
+
+        /* =========================================
+       2. SPLASH ANIMATION (AUTHENTIC INTRO)
+       ========================================= */
+        .splash-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 999;
+            pointer-events: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .anim-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Typing Text */
+        .brand-text {
+            font-size: 60px;
+            /* Massive */
+            font-weight: 800;
+            letter-spacing: -2px;
+
+            background: linear-gradient(90deg, #fff 0%, #fff 40%, #B522ED 50%, #00C6FF 60%, #fff 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+
+            transform: translateX(-70px);
+            margin-right: 30px;
+            white-space: nowrap;
+            overflow: hidden;
+            width: 0;
+            border-right: 4px solid transparent;
+
+            animation:
+                typing 1.5s steps(9, end) forwards,
+                cursor-show 1.5s steps(1) forwards,
+                gradient-wave 4s linear infinite,
+                text-fade-out 0.5s ease-out forwards;
+
+            animation-delay: 2.0s, 2.0s, 0s, 10.5s;
+        }
+
+        /* Morphing Shape */
+        .shape {
+            width: 140px;
+            height: 140px;
+            /* Massive */
+            background: linear-gradient(270deg, #B522ED, #00C6FF, #B522ED);
+            background-size: 400% 400%;
+            border-radius: 35px;
+            position: absolute;
+            z-index: 10;
+            animation: shapeMorph 12s cubic-bezier(0.83, 0, 0.17, 1) forwards, gradient-shift 4s ease infinite;
+        }
+
+        /* =========================================
+       3. FINAL SCREEN (CINEMATIC/REACTOR STYLE)
+       ========================================= */
+        .final-screen {
+            position: absolute;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            opacity: 0;
+            animation: screenReveal 1s ease-out forwards;
+            animation-delay: 12s;
+        }
+
+        /* 3.1 Logo Assembly */
+        .logo-svg {
+            width: 160px;
+            height: 160px;
+            margin-bottom: 40px;
+            filter: drop-shadow(0 0 30px rgba(255, 90, 31, 0.4));
+        }
+
+        /* Line Drawing */
+        .logo-path {
+            stroke-dasharray: 300;
+            stroke-dashoffset: 300;
+            animation: drawLines 1.5s ease-out forwards;
+            animation-delay: 12.2s;
+        }
+
+        /* Plus Pop */
+        .logo-plus {
+            transform-origin: 45px 45px;
+            transform: scale(0) rotate(-180deg);
+            opacity: 0;
+            animation: popPlus 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            animation-delay: 12.8s;
+        }
+
+        /* 3.2 Hero Text */
+        .hero-title {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .line-small {
+            display: block;
+            font-size: 18px;
+            font-weight: 600;
+            color: #888;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideUpFade 0.8s ease-out forwards;
+            animation-delay: 12.5s;
+        }
+
+        .line-big {
+            display: block;
+            font-size: 72px;
+            /* Cinematic size */
+            font-weight: 900;
+            line-height: 1;
+            margin-top: 10px;
+            opacity: 0;
+
+            /* Metal/Neon Gradient */
+            background: linear-gradient(135deg, #fff 0%, #a5a5a5 40%, var(--neon-purple) 60%, var(--neon-blue) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+
+            transform: scale(1.5);
+            filter: blur(20px);
+            animation: cinematicImpact 0.6s cubic-bezier(0, 0, 0.2, 1) forwards;
+            animation-delay: 12.7s;
+        }
+
+        /* 3.3 The "Reactor" Button */
+        .reactor-btn {
+            position: relative;
+            padding: 20px 50px;
+            background: transparent;
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+            border: 2px solid white;
+            border-radius: 100px;
+            cursor: pointer;
+            overflow: hidden;
+            opacity: 0;
+            animation: btnAppear 1s ease-out forwards;
+            animation-delay: 13.2s;
+            transition: 0.3s;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+        }
+
+        .reactor-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--neon-purple), var(--brand-orange));
+            opacity: 0;
+            transition: 0.3s;
+            z-index: -1;
+        }
+
+        .reactor-btn:hover {
+            border-color: transparent;
+            transform: scale(1.05);
+            box-shadow: 0 0 40px var(--neon-purple);
+        }
+
+        .reactor-btn:hover::before {
+            opacity: 1;
+        }
+
+
+        /* =========================================
+       KEYFRAMES
+       ========================================= */
+
+        /* SPLASH KEYS */
+        @keyframes shapeMorph {
+
+            0%,
+            20% {
+                transform: translate(0, -120px) rotate(0deg) scale(1);
+                border-radius: 35px;
+                width: 140px;
+                height: 140px;
+            }
+
+            40% {
+                transform: translate(0, -120px) rotate(45deg) scale(1.1);
+                width: 140px;
+                height: 140px;
+                border-radius: 35px;
+            }
+
+            60% {
+                width: 22px;
+                height: 22px;
+                border-radius: 50%;
+                transform: translate(140px, 0) rotate(45deg);
+            }
+
+            75% {
+                width: 22px;
+                height: 22px;
+                border-radius: 50%;
+                transform: translate(140px, 0) scale(1);
+            }
+
+            80% {
+                transform: translate(0, 0) scale(1);
+                width: 22px;
+                height: 22px;
+                opacity: 1;
+            }
+
+            98% {
+                width: 300vmax;
+                height: 300vmax;
+                transform: translate(0, 0);
+                opacity: 1;
+            }
+
+            100% {
+                width: 300vmax;
+                height: 300vmax;
+                opacity: 0;
+                display: none;
+            }
+        }
+
+        @keyframes gradient-shift {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        @keyframes typing {
+            0% {
+                width: 0;
+            }
+
+            100% {
+                width: 300px;
+            }
+        }
+
+        @keyframes cursor-show {
+            0% {
+                border-right-color: white;
+            }
+
+            99% {
+                border-right-color: white;
+            }
+
+            100% {
+                border-right-color: transparent;
+            }
+        }
+
+        @keyframes gradient-wave {
+            0% {
+                background-position: 200% center;
+            }
+
+            100% {
+                background-position: -200% center;
+            }
+        }
+
+        @keyframes text-fade-out {
+            to {
+                opacity: 0;
+                transform: translateX(-70px) scale(0.9);
+            }
+        }
+
+        /* ENDING KEYS */
+        @keyframes screenReveal {
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes drawLines {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        @keyframes popPlus {
+            to {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUpFade {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes cinematicImpact {
+            to {
+                opacity: 1;
+                transform: scale(1);
+                filter: blur(0);
+            }
+        }
+
+        @keyframes btnAppear {
+            to {
+                opacity: 1;
+            }
+        }
+    </style>
+    <!-- REALISTIC SNOW LAYER (From Massive Code) -->
+    <div class="snow-container">
+        <div class="snow snow-layer-1"></div>
+        <div class="snow snow-layer-2"></div>
+        <div class="snow snow-layer-3"></div>
+    </div>
+
+    <!-- PART 1: AUTHENTIC SPLASH (From Massive Code) -->
+    <div class="splash-layer">
+        <div class="anim-wrapper">
+            <div class="brand-text">UltraFind</div>
+            <div class="shape"></div>
+        </div>
+    </div>
+
+    <!-- PART 2: FINAL SCREEN (From Cinematic Code) -->
+    <div class="final-screen">
+
+        <!-- Animated SVG Logo -->
+        <svg class="logo-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle class="logo-path" cx="45" cy="45" r="30" stroke="white" stroke-width="6" />
+            <path class="logo-path" d="M68 68L85 85" stroke="white" stroke-width="6" stroke-linecap="round" />
+            <g class="logo-plus">
+                <path d="M45 25V65" stroke="#FF5A1F" stroke-width="8" stroke-linecap="round" />
+                <path d="M25 45H65" stroke="#FF5A1F" stroke-width="8" stroke-linecap="round" />
+            </g>
+        </svg>
+
+        <div class="hero-title">
+            <span class="line-small">Welcome to</span>
+            <span class="line-big">UltraFind</span>
+        </div>
+
+        <button class="reactor-btn"
+            onclick="localStorage.setItem('animation_watched', 'true'); window.location.href='login.html'">Get
+            Started</button>
+    </div>
+    </body>
+
+</html>
