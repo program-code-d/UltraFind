@@ -7,8 +7,6 @@ app.use(express.json());
 app.use(express.static(__dirname, { index: false }));
 
 let messageArray=[];
-let nigga=34;
-let trigga=4;
 app.get('/', (req, res) =>
 {
     console.log('Here')
