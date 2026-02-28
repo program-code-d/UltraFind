@@ -8,33 +8,197 @@
     <script>
         function signUp()
         {
-            fetch("http://localhost:8080/signup", {
-                // Defines the HTTP verb as POST, which is used for sending data to a server.
-                method: 'POST',
-                headers: {
-                    // Informs the server that the data being sent is formatted as a JSON string.
-                    'Content-Type': 'application/json'
-                },
-                // Converts the JavaScript object into a standardized JSON string for transmission.
-                body: JSON.stringify({  })
-            })
-                .then(response => response.json())
-                .then((data) =>
+            if (document.getElementById("login").style.display == "block")
+            {
+                console.error("tried to sign up from login screen")
+            }
+            else
+            {
+                if (document.getElementById("passwordSignUp").value == document.getElementById("confPassword").value)
                 {
-                    
-                })
+                    fetch("http://localhost:8080/signup", {
+                        // Defines the HTTP verb as POST, which is used for sending data to a server.
+                        method: 'POST',
+                        headers: {
+                            // Informs the server that the data being sent is formatted as a JSON string.
+                            'Content-Type': 'application/json'
+                        },
+                        // Converts the JavaScript object into a standardized JSON string for transmission.
+                        body: JSON.stringify({ email: document.getElementById("email").value, age: document.getElementById("age").value, name: document.getElementById("name").value, password: document.getElementById("passwordSignUp").value })
+                    })
+                        .then(response => response.json())
+                        .then((data) =>
+                        {
+
+                        })
+                }
+                else
+                {
+                    alert("passwords do not match try again")
+                }
+            }
         }
-        function main()
+        
+        function switchToSignUp()
         {
-            drawLogin()
+            document.getElementById("login").style.display = "none"
+            document.getElementById("signUp").style.display = "block"
+            checkAgeTimer()
         }
+        function checkAgeTimer()
+        {
+            setTimeout(checkAge, 200)
+        }
+        function switchToSignIn()
+        {
+            document.getElementById("login").style.display = "block"
+            document.getElementById("signUp").style.display = "none"
+        }
+        function checkAge()
+        {
+            var age = document.getElementById("age").value
+          
+            if ((age < 13)&&(age!=""))
+            {
+                if (age < 12)
+                {
+                    document.getElementById("sorry-cant-sign-up").innerHTML = `  you can't sign up yet, wait till you are 13 and come back in ${13 - age} years`
+                }
+                else
+                {
+                    document.getElementById("sorry-cant-sign-up").innerHTML = `  you can't sign up yet, wait till you are 13 and come back in 1 year`
+                }
+            }
+            else
+            {
+                 document.getElementById("sorry-cant-sign-up").innerHTML = ``
+            }
+            checkAgeTimer()
+        }
+
     </script>
+    <link rel="stylesheet" href="login.css">
 </head>
 
-<body onload="main()">
-    <div id="login"> 
+<body >
+    <div id="login">
         <div id="login-card">
-            
+            <div onclick="switchToSignUp()">Dont Have An account? Sign Up</div>
+
+
+
+            <table class="center-table">
+                <tr>
+                    <td>
+                        <h1> Login</h1>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="group">
+                            <input id="email" required="" type="text" class="input">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label>Email</label>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="group">
+                            <input id="password" required="" type="text" class="input">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label>Passsword</label>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <button onclick="logIn()"> Login </button>
+        </div>
+        </td>
+        </tr>
+        </table>
+    </div>
+    </div>
+    <div id="signUp" style="display: none;">
+        <div id="signUp-card">
+            <h4>
+                <div onclick="switchToSignIn()">Back To Login</div>
+                </h6>
+                <table class="center-table">
+
+                    <tr>
+                        <td>
+                            <h1> Sign Up</h1>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="group">
+                                <input id="name" required="" type="text" class="input">
+                                <span class="highlight"></span>
+                                <span class="bar"></span>
+                                <label>Name</label>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="group">
+                                <input id="age" step="1" min="13" max="110" required="" type="number" class="input">
+                                <span class="highlight"></span>
+                                <span class="bar"></span>
+                                <label>Age</label>
+                            </div>
+                        </td>
+                        <td>
+                            <div id="sorry-cant-sign-up">
+
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+
+                            <div class="group">
+                                <input id="email" required="" type="text" class="input">
+                                <span class="highlight"></span>
+                                <span class="bar"></span>
+                                <label>Enter Email</label>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="group">
+                                <input id="passwordSignUp" required="" type="password" class="input">
+                                <span class="highlight"></span>
+                                <span class="bar"></span>
+                                <label>Enter Password</label>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="group">
+                                <input id="confPassword" required="" type="password" class="input">
+                                <span class="highlight"></span>
+                                <span class="bar"></span>
+                                <label>Confirm Password</label>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button onclick="signUp()"> Sign Up </button>
+                        </td>
+                    </tr>
+                </table>
+
+
+
         </div>
     </div>
 </body>

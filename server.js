@@ -8,6 +8,12 @@ const PORT=8080;
 app.use(express.json());
 app.use(express.static(__dirname, { index: false }));
 
+function registerUser(user)
+{
+   var hashedPassword=hashPassword(user.password)
+   console.log(hashedPassword)
+}
+
 function hashPassword(passw_string)
 {
   return crypto.createHash("sha256").update(String(passw_string)).digest("hex");
@@ -20,7 +26,8 @@ app.get('/', (req, res) =>
 
 app.post('/signup', (req,res)=>
 {
-    
+    console.log(req.body)
+    registerUser(req.body)
 })
 app.listen(PORT,()=>
 {
