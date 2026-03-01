@@ -29,7 +29,7 @@ async function registerUser(user)
     try
     {
         if (!user.email) throw new Error("Email is required");
-        let salt=(Math.random() * (10099999990931 - 0) + 0)*78-12;
+        let salt=Math.trunc((Math.random() * (10099999 - 0) + 0)*78-12.2)
 
         const hashedPassword = hashPassword(user.password+salt);
 
@@ -38,7 +38,7 @@ async function registerUser(user)
         const firstName = user.firstName || user.first_name;
         const lastName = user.lastName || user.last_name;
 
-        // Using ? as placeholders to prevent SQL Injection
+        
         const query = "INSERT INTO Users (first_name,last_name,email,password,age,location,salt) VALUES (?, ?, ?, ?, ?, ?, ?)";
         const res = await conn.query(query, [firstName, lastName, user.email, hashedPassword, user.age, "",salt]);
 
@@ -54,7 +54,7 @@ async function registerUser(user)
         throw err;
     } finally
     {
-        if (conn) conn.release(); // Release connection back to pool
+        if (conn) conn.release(); 
     }
 }
 async function login(user)
@@ -68,20 +68,20 @@ async function login(user)
         let query = "SELECT salt FROM Users WHERE email = ?;"
         
         let salt=await conn.query(query, [user.email]);
-        const hashedPassword = hashPassword(user.password+salt);
+        const hashedPassword = hashPassword(user.password+salt[0].salt);
 
-        // Using ? as placeholders to prevent SQL Injection
          query = "SELECT email, password FROM Users WHERE email = ? AND password = ?;"
         const res = await conn.query(query, [user.email, hashedPassword]);
 
         console.log("User logged in! Insert ID:", res.insertId);
-        
+        return { success: true, userExist:true};
     } catch (err)
     {
         console.error(err)
+        return {success:false, userExist: false}
     } finally
     {
-        if (conn) conn.release(); // Release connection back to pool
+        if (conn) conn.release();
     }
 }
 app.get('/', (req, res) =>
@@ -103,8 +103,7 @@ app.post('/signup', async (req, res) =>
         {
              res.redirect("/index.html")
         }
-     //   res.send("User registered in MariaDB!");
-     // dont forget to do the connection view maraidb i (isaac) will do it.
+   
     } catch (err)
     {
 
@@ -118,9 +117,16 @@ app.post('/login', async (req, res) =>
     console.log("login request:", req.body);
     try
     {
-        await login(req.body);
-
-        res.send("User logged in")
+        const result= await login(req.body);
+         if (result && !result.userExist)
+        {
+            return res.json({ message: "failed" })
+        }
+        if (result && result.success)
+        {
+             res.redirect("/index.html")
+        }
+    
     } catch (err)
     {
         res.status(400).send(err.message);

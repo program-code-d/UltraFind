@@ -70,7 +70,15 @@
                     // Converts the JavaScript object into a standardized JSON string for transmission.
                     body: JSON.stringify({ email: document.getElementById("email").value, password: document.getElementById("password").value })
                 })
-                    .then(response => response.json())
+                    .then(response =>
+                        {
+                            if (response.redirected)
+                            {
+                                window.location.href = response.url;
+                                return;
+                            }
+                            return response.json();
+                        })
                     .then((data) =>
                     {
 
