@@ -7,5 +7,6 @@ CREATE TABLE Users (
   last_name VARCHAR(255),
   password VARCHAR(255),
   location VARCHAR(255),
-  age TINYINT UNSIGNED
+  age TINYINT UNSIGNED,
+  salt BIGINT UNSIGNED
 );

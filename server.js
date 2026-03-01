@@ -29,7 +29,7 @@ async function registerUser(user)
     try
     {
         if (!user.email) throw new Error("Email is required");
-        let salt=(Math.random() * (100931 - 0) + 0)*78-12;
+        let salt=(Math.random() * (10099999990931 - 0) + 0)*78-12;
 
         const hashedPassword = hashPassword(user.password+salt);
 
