@@ -30,6 +30,8 @@
 </body>
 <link rel="stylesheet" href="CSS files/create_listing.css">
 <script>
+    var email
+    var password
     function createListing()
     {
         let listingName = document.getElementById('listing-name');
@@ -37,6 +39,8 @@
         let listingDescription = document.getElementById('listing-description');
         let listingLocation = document.getElementById('listing-location');
 
+        email=localStorage.getItem('email')
+        password=localStorage.getItem('password')
 
         if (listingName.vaule && listingPrice.value && listingDescription.value && listingLocation.value != "")
         {
@@ -48,7 +52,7 @@
                     'Content-Type': 'application/json'
                 },
                 // Converts the JavaScript object into a standardized JSON string for transmission.
-                body: JSON.stringify({name:listingName.value,pay:listingPrice.value,description:listingDescription.value,location:listingLocation.value})
+                body: JSON.stringify({email:email,password:password,name:listingName.value,pay:listingPrice.value,description:listingDescription.value,location:listingLocation.value})
             })
                 .then(response =>
                 {
