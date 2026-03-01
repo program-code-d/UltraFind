@@ -65,13 +65,13 @@ async function login(user)
         if (!user.email) throw new Error("Email is required");
         
         conn = await pool.getConnection();
-        let query = "SELECT id, email, password FROM Users WHERE email = ? AND password = ?;"
+        let query = "SELECT salt FROM Users WHERE email = ?;"
         
-        let salt=await conn.query(query, [user.email, hashedPassword]);
+        let salt=await conn.query(query, [user.email]);
         const hashedPassword = hashPassword(user.password+salt);
 
         // Using ? as placeholders to prevent SQL Injection
-         query = "SELECT id, email, password FROM Users WHERE email = ? AND password = ?;"
+         query = "SELECT email, password FROM Users WHERE email = ? AND password = ?;"
         const res = await conn.query(query, [user.email, hashedPassword]);
 
         console.log("User logged in! Insert ID:", res.insertId);
@@ -104,6 +104,7 @@ app.post('/signup', async (req, res) =>
              res.redirect("/index.html")
         }
      //   res.send("User registered in MariaDB!");
+     // dont forget to do the connection view maraidb i (isaac) will do it.
     } catch (err)
     {
 

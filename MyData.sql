@@ -1,12 +1,12 @@
 DROP TABLE IF EXISTS Users;
 
 CREATE TABLE Users (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  email VARCHAR(255) UNIQUE,
-  first_name VARCHAR(255),
-  last_name VARCHAR(255),
-  password VARCHAR(255),
-  location VARCHAR(255),
-  age TINYINT UNSIGNED,
-  salt BIGINT UNSIGNED
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255) UNIQUE,
+    first_name VARCHAR(255),
+    last_name VARCHAR(255),
+    password VARCHAR(255),
+    salt BIGINT UNSIGNED,
+    location VARCHAR(255),
+    age TINYINT UNSIGNED
 );
