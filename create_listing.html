@@ -24,7 +24,7 @@
     <div id="listing-location">
         <input placeholder="Enter Your Location Here" class="input-style" type="text">
     </div>
- <button id="submit-buttton" onclick="createListing()"></button>
+    <button id="submit-buttton" onclick="createListing()">Submit</button>
 
 
 </body>
@@ -36,8 +36,39 @@
         let listingPrice = document.getElementById('listing-price');
         let listingDescription = document.getElementById('listing-description');
         let listingLocation = document.getElementById('listing-location');
-        
 
+
+        if (listingName.vaule && listingPrice.value && listingDescription.value && listingLocation.value != "")
+        {
+            fetch("http://localhost:8080/createListing", {
+                // Defines the HTTP verb as POST, which is used for sending data to a server.
+                method: 'POST',
+                headers: {
+                    // Informs the server that the data being sent is formatted as a JSON string.
+                    'Content-Type': 'application/json'
+                },
+                // Converts the JavaScript object into a standardized JSON string for transmission.
+                body: JSON.stringify({name:listingName.value,pay:listingPrice.value,description:listingDescription.value,location:listingLocation.value})
+            })
+                .then(response =>
+                {
+                    if (response.redirected)
+                    {
+                        window.location.href = response.url;
+                        return;
+                    }
+                    return response.json();
+                })
+                .then((data) =>
+                {
+                   
+
+                })
+        }
+        else
+        {
+            alert("You didnt complete the listing");
+        }
     }
 
 </script>

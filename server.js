@@ -4,6 +4,7 @@ const mariadb = require('mariadb'); // 1. Import MariaDB
 const app = express();
 const PORT = 8080;
 const path = require('path');
+const { create } = require('domain');
 
 // 2. Create a Connection Pool
 // Replace these with your actual MariaDB credentials
@@ -29,21 +30,21 @@ async function registerUser(user)
     try
     {
         if (!user.email) throw new Error("Email is required");
-        let salt=Math.trunc((Math.random() * (10099999 - 0) + 0)*78-12.2)
+        let salt = Math.trunc((Math.random() * (10099999 - 0) + 0) * 78 - 12.2)
 
-        const hashedPassword = hashPassword(user.password+salt);
+        const hashedPassword = hashPassword(user.password + salt);
 
         conn = await pool.getConnection();
 
         const firstName = user.firstName || user.first_name;
         const lastName = user.lastName || user.last_name;
 
-        
+
         const query = "INSERT INTO Users (first_name,last_name,email,password,age,location,salt) VALUES (?, ?, ?, ?, ?, ?, ?)";
-        const res = await conn.query(query, [firstName, lastName, user.email, hashedPassword, user.age, "",salt]);
+        const res = await conn.query(query, [firstName, lastName, user.email, hashedPassword, user.age, "", salt]);
 
         console.log("User registered! Insert ID:", res.insertId);
-        return { success: true, emailExist:false};
+        return { success: true, emailExist: false };
     } catch (err)
     {
         console.error(err)
@@ -54,7 +55,7 @@ async function registerUser(user)
         throw err;
     } finally
     {
-        if (conn) conn.release(); 
+        if (conn) conn.release();
     }
 }
 async function login(user)
@@ -63,27 +64,52 @@ async function login(user)
     try
     {
         if (!user.email) throw new Error("Email is required");
-        
+
         conn = await pool.getConnection();
         let query = "SELECT salt FROM Users WHERE email = ?;"
-        
-        let salt=await conn.query(query, [user.email]);
-        const hashedPassword = hashPassword(user.password+salt[0].salt);
 
-         query = "SELECT email, password FROM Users WHERE email = ? AND password = ?;"
+        let salt = await conn.query(query, [user.email]);
+        const hashedPassword = hashPassword(user.password + salt[0].salt);
+
+        query = "SELECT email, password FROM Users WHERE email = ? AND password = ?;"
         const res = await conn.query(query, [user.email, hashedPassword]);
 
         console.log("User logged in! Insert ID:", res.insertId);
-        return { success: true, userExist:true};
+        return { success: true, userExist: true };
     } catch (err)
     {
         console.error(err)
-        return {success:false, userExist: false}
+        return { success: false, userExist: false }
     } finally
     {
         if (conn) conn.release();
     }
 }
+async function createListing(body)
+{
+    let conn;
+    try
+    {
+        conn = await pool.getConnection();
+
+        let salt = await conn.query(query, [user.email]);
+        const hashedPassword = hashPassword(user.password + salt[0].salt);
+
+        const query = "SELECT email, password FROM Users WHERE email = ? AND password = ?;"
+        const res = await conn.query(query, [user.email, hashedPassword]);
+
+        console.log("User logged in! Insert ID:", res.insertId);
+        return { success: true, userExist: true };
+    } catch (err)
+    {
+        console.error(err)
+        return { success: false, userExist: false }
+    } finally
+    {
+        if (conn) conn.release();
+    }
+}
+
 app.get('/', (req, res) =>
 {
     res.sendFile(path.join(__dirname, 'intro.html'));
@@ -101,9 +127,9 @@ app.post('/signup', async (req, res) =>
         }
         if (result && result.success)
         {
-             res.redirect("/index.html")
+            res.redirect("/index.html")
         }
-   
+
     } catch (err)
     {
 
@@ -117,16 +143,37 @@ app.post('/login', async (req, res) =>
     console.log("login request:", req.body);
     try
     {
-        const result= await login(req.body);
-         if (result && !result.userExist)
+        const result = await login(req.body);
+        if (result && !result.userExist)
         {
             return res.json({ message: "failed" })
         }
         if (result && result.success)
         {
-             res.redirect("/index.html")
+            res.redirect("/index.html")
         }
-    
+
+    } catch (err)
+    {
+        res.status(400).send(err.message);
+    }
+
+});
+app.post('/createListing', async (req, res) =>
+{
+    console.log("Create Listing request:", req.body);
+    try
+    {
+        const result = await createListing(req.body);
+        if (result && !result.userExist)
+        {
+            return res.json({ message: "failed" })
+        }
+        if (result && result.success)
+        {
+            res.redirect("/index.html")
+        }
+
     } catch (err)
     {
         res.status(400).send(err.message);
