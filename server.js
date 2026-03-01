@@ -92,14 +92,34 @@ async function createListing(body)
     {
         conn = await pool.getConnection();
 
-        let salt = await conn.query(query, [user.email]);
-        const hashedPassword = hashPassword(user.password + salt[0].salt);
+        // 1. Get the salt (assuming 'query' for salt was defined above)
+        let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
+        const hashedPassword = hashPassword(body.password + saltResult[0].salt);
 
-        const query = "SELECT email, password FROM Users WHERE email = ? AND password = ?;"
-        const res = await conn.query(query, [user.email, hashedPassword]);
+        // 2. Login and SELECT the 'id' (Crucial step!)
+        const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
+        const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
 
-        console.log("User logged in! Insert ID:", res.insertId);
-        return { success: true, userExist: true };
+        if (userRows.length > 0)
+        {
+            // This is the ID from the Users table we need to "import"
+            const userId = userRows[0].id;
+
+            // 3. Insert into Listings using that userId
+            const insertQuery = "INSERT INTO Listings (user_id, title, description, price) VALUES (?, ?, ?, ?);";
+            const res = await conn.query(insertQuery, [
+                userId,           // This links the listing to the user
+                body.title,
+                body.description,
+                body.price
+            ]);
+
+            console.log("Listing created! New Listing ID:", res.insertId);
+            return { success: true, userExist: true, listingId: res.insertId };
+        } else
+        {
+            return { success: false, message: "Invalid login" };
+        }
     } catch (err)
     {
         console.error(err)
