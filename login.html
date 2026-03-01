@@ -24,12 +24,15 @@
                             'Content-Type': 'application/json'
                         },
                         // Converts the JavaScript object into a standardized JSON string for transmission.
-                        body: JSON.stringify({ email: document.getElementById("email").value, age: document.getElementById("age").value, name: document.getElementById("name").value, password: document.getElementById("passwordSignUp").value })
+                        body: JSON.stringify({ email: document.getElementById("emailSignUP").value, age: document.getElementById("age").value, firstName: document.getElementById("first-name").value, lastName: document.getElementById("last-name").value, password: document.getElementById("passwordSignUp").value })
                     })
                         .then(response => response.json())
                         .then((data) =>
                         {
-
+                            if (data.message == "Email In Use")
+                            {
+                                document.getElementById("error").innerHTML = `This Email Is Already In Use, Try Logging In`
+                            }
                         })
                 }
                 else
@@ -38,7 +41,7 @@
                 }
             }
         }
-        
+
         function switchToSignUp()
         {
             document.getElementById("login").style.display = "none"
@@ -57,8 +60,8 @@
         function checkAge()
         {
             var age = document.getElementById("age").value
-          
-            if ((age < 13)&&(age!=""))
+
+            if ((age < 13) && (age != ""))
             {
                 if (age < 12)
                 {
@@ -71,7 +74,7 @@
             }
             else
             {
-                 document.getElementById("sorry-cant-sign-up").innerHTML = ``
+                document.getElementById("sorry-cant-sign-up").innerHTML = ``
             }
             checkAgeTimer()
         }
@@ -80,7 +83,7 @@
     <link rel="stylesheet" href="login.css">
 </head>
 
-<body >
+<body>
     <div id="login">
         <div id="login-card">
             <div onclick="switchToSignUp()">Dont Have An account? Sign Up</div>
@@ -115,7 +118,7 @@
                 </tr>
                 <tr>
                     <td>
-                        <button onclick="logIn()"> Login </button>
+                        <button onclick="login()"> Login </button>
         </div>
         </td>
         </tr>
@@ -137,10 +140,18 @@
                     <tr>
                         <td>
                             <div class="group">
-                                <input id="name" required="" type="text" class="input">
+                                <input id="first-name" required="" type="text" class="input">
                                 <span class="highlight"></span>
                                 <span class="bar"></span>
-                                <label>Name</label>
+                                <label>First Name</label>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="group">
+                                <input id="last-name" required="" type="text" class="input">
+                                <span class="highlight"></span>
+                                <span class="bar"></span>
+                                <label>Last Name</label>
                             </div>
                         </td>
                     </tr>
@@ -163,7 +174,7 @@
                         <td>
 
                             <div class="group">
-                                <input id="email" required="" type="text" class="input">
+                                <input id="emailSignUP" required="" type="text" class="input">
                                 <span class="highlight"></span>
                                 <span class="bar"></span>
                                 <label>Enter Email</label>
@@ -193,6 +204,11 @@
                     <tr>
                         <td>
                             <button onclick="signUp()"> Sign Up </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div id="error"></div>
                         </td>
                     </tr>
                 </table>
