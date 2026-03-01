@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <script>
+        let email=""
+        let password=""
+
         function signUp()
         {
             if (document.getElementById("login").style.display == "block")
@@ -16,6 +19,8 @@
             {
                 if (document.getElementById("passwordSignUp").value == document.getElementById("confPassword").value)
                 {
+                    email=document.getElementById("emailSignUP").value
+                    password=document.getElementById("passwordSignUp").value
                     fetch("http://localhost:8080/signup", {
                         // Defines the HTTP verb as POST, which is used for sending data to a server.
                         method: 'POST',
@@ -23,13 +28,15 @@
                             // Informs the server that the data being sent is formatted as a JSON string.
                             'Content-Type': 'application/json'
                         },
-                        // Converts the JavaScript object into a standardized JSON string for transmission.
-                        body: JSON.stringify({ email: document.getElementById("emailSignUP").value, age: document.getElementById("age").value, firstName: document.getElementById("first-name").value, lastName: document.getElementById("last-name").value, password: document.getElementById("passwordSignUp").value })
+                      
+                        body: JSON.stringify({ email:email, age: document.getElementById("age").value, firstName: document.getElementById("first-name").value, lastName: document.getElementById("last-name").value, password: password })
                     })
                         .then(response =>
                         {
                             if (response.redirected)
                             {
+                                localStorage.setItem('email', email);
+                                localStorage.setItem('password', password);
                                 window.location.href = response.url;
                                 return;
                             }
