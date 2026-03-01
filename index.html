@@ -7,38 +7,89 @@
     <title>Document</title>
 </head>
 <script>
+    let listings
     function main()
     {
-        let listings = 
-        [
+        listings =
+            [
+                {
+                    name: "alex",
+                    pay: 10,
+                    description: `here is my description ,kasdfkldelweklekwe`,
+                    location: ""
+                },
+                {
+                    name: "loo",
+                    pay: 10,
+                    description: `he54escription ,kasdfkldelweklekwe`,
+                    location: ""
+                },
+                {
+                    name: "poo",
+                    pay: 10,
+                    description: `here is ghdfdfsldelweklekwe`,
+                    location: ""
+                },           {
+                    name: "poo",
+                    pay: 10,
+                    description: `here is ghdfdfsldelweklekwe`,
+                    location: ""
+                },           {
+                    name: "pood",
+                    pay: 10,
+                    description: `here is ghdfdfsldelweklekwe`,
+                    location: ""
+                },           {
+                    name: "poso",
+                    pay: 10,
+                    description: `here is ghdfdfsldelweklekwe`,
+                    location: ""
+                },
+            ]
+        draw_listings()
+    }
+    function draw_listings()
+    {
+        let listings_div = `<table>`
+        let l = 0
+        while (l < listings.length)
+        {
+            listings_div += `<tr>`
+            for (let i = 0; i < 5 ; i++)
             {
-                name:"alex",
-                pay:10,
-                description:`here is my description ,kasdfkldelweklekwe`,
-                location:""
-            },
-            {
-                name:"loo",
-                pay:10,
-                description:`he54escription ,kasdfkldelweklekwe`,
-                location:""
-            },
-            {
-                name:"poo",
-                pay:10,
-                description:`here is ghdfdfsldelweklekwe`,
-                location:""                                       
-            },
-        ]
+                listings_div += `<td>
+                                <div id="${l}_${i}" style="">
+                                    <table>
+                                        <tr>
+                                            <td>
+                                                ${listings[l].name}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <h2>$${listings[l].pay}</h2>
+                                            </td>
+                                        </tr>
+                                    </table>    
+                                </div>
+                          </td>`
+                          l++
+            }
+            listings_div += `</tr>`
+           // l++
+        }
+
+        listings_div += `</table>`
+        document.getElementById("listings").innerHTML = listings_div
     }
 </script>
-
+ <link rel="stylesheet" href="CSS files/index.css">
 <body onload="main()">
     <table>
         <tr>
             <td>
                 <div id="listings">
-
+                               
                 </div>
             </td>
         </tr>
