@@ -23,33 +23,35 @@ function hashPassword(passw_string)
     return crypto.createHash("sha256").update(String(passw_string)).digest("hex");
 }
 
-let emailExist = 0
-var success = 0
 async function registerUser(user)
 {
     let conn;
     try
     {
         if (!user.email) throw new Error("Email is required");
-        const hashedPassword = hashPassword(user.password);
+        let salt=(Math.random() * (100931 - 0) + 0)*78-12;
+
+        const hashedPassword = hashPassword(user.password+salt);
+
         conn = await pool.getConnection();
 
         const firstName = user.firstName || user.first_name;
         const lastName = user.lastName || user.last_name;
 
         // Using ? as placeholders to prevent SQL Injection
-        const query = "INSERT INTO Users (first_name,last_name,email,password,age,location) VALUES (?, ?, ?, ?, ?, ?)";
-        const res = await conn.query(query, [firstName, lastName, user.email, hashedPassword, user.age, ""]);
+        const query = "INSERT INTO Users (first_name,last_name,email,password,age,location,salt) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        const res = await conn.query(query, [firstName, lastName, user.email, hashedPassword, user.age, "",salt]);
 
         console.log("User registered! Insert ID:", res.insertId);
-        success=1
+        return { success: true, emailExist:false};
     } catch (err)
     {
         console.error(err)
         if (err.errno == 1062)
         {
-            emailExist = 1
+            return { emailExist: true };
         }
+        throw err;
     } finally
     {
         if (conn) conn.release(); // Release connection back to pool
@@ -61,25 +63,22 @@ async function login(user)
     try
     {
         if (!user.email) throw new Error("Email is required");
-        const hashedPassword = hashPassword(user.password);
+        
         conn = await pool.getConnection();
-
-        const firstName = user.firstName || user.first_name;
-        const lastName = user.lastName || user.last_name;
+        let query = "SELECT id, email, password FROM Users WHERE email = ? AND password = ?;"
+        
+        let salt=await conn.query(query, [user.email, hashedPassword]);
+        const hashedPassword = hashPassword(user.password+salt);
 
         // Using ? as placeholders to prevent SQL Injection
-        const query = "SELECT id, email, password FROM Users WHERE email = 'input_user' AND password = 'input_password';"
+         query = "SELECT id, email, password FROM Users WHERE email = ? AND password = ?;"
         const res = await conn.query(query, [user.email, hashedPassword]);
 
         console.log("User logged in! Insert ID:", res.insertId);
-
+        
     } catch (err)
     {
         console.error(err)
-        if (err.errno == 1062)
-        {
-            emailExist = 1
-        }
     } finally
     {
         if (conn) conn.release(); // Release connection back to pool
@@ -95,16 +94,16 @@ app.post('/signup', async (req, res) =>
     console.log("Signup request:", req.body);
     try
     {
-        await registerUser(req.body);
-        if (emailExist == 1)
+        const result = await registerUser(req.body);
+        if (result && result.emailExist)
         {
-            res.json({ message: "Email In Use" })
+            return res.json({ message: "Email In Use" })
         }
-        if (success == 1)
+        if (result && result.success)
         {
-            res.sendFile(path.join(__dirname, 'index.html'));
+             res.redirect("/index.html")
         }
-        res.send("User registered in MariaDB!");
+     //   res.send("User registered in MariaDB!");
     } catch (err)
     {
 

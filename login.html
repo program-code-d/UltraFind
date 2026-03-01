@@ -26,13 +26,22 @@
                         // Converts the JavaScript object into a standardized JSON string for transmission.
                         body: JSON.stringify({ email: document.getElementById("emailSignUP").value, age: document.getElementById("age").value, firstName: document.getElementById("first-name").value, lastName: document.getElementById("last-name").value, password: document.getElementById("passwordSignUp").value })
                     })
-                        .then(response => response.json())
+                        .then(response =>
+                        {
+                            if (response.redirected)
+                            {
+                                window.location.href = response.url;
+                                return;
+                            }
+                            return response.json();
+                        })
                         .then((data) =>
                         {
                             if (data.message == "Email In Use")
                             {
                                 document.getElementById("error").innerHTML = `<div style="color:red;"><h3>This Email Is Already In Use, Try Logging In</h3></div>`
                             }
+
                         })
                 }
                 else
@@ -59,12 +68,12 @@
                         'Content-Type': 'application/json'
                     },
                     // Converts the JavaScript object into a standardized JSON string for transmission.
-                    body: JSON.stringify({ email: document.getElementById("email").value,password: document.getElementById("password").value })
+                    body: JSON.stringify({ email: document.getElementById("email").value, password: document.getElementById("password").value })
                 })
                     .then(response => response.json())
                     .then((data) =>
                     {
-                       
+
                     })
 
             }
