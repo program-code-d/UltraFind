@@ -29,17 +29,17 @@
                     pay: 10,
                     description: `here is ghdfdfsldelweklekwe`,
                     location: ""
-                },           {
+                }, {
                     name: "poo",
                     pay: 10,
                     description: `here is ghdfdfsldelweklekwe`,
                     location: ""
-                },           {
+                }, {
                     name: "pood",
                     pay: 10,
                     description: `here is ghdfdfsldelweklekwe`,
                     location: ""
-                },           {
+                }, {
                     name: "poso",
                     pay: 10,
                     description: `here is ghdfdfsldelweklekwe`,
@@ -50,46 +50,57 @@
     }
     function draw_listings()
     {
-        let listings_div = `<table>`
+        let listings_div = `<table><tr>`
         let l = 0
+        let counter = -1
         while (l < listings.length)
         {
-            listings_div += `<tr>`
-            for (let i = 0; i < 5 ; i++)
+            counter++
+            if (counter == 5)
             {
-                listings_div += `<td>
-                                <div id="${l}_${i}" style="">
-                                    <table>
-                                        <tr>
+                listings_div += `</tr>`
+                listings_div += `<tr>`
+                counter = 0
+            }
+
+
+            listings_div += `<td>
+                                <div id="${l}" style="height: 40vh; width: 18vw;">
+                                    <table style="height: 100%; width: 100%;">
+                                        <tr style="height:60%">
                                             <td>
-                                                ${listings[l].name}
+                                                <h1 style="text-align:center">${listings[l].name}</h1>
                                             </td>
                                         </tr>
-                                        <tr>
+                                        <tr style="height:40%">
                                             <td>
                                                 <h2>$${listings[l].pay}</h2>
+                                            </td>
+                                            <td>
+                                                <h3> ${listings[l].description}</h3>
                                             </td>
                                         </tr>
                                     </table>    
                                 </div>
                           </td>`
-                          l++
-            }
-            listings_div += `</tr>`
-           // l++
+            l++
         }
+        listings_div += `</tr>`
+        // l++
+
 
         listings_div += `</table>`
         document.getElementById("listings").innerHTML = listings_div
     }
 </script>
- <link rel="stylesheet" href="CSS files/index.css">
+<link rel="stylesheet" href="CSS files/index.css">
+
 <body onload="main()">
     <table>
         <tr>
             <td>
                 <div id="listings">
-                               
+
                 </div>
             </td>
         </tr>
