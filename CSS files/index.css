@@ -1,0 +1,19 @@
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse; /* Removes gaps between borders */
+  }
+  table, th, td {
+    border: 1px solid black;
+  }
+  th, td {
+    padding: 10px; /* Optional: Adds space inside cells */
+    text-align: left; /* Optional: Aligns text */
+  }
+
