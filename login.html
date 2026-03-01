@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <script>
-        let email=""
-        let password=""
+        let email = ""
+        let password = ""
 
         function signUp()
         {
@@ -19,8 +19,8 @@
             {
                 if (document.getElementById("passwordSignUp").value == document.getElementById("confPassword").value)
                 {
-                    email=document.getElementById("emailSignUP").value
-                    password=document.getElementById("passwordSignUp").value
+                    email = document.getElementById("emailSignUP").value
+                    password = document.getElementById("passwordSignUp").value
                     fetch("http://localhost:8080/signup", {
                         // Defines the HTTP verb as POST, which is used for sending data to a server.
                         method: 'POST',
@@ -28,8 +28,8 @@
                             // Informs the server that the data being sent is formatted as a JSON string.
                             'Content-Type': 'application/json'
                         },
-                      
-                        body: JSON.stringify({ email:email, age: document.getElementById("age").value, firstName: document.getElementById("first-name").value, lastName: document.getElementById("last-name").value, password: password })
+
+                        body: JSON.stringify({ email: email, age: document.getElementById("age").value, firstName: document.getElementById("first-name").value, lastName: document.getElementById("last-name").value, password: password })
                     })
                         .then(response =>
                         {
@@ -78,16 +78,21 @@
                     body: JSON.stringify({ email: document.getElementById("email").value, password: document.getElementById("password").value })
                 })
                     .then(response =>
+                    {
+                        if (response.redirected)
                         {
-                            if (response.redirected)
-                            {
-                                window.location.href = response.url;
-                                return;
-                            }
-                            return response.json();
-                        })
+                            window.location.href = response.url;
+                            return;
+                        }
+                        return response.json();
+                    })
                     .then((data) =>
                     {
+                        if (data.message == "failed")
+                        {
+                            document.getElementById("error-login").innerHTML = `<div style="color:red;"><h3>Sign In Failed. Try Again</h3></div>`
+                            document.getElementById("password").value = ""
+                        }
 
                     })
 
@@ -130,7 +135,8 @@
             }
             checkAgeTimer()
         }
-
+       
+       
     </script>
     <link rel="stylesheet" href="CSS files/login.css">
 </head>
@@ -151,7 +157,7 @@
                 <tr>
                     <td>
                         <div class="group">
-                            <input id="email" required="" type="text" class="input">
+                            <input id="email" required="" type="email" class="input">
                             <span class="highlight"></span>
                             <span class="bar"></span>
                             <label>Email</label>
@@ -161,7 +167,7 @@
                 <tr>
                     <td>
                         <div class="group">
-                            <input id="password" required="" type="text" class="input">
+                            <input id="password" required="" type="password" class="input">
                             <span class="highlight"></span>
                             <span class="bar"></span>
                             <label>Passsword</label>
@@ -170,13 +176,19 @@
                 </tr>
                 <tr>
                     <td>
-                        <button onclick="login()"> Login </button>
+                        <a onclick="login()" class="myButton">Login</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div id="error-login"></div>
+                    </td>
+                </tr>
+            </table>
         </div>
-        </td>
-        </tr>
-        </table>
+
     </div>
-    </div>
+
     <div id="signUp" style="display: none;">
         <div id="signUp-card">
             <h4>
