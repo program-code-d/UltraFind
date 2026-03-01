@@ -9,11 +9,37 @@
 
 <body>
     <h1>Create A Listing</h1>
-    <div id="Listing-name">
-        <input placeholder="Enter text here" class="input-style" type="text">
+    <div id="listing-name">
+        <input placeholder="Enter The Listing Name Here" class="input-style" type="text">
     </div>
+
+    <div id="listing-price">
+        <input placeholder="Enter The Listing Price" class="input-style" type="text">
+    </div>
+
+    <div id="listing-description">
+        <input placeholder="Enter The Description Here" class="input-style" type="text">
+    </div>
+
+    <div id="listing-location">
+        <input placeholder="Enter Your Location Here" class="input-style" type="text">
+    </div>
+ <button id="submit-buttton" onclick="createListing()"></button>
+
 
 </body>
 <link rel="stylesheet" href="CSS files/create_listing.css">
+<script>
+    function createListing()
+    {
+        let listingName = document.getElementById('listing-name');
+        let listingPrice = document.getElementById('listing-price');
+        let listingDescription = document.getElementById('listing-description');
+        let listingLocation = document.getElementById('listing-location');
+        
+
+    }
+
+</script>
 
 </html>
