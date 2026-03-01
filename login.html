@@ -42,6 +42,34 @@
             }
         }
 
+        function login()
+        {
+            if (document.getElementById("signUp").style.display == "block")
+            {
+                console.error("tried to Login from SignUp screen")
+            }
+            else
+            {
+
+                fetch("http://localhost:8080/login", {
+                    // Defines the HTTP verb as POST, which is used for sending data to a server.
+                    method: 'POST',
+                    headers: {
+                        // Informs the server that the data being sent is formatted as a JSON string.
+                        'Content-Type': 'application/json'
+                    },
+                    // Converts the JavaScript object into a standardized JSON string for transmission.
+                    body: JSON.stringify({ email: document.getElementById("email").value,password: document.getElementById("password").value })
+                })
+                    .then(response => response.json())
+                    .then((data) =>
+                    {
+                       
+                    })
+
+            }
+        }
+
         function switchToSignUp()
         {
             document.getElementById("login").style.display = "none"
