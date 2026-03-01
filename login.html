@@ -93,6 +93,10 @@
                             document.getElementById("error-login").innerHTML = `<div style="color:red;"><h3>Sign In Failed. Try Again</h3></div>`
                             document.getElementById("password").value = ""
                         }
+                        if (data.message == "NotEmailFormat")
+                        {
+                            document.getElementById("error-login").innerHTML = `<div style="color:red;"><h3>This is not an email</h3></div>`
+                        }
 
                     })
 
@@ -157,7 +161,7 @@
                 <tr>
                     <td>
                         <div class="group">
-                            <input id="email" required="" type="email" class="input">
+                            <input id="email" required="" type="text" class="input">
                             <span class="highlight"></span>
                             <span class="bar"></span>
                             <label>Email</label>

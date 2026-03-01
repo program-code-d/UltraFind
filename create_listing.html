@@ -9,20 +9,20 @@
 
 <body>
     <h1>Create A Listing</h1>
-    <div id="listing-name">
-        <input placeholder="Enter The Listing Name Here" class="input-style" type="text">
+    <div>
+        <input id="listing-name" placeholder="Enter The Listing Name Here" class="input-style" type="text">
     </div>
 
-    <div id="listing-price">
-        <input placeholder="Enter The Listing Price" class="input-style" type="text">
+    <div>
+        <input id="listing-price" placeholder="Enter The Listing Price" class="input-style" type="number">
     </div>
 
-    <div id="listing-description">
-        <input placeholder="Enter The Description Here" class="input-style" type="text">
+    <div>
+        <input id="listing-description" placeholder="Enter The Description Here" class="input-style" type="text">
     </div>
 
-    <div id="listing-location">
-        <input placeholder="Enter Your Location Here" class="input-style" type="text">
+    <div>
+        <input id="listing-location" placeholder="Enter Your Location Here" class="input-style" type="text">
     </div>
     <button id="submit-buttton" onclick="createListing()">Submit</button>
 
@@ -39,10 +39,10 @@
         let listingDescription = document.getElementById('listing-description');
         let listingLocation = document.getElementById('listing-location');
 
-        email=localStorage.getItem('email')
-        password=localStorage.getItem('password')
+        email = localStorage.getItem('email')
+        password = localStorage.getItem('password')
 
-        if (listingName.vaule && listingPrice.value && listingDescription.value && listingLocation.value != "")
+        if (listingName.value && listingPrice.value && listingDescription.value && listingLocation.value != "")
         {
             fetch("http://localhost:8080/createListing", {
                 // Defines the HTTP verb as POST, which is used for sending data to a server.
@@ -52,7 +52,7 @@
                     'Content-Type': 'application/json'
                 },
                 // Converts the JavaScript object into a standardized JSON string for transmission.
-                body: JSON.stringify({email:email,password:password,name:listingName.value,pay:listingPrice.value,description:listingDescription.value,location:listingLocation.value})
+                body: JSON.stringify({ email: email, password: password, name: listingName.value, pay: listingPrice.value, description: listingDescription.value, location: listingLocation.value })
             })
                 .then(response =>
                 {
@@ -65,7 +65,7 @@
                 })
                 .then((data) =>
                 {
-                   
+
 
                 })
         }
