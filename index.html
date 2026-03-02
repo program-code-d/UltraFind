@@ -8,44 +8,32 @@
 </head>
 <script>
     let listings
+    let email
+    let password
     function main()
     {
-        listings =
-            [
-                {
-                    name: "alex",
-                    pay: 10,
-                    description: `here is my description ,kasdfkldelweklekwe`,
-                    location: ""
-                },
-                {
-                    name: "loo",
-                    pay: 10,
-                    description: `he54escription ,kasdfkldelweklekwe`,
-                    location: ""
-                },
-                {
-                    name: "poo",
-                    pay: 10,
-                    description: `here is ghdfdfsldelweklekwe`,
-                    location: ""
-                }, {
-                    name: "poo",
-                    pay: 10,
-                    description: `here is ghdfdfsldelweklekwe`,
-                    location: ""
-                }, {
-                    name: "pood",
-                    pay: 10,
-                    description: `here is ghdfdfsldelweklekwe`,
-                    location: ""
-                }, {
-                    name: "poso",
-                    pay: 10,
-                    description: `here is ghdfdfsldelweklekwe`,
-                    location: ""
-                },
-            ]
+
+        email = localStorage.getItem('email')
+        password = localStorage.getItem('password')
+
+        fetch("http://localhost:8080/getListings", {
+            // Defines the HTTP verb as POST, which is used for sending data to a server.
+            method: 'POST',
+            headers: {
+                // Informs the server that the data being sent is formatted as a JSON string.
+                'Content-Type': 'application/json' 
+            },
+            // Converts the JavaScript object into a standardized JSON string for transmission.
+            body: JSON.stringify({search:"", email: email, password: password})
+        })
+            .then(response => response.json())
+            .then((data) =>
+            {
+                listings=data
+            })
+
+
+
         draw_listings()
     }
     function draw_listings()
@@ -56,7 +44,7 @@
         while (l < listings.length)
         {
             listings_div += `<div id="${l}" style="display: inline-block;margin:1vw; vertical-align: top; height: 40vh; width: 18vw;">
-                                    <table style="height: 100%; width: 100%;">
+                                    <table style="height:80%; width: 100%;">
                                         <tr style="height:60%">
                                             <td colspan="2">
                                                 <h1 style="text-align:center">${listings[l].name}</h1>
