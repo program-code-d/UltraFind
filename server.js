@@ -58,12 +58,25 @@ async function registerUser(user)
         if (conn) conn.release();
     }
 }
+
+    function isEmail(email)
+    {
+        // A common regex pattern for basic email validation
+        const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        return emailPattern.test(email); // Returns true if valid, false otherwise
+    }
+
 async function login(user)
 {
     let conn;
     try
     {
         if (!user.email) throw new Error("Email is required");
+        if (!isEmail(user.email))
+        {
+            return {success:"false", notEmailFormat:true}
+        }
+
 
         conn = await pool.getConnection();
         let query = "SELECT salt FROM Users WHERE email = ?;"
@@ -109,13 +122,48 @@ async function createListing(body)
             const insertQuery = "INSERT INTO Listings (user_id, title, description, price) VALUES (?, ?, ?, ?);";
             const res = await conn.query(insertQuery, [
                 userId,           // This links the listing to the user
-                body.title,
+                body.name,
                 body.description,
-                body.price
+                body.pay
             ]);
 
             console.log("Listing created! New Listing ID:", res.insertId);
             return { success: true, userExist: true, listingId: res.insertId };
+        } else
+        {
+            return { success: false, message: "Invalid login" };
+        }
+    } catch (err)
+    {
+        console.error(err)
+        return { success: false, userExist: false }
+    } finally
+    {
+        if (conn) conn.release();
+    }
+}
+async function getListings(body)
+{
+    let conn;
+    try
+    {
+        conn = await pool.getConnection();
+
+        // 1. Get the salt (assuming 'query' for salt was defined above)
+        let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
+        const hashedPassword = hashPassword(body.password + saltResult[0].salt);
+
+        
+        const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
+        const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
+
+        if (userRows.length > 0)
+        {
+            const insertQuery = "INSERT INTO Listings (user_id, title, description, price) VALUES (?, ?, ?, ?);";
+            const res = await conn.query(insertQuery, [body.search]);
+
+         //   console.log("Listing created! New Listing ID:", res.insertId);
+            return { success: true, listings:res };
         } else
         {
             return { success: false, message: "Invalid login" };
@@ -164,6 +212,10 @@ app.post('/login', async (req, res) =>
     try
     {
         const result = await login(req.body);
+        if (result && result.notEmailFormat)
+        {
+             return res.json({ message: "NotEmailFormat" })
+        }
         if (result && !result.userExist)
         {
             return res.json({ message: "failed" })
@@ -192,6 +244,29 @@ app.post('/createListing', async (req, res) =>
         if (result && result.success)
         {
             res.redirect("/index.html")
+        }
+
+    } catch (err)
+    {
+        res.status(400).send(err.message);
+    }
+
+});
+
+app.post('/getListings', async (req, res) =>
+{
+    console.log("Create Listing request:", req.body);
+    try
+    {
+        const result = await getListings(req.body);
+        if (result && !result.userExist)
+        {
+            return res.json({ message: "failed" })
+        }
+        if (result && result.success)
+        {
+           // res.redirect("/index.html")
+            res.json(result.listings)
         }
 
     } catch (err)
