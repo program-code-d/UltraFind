@@ -30,11 +30,12 @@
             .then((data) =>
             {
                 listings=data
+                draw_listings()
             })
 
 
 
-        draw_listings()
+        
     }
     function draw_listings()
     {
@@ -47,12 +48,12 @@
                                     <table style="height:80%; width: 100%;">
                                         <tr style="height:60%">
                                             <td colspan="2">
-                                                <h1 style="text-align:center">${listings[l].name}</h1>
+                                                <h1 style="text-align:center">${listings[l].title}</h1>
                                             </td>
                                         </tr>
                                         <tr style="height:40%">
                                             <td>
-                                                <h2>$${listings[l].pay}</h2>
+                                                <h2>$${listings[l].price}</h2>
                                             </td>
                                             <td>
                                                 <h3> ${listings[l].description}</h3>
@@ -70,6 +71,14 @@
 
 <body onload="main()">
     <table>
+        <tr>
+            <td colspan="2">
+
+            </td>
+            <td>
+                <button class="clean-btn">+</button>
+            </td>
+        </tr>
         <tr>
             <td>
                 <div id="listings">

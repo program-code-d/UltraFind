@@ -1,19 +1,46 @@
-
-  html, body {
+html, body {
     margin: 0;
     padding: 0;
     width: 100%;
     height: 100%;
-  }
-  table {
+}
+
+table {
     width: 100%;
     border-collapse: collapse; /* Removes gaps between borders */
-  }
-  table, th, td {
+}
+
+table, th, td {
     border: 1px solid black;
-  }
-  th, td {
+}
+
+th, td {
     padding: 10px; /* Optional: Adds space inside cells */
     text-align: left; /* Optional: Aligns text */
-  }
+}
 
+.clean-btn {
+    /* 1. Positioning */
+    position: fixed; /* Positions the button relative to the browser window */
+    top: 10px;      /* Places it 10px from the top edge */
+    right: 10px;    /* Places it 10px from the right edge */
+    z-index: 1000;  /* Ensures the button is above other content */
+
+    /* 2. Reset/Remove default styles */
+    all: unset; /* Modern way, well-supported except IE */
+    box-sizing: border-box; /* Ensures padding/border are included in width/height */
+    vertical-align: top;
+    /* 3. Basic Styling */
+    background-color: #757474; /* A clean blue background */
+    color: #ffffff; /* White text color */
+    padding: 10px 20px; /* Ample padding for a good click area */
+    border-radius: 5px; /* Slightly rounded corners */
+    cursor: pointer; /* Changes cursor to a hand icon on hover */
+    font-family: inherit; /* Inherit font from the body */
+    font-size: 16px;
+    text-align: center;
+    text-decoration: none; /* Removes underlines if using <a> as a button */
+    display: inline-block; /* Allows for margin/padding as an inline element */
+    /* 4. Ensure keyboard accessibility */
+    outline: revert; /* Revert the outline to the browser's default for focus */
+}

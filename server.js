@@ -59,12 +59,12 @@ async function registerUser(user)
     }
 }
 
-    function isEmail(email)
-    {
-        // A common regex pattern for basic email validation
-        const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-        return emailPattern.test(email); // Returns true if valid, false otherwise
-    }
+function isEmail(email)
+{
+    // A common regex pattern for basic email validation
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return emailPattern.test(email); // Returns true if valid, false otherwise
+}
 
 async function login(user)
 {
@@ -74,7 +74,7 @@ async function login(user)
         if (!user.email) throw new Error("Email is required");
         if (!isEmail(user.email))
         {
-            return {success:"false", notEmailFormat:true}
+            return { success: "false", notEmailFormat: true }
         }
 
 
@@ -153,15 +153,17 @@ async function getListings(body)
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
         const hashedPassword = hashPassword(body.password + saltResult[0].salt);
 
-        
+
         const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
 
-       
-            const insertQuery = "SELECT * FROM Listings WHERE title LIKE '%?%';";
-            const res = await conn.query(insertQuery, [body.search]);
-            return { success: true, listings:res };
-       
+
+        const insertQuery = "SELECT * FROM Listings WHERE title LIKE ?;";
+        const res = await conn.query(insertQuery, [`%${body.search}%`]);
+
+        //   console.log("Listing created! New Listing ID:", res.insertId);
+        return { success: true, listings: res };
+
     } catch (err)
     {
         console.error(err)
@@ -208,7 +210,7 @@ app.post('/login', async (req, res) =>
         const result = await login(req.body);
         if (result && result.notEmailFormat)
         {
-             return res.json({ message: "NotEmailFormat" })
+            return res.json({ message: "NotEmailFormat" })
         }
         if (result && !result.userExist)
         {
@@ -259,7 +261,7 @@ app.post('/getListings', async (req, res) =>
         }
         if (result && result.success)
         {
-           // res.redirect("/index.html")
+            // res.redirect("/index.html")
             res.json(result.listings)
         }
 
