@@ -160,8 +160,6 @@ async function getListings(body)
        
             const insertQuery = "SELECT * FROM Listings WHERE title LIKE '%?%';";
             const res = await conn.query(insertQuery, [body.search]);
-
-         //   console.log("Listing created! New Listing ID:", res.insertId);
             return { success: true, listings:res };
        
     } catch (err)
