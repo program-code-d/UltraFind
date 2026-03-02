@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Messages</title>
 </head>
+
 <body>
 
     <div id="messages-display"></div>
@@ -11,9 +13,47 @@
     <div class="chat-bar">
         <form id="chat-form">
             <input type="text" id="user-msg" placeholder="Type a message..." required>
-            <button type="submit">Submit</button>
+            <button onclick="messageFunc" type="submit">Submit</button>
         </form>
     </div>
 
 </body>
+<script>
+    function messageFunc()
+    {
+        let message = document.getElementById('user-msg');
+        
+        email = localStorage.getItem('email');
+        password = localStorage.getItem('password');
+
+        fetch("http://localhost:8080/sendmessage", {
+            // Defines the HTTP verb as POST, which is used for sending data to a server.
+            method: 'POST',
+            headers: {
+                // Informs the server that the data being sent is formatted as a JSON string.
+                'Content-Type': 'application/json'
+            },
+            // Converts the JavaScript object into a standardized JSON string for transmission.
+            body: JSON.stringify({ email: email, password: password,message:message })
+        })
+            .then(response =>
+            {
+                if (response.redirected)
+                {
+                    window.location.href = response.url;
+                    return;
+                }
+                return response.json();
+            })
+            .then((data) =>
+            {
+
+
+            })
+    }
+
+
+
+</script>
+
 </html>
