@@ -1,26 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Info Listing</title>
 </head>
+
 <body onload="main()">
-   <div id="title"></div>
-   <div id="price"></div>
-   <div id="description"></div>
-   <div id="location"></div>
+    <div id="title"></div>
+    <div id="price"></div>
+    <div id="description"></div>
 </body>
 <script>
     function main()
     {
-      let title=document.getElementById('title');
-      let price=document.getElementById('price');
-      let description=document.getElementById('description');
-      let location=document.getElementById('location');
+        var email
+        var password
+        let title = document.getElementById('title');
+        let price = document.getElementById('price');
+        let description = document.getElementById('description');
+
+
+        email = localStorage.getItem('email')
+        password = localStorage.getItem('password')
+
+        fetch("http://localhost:8080/getinfolisting", {
+            // Defines the HTTP verb as POST, which is used for sending data to a server.
+            method: 'POST',
+            headers: {
+                // Informs the server that the data being sent is formatted as a JSON string.
+                'Content-Type': 'application/json'
+            },
+            // Converts the JavaScript object into a standardized JSON string for transmission.
+            body: JSON.stringify({ email: email, password: password, name: title.value, pay: price.value, description: description.value })
+        })
+            .then(response =>
+            {
+                if (response.redirected)
+                {
+                    window.location.href = response.url;
+                    return;
+                }
+                return response.json();
+            })
+            .then((data) =>
+            {
+
+
+            })
+
+
     }
-  
+
 
 
 </script>
+
 </html>
