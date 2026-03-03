@@ -205,6 +205,38 @@ async function messageFunc(body)
         if (conn) conn.release();
     }
 }
+
+async function getinfolistings(body)
+{
+    let conn;
+    try
+    {
+        conn = await pool.getConnection();
+
+        // 1. Get the salt (assuming 'query' for salt was defined above)
+        let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
+        const hashedPassword = hashPassword(body.password + saltResult[0].salt);
+
+
+        const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
+        const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
+
+
+        const insertQuery = "SELECT * FROM Listings WHERE title LIKE ?;";
+        const res = await conn.query(insertQuery, [`%${body.search}%`]);
+
+        //   console.log("Listing created! New Listing ID:", res.insertId);
+        return { success: true, listings: res };
+
+    } catch (err)
+    {
+        console.error(err)
+        return { success: false, userExist: false }
+    } finally
+    {
+        if (conn) conn.release();
+    }
+}
 async function switchFile(body)
 {
     let conn;
@@ -270,6 +302,29 @@ app.post('/sendmessage', async (req, res) =>
     try
     {
         const result = await messageFunc(req.body);
+        if (result && result.emailExist)
+        {
+            return res.json({ message: "Email In Use" })
+        }
+        if (result && result.success)
+        {
+           // res.redirect("/index.html")
+        }
+
+    } catch (err)
+    {
+
+        res.status(400).send(err.message);
+    }
+
+});
+
+app.post('/getinfolisting', async (req, res) =>
+{
+    console.log("Signup request:", req.body);
+    try
+    {
+        const result = await getinfolistings(req.body);
         if (result && result.emailExist)
         {
             return res.json({ message: "Email In Use" })
@@ -369,8 +424,8 @@ app.post('/switchFile', async (req, res) =>
         }
         if (result && result.success)
         {
-             res.redirect("/create_listing.html")
-            //res.json(result.listings)
+            // res.redirect("/index.html")
+            res.json(result.listings)
         }
 
     } catch (err)
