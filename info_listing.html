@@ -13,41 +13,34 @@
     <div id="description"></div>
 </body>
 <script>
-    function main()
-    {
+    
         var email
         var password
-        let title = document.getElementById('title');
-        let price = document.getElementById('price');
-        let description = document.getElementById('description');
+        var id
+        var listing_info={}
+    function main()
+    {
+       
 
 
         email = localStorage.getItem('email')
         password = localStorage.getItem('password')
+        id = sessionStorage.getItem("id")
 
         fetch("http://localhost:8080/getinfolisting", {
             // Defines the HTTP verb as POST, which is used for sending data to a server.
-            method: 'POST',
+            method: 'GET',
             headers: {
                 // Informs the server that the data being sent is formatted as a JSON string.
                 'Content-Type': 'application/json'
             },
             // Converts the JavaScript object into a standardized JSON string for transmission.
-            body: JSON.stringify({ email: email, password: password, name: title.value, pay: price.value, description: description.value })
+            body: JSON.stringify({ email: email, password: password, id:id })
         })
-            .then(response =>
-            {
-                if (response.redirected)
-                {
-                    window.location.href = response.url;
-                    return;
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then((data) =>
             {
-
-
+                listing_info=data
             })
 
 
