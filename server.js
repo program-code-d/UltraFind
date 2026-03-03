@@ -205,6 +205,35 @@ async function messageFunc(body)
         if (conn) conn.release();
     }
 }
+async function switchFile(body)
+{
+    let conn;
+    try
+    {
+        conn = await pool.getConnection();
+
+        // 1. Get the salt (assuming 'query' for salt was defined above)
+        let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
+        const hashedPassword = hashPassword(body.password + saltResult[0].salt);
+
+
+        const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
+        const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
+
+
+        
+        return { success: true, userExist: true };
+
+    } catch (err)
+    {
+        console.error(err)
+        return { success: false, userExist: false }
+    } finally
+    {
+        if (conn) conn.release();
+    }
+}
+
 
 app.get('/', (req, res) =>
 {
@@ -327,6 +356,30 @@ app.post('/getListings', async (req, res) =>
     }
 
 });
+
+app.post('/switchFile', async (req, res) =>
+{
+   // console.log("Create Listing request:", req.body);
+    try
+    {
+        const result = await switchFile(req.body);
+        if (result && !result.userExist)
+        {
+            return res.json({ message: "failed" })
+        }
+        if (result && result.success)
+        {
+            // res.redirect("/index.html")
+            res.json(result.listings)
+        }
+
+    } catch (err)
+    {
+        res.status(400).send(err.message);
+    }
+
+});
+
 
 app.listen(PORT, () =>
 {
