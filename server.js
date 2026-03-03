@@ -369,7 +369,7 @@ app.post('/switchFile', async (req, res) =>
         }
         if (result && result.success)
         {
-             res.redirect("/create_listing.html")
+             res.redirect("/"+req.body.file)
             //res.json(result.listings)
         }
 
