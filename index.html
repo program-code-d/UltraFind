@@ -68,53 +68,37 @@
     }
     function goTocreateListing()
     {
+        email = document.getElementById("emailSignUP").value
+        password = document.getElementById("passwordSignUp").value
+        fetch("http://localhost:8080/switchFile", {
+            // Defines the HTTP verb as POST, which is used for sending data to a server.
+            method: 'POST',
+            headers: {
+                // Informs the server that the data being sent is formatted as a JSON string.
+                'Content-Type': 'application/json'
+            },
 
-
-        if (document.getElementById("login").style.display == "block")
-        {
-            console.error("tried to sign up from login screen")
-        }
-        else
-        {
-            if (document.getElementById("passwordSignUp").value == document.getElementById("confPassword").value)
+            body: JSON.stringify({ email: email,password: password,file:"create_listing.html" })
+        })
+            .then(response =>
             {
-                email = document.getElementById("emailSignUP").value
-                password = document.getElementById("passwordSignUp").value
-                fetch("http://localhost:8080/signup", {
-                    // Defines the HTTP verb as POST, which is used for sending data to a server.
-                    method: 'POST',
-                    headers: {
-                        // Informs the server that the data being sent is formatted as a JSON string.
-                        'Content-Type': 'application/json'
-                    },
-
-                    body: JSON.stringify({ email: email, age: document.getElementById("age").value, firstName: document.getElementById("first-name").value, lastName: document.getElementById("last-name").value, password: password })
-                })
-                    .then(response =>
-                    {
-                        if (response.redirected)
-                        {
-                            localStorage.setItem('email', email);
-                            localStorage.setItem('password', password);
-                            window.location.href = response.url;
-                            return;
-                        }
-                        return response.json();
-                    })
-                    .then((data) =>
-                    {
-                        if (data.message == "Email In Use")
-                        {
-                            document.getElementById("error").innerHTML = `<div style="color:red;"><h3>This Email Is Already In Use, Try Logging In</h3></div>`
-                        }
-
-                    })
-            }
-            else
+                if (response.redirected)
+                {
+                    localStorage.setItem('email', email);
+                    localStorage.setItem('password', password);
+                    window.location.href = response.url;
+                    return;
+                }
+                return response.json();
+            })
+            .then((data) =>
             {
-                alert("passwords do not match try again")
-            }
-        }
+                if (data.message == "Email In Use")
+                {
+                    document.getElementById("error").innerHTML = `<div style="color:red;"><h3>This Email Is Already In Use, Try Logging In</h3></div>`
+                }
+
+            })
 
     }
 </script>
