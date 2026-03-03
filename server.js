@@ -241,31 +241,23 @@ async function getinfolistings(body)
 async function sendfriendmessage(body) {
     let conn;
     try {
-        // 0. Debugging (Optional: reveals exactly what the frontend sent)
-        // console.log("Received body:", body);
-
         conn = await pool.getConnection();
 
         // 1. Get the salt
         const saltQuery = "SELECT salt FROM Users WHERE email = ?";
         const saltResult = await conn.query(saltQuery, [body.email]);
 
-        // FIX: Check if user exists before accessing saltResult[0]
         if (!saltResult || saltResult.length === 0) {
-            console.error("Authentication failed: Email not found ->", body.email);
             return { success: false, error: "User not found" };
         }
 
-        // 2. Hash the incoming password with the found salt
+        // 2. Hash and Verify Sender
         const salt = saltResult[0].salt;
         const hashedPassword = hashPassword(body.password + salt);
-
-        // 3. Verify credentials and get the Sender's ID
         const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?";
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
 
         if (!userRows || userRows.length === 0) {
-            console.error("Authentication failed: Incorrect password for", body.email);
             return { success: false, error: "Invalid password" };
         }
 
@@ -273,7 +265,7 @@ async function sendfriendmessage(body) {
 
         // 4. Insert the message
         // Note: Using 'reciver_id' as per your original code's spelling
-        const insertQuery = "INSERT INTO Friends (sender_id, receiver_id, message_text) VALUES (?, ?, ?)";
+        const insertQuery = "INSERT INTO Friends (sender_id, reciver_id, message_text) VALUES (?, ?, ?)";
         const res = await conn.query(insertQuery, [senderId, body.friend_id, body.message]);
 
         return { 
@@ -445,7 +437,6 @@ app.post('/createListing', async (req, res) =>
 
 app.post('/getListings', async (req, res) =>
 {
-    console.log("Create Listing request:", req.body);
     try
     {
         const result = await getListings(req.body);
@@ -465,6 +456,30 @@ app.post('/getListings', async (req, res) =>
     }
 
 });
+
+
+app.post('/getNavbar', async (req, res) =>
+{
+   
+    try
+    {
+        const result = await getListings(req.body);
+        if (result && !result.userExist)
+        {
+            return res.json({ message: "failed" })
+        }
+        if (result && result.success)
+        {
+            res.json(result.listings)
+        }
+
+    } catch (err)
+    {
+        res.status(400).send(err.message);
+    }
+
+});
+
 
 app.post('/switchFile', async (req, res) =>
 {

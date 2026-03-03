@@ -104,6 +104,26 @@
           
 
     }
+    function injectNavbar()
+    {
+        let navbar=``
+        fetch("http://localhost:8080/getNavbar", {
+            // Defines the HTTP verb as POST, which is used for sending data to a server.
+            method: 'POST',
+            headers: {
+                // Informs the server that the data being sent is formatted as a JSON string.
+                'Content-Type': 'application/json'
+            },
+            // Converts the JavaScript object into a standardized JSON string for transmission.
+            body: JSON.stringify({ email: email, password: password })
+        })
+            .then(response => response.json())
+            .then((data) =>
+            {
+                navbar=data.navbar
+            })
+         document.getElementById("navbar").innerHTML=navbar
+    }
 </script>
 <link rel="stylesheet" href="CSS files/index.css">
 
