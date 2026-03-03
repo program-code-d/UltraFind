@@ -162,7 +162,7 @@ async function getListings(body)
         const res = await conn.query(insertQuery, [`%${body.search}%`]);
 
         //   console.log("Listing created! New Listing ID:", res.insertId);
-        return { success: true, listings: res };
+        return { success: true, listings: res, userExist: true };
 
     } catch (err)
     {
@@ -254,8 +254,8 @@ async function sendfriendmessage(body)
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
 
 
-        const insertQuery = "INSERT INTO Friends (sender_id, reciver_id message_text) WHERE sender_id";
-        const res = await conn.query(insertQuery, [`%${body.search}%`]);
+        const insertQuery = "INSERT INTO Friends (sender_id, reciver_id, message_text) VALUES (?, ?, ?)";
+        const res = await conn.query(insertQuery, [userRows[0].id, body.friend_id, body.message]);
 
         //   console.log("Listing created! New Listing ID:", res.insertId);
         return { success: true, listings: res };
@@ -285,7 +285,7 @@ async function switchFile(body)
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
 
 
-        
+
         return { success: true, userExist: true };
 
     } catch (err)
@@ -340,7 +340,7 @@ app.post('/sendmessage', async (req, res) =>
         }
         if (result && result.success)
         {
-           // res.redirect("/index.html")
+            // res.redirect("/index.html")
         }
 
     } catch (err)
@@ -363,7 +363,7 @@ app.post('/getinfolisting', async (req, res) =>
         }
         if (result && result.success)
         {
-           // res.redirect("/index.html")
+            // res.redirect("/index.html")
         }
 
     } catch (err)
@@ -446,7 +446,7 @@ app.post('/getListings', async (req, res) =>
 
 app.post('/switchFile', async (req, res) =>
 {
-   // console.log("Create Listing request:", req.body);
+    // console.log("Create Listing request:", req.body);
     try
     {
         const result = await switchFile(req.body);
@@ -456,7 +456,7 @@ app.post('/switchFile', async (req, res) =>
         }
         if (result && result.success)
         {
-             res.redirect("/"+req.body.file)
+            res.redirect("/" + req.body.file)
             //res.json(result.listings)
         }
 

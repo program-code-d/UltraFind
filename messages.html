@@ -13,7 +13,6 @@
     <div class="chat-bar">
         <form id="friend-id">
             <input type="text" id="user-msg" placeholder="Type a message..." required>
-            <input type="number" id="user-friend-id" placeholder="Type The Id of Your Friend..." required>
             <button onclick="messageFunc" type="submit">Submit</button>
         </form>
     </div>
@@ -25,7 +24,7 @@
         var email
         var password
         let message = document.getElementById('user-msg');
-        let friend_id=document.getElementById('user-friend-id')
+       
 
         email = localStorage.getItem('email');
         password = localStorage.getItem('password');
@@ -38,7 +37,7 @@
                 'Content-Type': 'application/json'
             },
             // Converts the JavaScript object into a standardized JSON string for transmission.
-            body: JSON.stringify({ email: email, password: password, message: message,friend_id: friend_id })
+            body: JSON.stringify({ email: email, password: password, message: message })
         })
             .then(response =>
             {
