@@ -162,7 +162,7 @@ async function getListings(body)
         const res = await conn.query(insertQuery, [`%${body.search}%`]);
 
         //   console.log("Listing created! New Listing ID:", res.insertId);
-        return { success: true, listings: res };
+        return { success: true, listings: res, userExist: true  };
 
     } catch (err)
     {

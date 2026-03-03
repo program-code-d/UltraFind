@@ -46,12 +46,12 @@
         {
             listings_div += `<div id="${l}" style="display: inline-block;margin:1vw; vertical-align: top; height: 40vh; width: 18vw;">
                                     <table style="height:80%; width: 100%;">
-                                        <tr style="height:60%">
+                                        <tr style="height:30%">
                                             <td colspan="2">
                                                 <h1 style="text-align:center">${listings[l].title}</h1>
                                             </td>
                                         </tr>
-                                        <tr style="height:40%">
+                                        <tr style="height:20%">
                                             <td>
                                                 <h2>$${listings[l].price}</h2>
                                             </td>
@@ -59,6 +59,11 @@
                                                 <h3> ${listings[l].description}</h3>
                                             </td>
                                         </tr>
+                                        <tr style="10%">
+                                            <td>
+                                                <button onclick="" >More Info</button>
+                                            </td>
+                                        <tr>
                                     </table>    
                                 </div>`
             l++
@@ -66,10 +71,15 @@
 
         document.getElementById("listings").innerHTML = listings_div
     }
-    function goTocreateListing()
+    function goToInfoListing(id)
     {
-        email = document.getElementById("emailSignUP").value
-        password = document.getElementById("passwordSignUp").value
+        sessionStorage.removeItem(`id`)
+        sessionStorage.setItem(`id`,id)
+        goToDifferentScreen("info_listing.html")
+    }
+    function goToDifferentScreen(file)
+    {
+        
         fetch("http://localhost:8080/switchFile", {
             // Defines the HTTP verb as POST, which is used for sending data to a server.
             method: 'POST',
@@ -78,7 +88,7 @@
                 'Content-Type': 'application/json'
             },
 
-            body: JSON.stringify({ email: email,password: password,file:"create_listing.html" })
+            body: JSON.stringify({ email: email,password: password,file:file })
         })
             .then(response =>
             {
@@ -91,14 +101,7 @@
                 }
                 return response.json();
             })
-            .then((data) =>
-            {
-                if (data.message == "Email In Use")
-                {
-                    document.getElementById("error").innerHTML = `<div style="color:red;"><h3>This Email Is Already In Use, Try Logging In</h3></div>`
-                }
-
-            })
+          
 
     }
 </script>
@@ -111,7 +114,7 @@
 
             </td>
             <td>
-                <button onclick="goTocreateListing()" class="clean-btn">+</button>
+                <button onclick="goToDifferentScreen(`create_listing.html`)" class="clean-btn">+</button>
             </td>
         </tr>
         <tr>
