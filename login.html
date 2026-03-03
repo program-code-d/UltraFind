@@ -8,7 +8,37 @@
     <script>
         let email = ""
         let password = ""
+        function main()
+        {
+            email = localStorage.getItem("email")
+            password = localStorage.getItem("password")
+            if ((email != null) && (password != null))
+            {
+                fetch("http://localhost:8080/login", {
+                    // Defines the HTTP verb as POST, which is used for sending data to a server.
+                    method: 'POST',
+                    headers: {
+                        // Informs the server that the data being sent is formatted as a JSON string.
+                        'Content-Type': 'application/json'
+                    },
+                    // Converts the JavaScript object into a standardized JSON string for transmission.
+                    body: JSON.stringify({ email: email, password: password })
+                })
+                    .then(response =>
+                    {
+                        if (response.redirected)
+                        {
+                            window.location.href = response.url;
+                            return;
+                        }
+                        return response.json();
+                    })
+                    .then((data) =>
+                    {
 
+                    })
+            }
+        }
         function signUp()
         {
             if (document.getElementById("login").style.display == "block")
@@ -139,13 +169,13 @@
             }
             checkAgeTimer()
         }
-       
-       
+
+
     </script>
     <link rel="stylesheet" href="CSS files/login.css">
 </head>
 
-<body>
+<body onload="main()">
     <div id="login">
         <div id="login-card">
             <div onclick="switchToSignUp()">Dont Have An account? Sign Up</div>

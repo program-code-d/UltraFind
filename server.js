@@ -357,7 +357,7 @@ app.post('/getInfoListing', async (req, res) =>
     try
     {
         const result = await getinfolistings(req.body);
-        if (result && result.userExist)
+        if (result && !result.userExist)
         {
             return res.json({ message: "failed" })
         }
