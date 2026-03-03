@@ -273,7 +273,7 @@ async function sendfriendmessage(body) {
 
         // 4. Insert the message
         // Note: Using 'reciver_id' as per your original code's spelling
-        const insertQuery = "INSERT INTO Friends (sender_id, reciver_id, message_text) VALUES (?, ?, ?)";
+        const insertQuery = "INSERT INTO Friends (sender_id, receiver_id, message_text) VALUES (?, ?, ?)";
         const res = await conn.query(insertQuery, [senderId, body.friend_id, body.message]);
 
         return { 
