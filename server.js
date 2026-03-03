@@ -238,55 +238,6 @@ async function getinfolistings(body)
     }
 }
 
-async function sendfriendmessage(body) {
-    let conn;
-    try {
-        conn = await pool.getConnection();
-
-        // 1. Get the salt
-        const saltQuery = "SELECT salt FROM Users WHERE email = ?";
-        const saltResult = await conn.query(saltQuery, [body.email]);
-
-        if (!saltResult || saltResult.length === 0) {
-            return { success: false, error: "User not found" };
-        }
-
-        // 2. Hash and Verify Sender
-        const salt = saltResult[0].salt;
-        const hashedPassword = hashPassword(body.password + salt);
-        const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?";
-        const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
-
-        if (!userRows || userRows.length === 0) {
-            return { success: false, error: "Invalid password" };
-        }
-
-        const senderId = userRows[0].id;
-
-        // 3. OPTIONAL BUT RECOMMENDED: Verify the receiver exists
-        const receiverCheck = await conn.query("SELECT id FROM Users WHERE id = ?", [body.friend_id]);
-        if (receiverCheck.length === 0) {
-            return { success: false, error: "The person you are trying to message does not exist." };
-        }
-
-        // 4. Insert the message (FIXED SPELLING: receiver_id)
-        const insertQuery = "INSERT INTO Friends (sender_id, receiver_id, message_text) VALUES (?, ?, ?)";
-        const res = await conn.query(insertQuery, [senderId, body.friend_id, body.message]);
-
-        return { 
-            success: true, 
-            message: "Message sent!", 
-            insertId: res.insertId 
-        };
-
-    } catch (err) {
-        console.error("Database Error:", err);
-        return { success: false, error: "Internal server error" };
-    } finally {
-        if (conn) conn.release();
-    }
-}
-
 async function switchFile(body)
 {
     let conn;
