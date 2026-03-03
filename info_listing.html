@@ -8,16 +8,14 @@
 </head>
 
 <body onload="main()">
-    <div id="title"></div>
-    <div id="price"></div>
-    <div id="description"></div>
+    <div id="listing"></div>
 </body>
 <script>
     
-        var email
-        var password
-        var id
-        var listing_info={}
+        let email
+        let password
+        let id
+        let listing_info={}
     function main()
     {
        
@@ -27,9 +25,9 @@
         password = localStorage.getItem('password')
         id = sessionStorage.getItem("id")
 
-        fetch("http://localhost:8080/getinfolisting", {
+        fetch("http://localhost:8080/getInfoListing", {
             // Defines the HTTP verb as POST, which is used for sending data to a server.
-            method: 'GET',
+            method: 'POST',
             headers: {
                 // Informs the server that the data being sent is formatted as a JSON string.
                 'Content-Type': 'application/json'
@@ -44,6 +42,19 @@
             })
 
 
+    }
+    function draw_listings()
+    {
+        let listing_drawing=
+        `
+        <table>
+            <tr>
+                <td>
+                    ${listing_info.title}
+                </td>
+            </tr>
+        `
+        document.getElementById("listing").innerHTML=listing_drawing
     }
 
 
