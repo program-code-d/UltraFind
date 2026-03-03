@@ -2,7 +2,7 @@
 --DROP TABLE IF EXISTS Users;
 
 CREATE TABLE Users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY UNSIGNED,
     email VARCHAR(255) NOT NULL UNIQUE,
     first_name VARCHAR(255),
     last_name VARCHAR(255),
@@ -13,7 +13,7 @@ CREATE TABLE Users (
 );
 
 CREATE TABLE Listings (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY UNSIGNED,
     user_id INT NOT NULL,  -- This links to Users.id
     title VARCHAR(255) NOT NULL,
     description TEXT,
@@ -28,10 +28,10 @@ CREATE TABLE Listings (
 );
 
 CREATE TABLE Messages (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY UNSIGNED,
     sender_id INT NOT NULL,     -- The person sending
     receiver_id INT NOT NULL,   -- The person receiving
-    listing_id INT NOT NULL,    -- The item being discussed
+    listing_id INT NOT NULL UNSIGNED,    -- The item being discussed
     message_text TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
