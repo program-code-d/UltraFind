@@ -238,37 +238,58 @@ async function getinfolistings(body)
     }
 }
 
-async function sendfriendmessage(body)
-{
+async function sendfriendmessage(body) {
     let conn;
-    try
-    {
+    try {
+        // 0. Debugging (Optional: reveals exactly what the frontend sent)
+        // console.log("Received body:", body);
+
         conn = await pool.getConnection();
 
-        // 1. Get the salt (assuming 'query' for salt was defined above)
-        let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
-        const hashedPassword = hashPassword(body.password + saltResult[0].salt);
+        // 1. Get the salt
+        const saltQuery = "SELECT salt FROM Users WHERE email = ?";
+        const saltResult = await conn.query(saltQuery, [body.email]);
 
+        // FIX: Check if user exists before accessing saltResult[0]
+        if (!saltResult || saltResult.length === 0) {
+            console.error("Authentication failed: Email not found ->", body.email);
+            return { success: false, error: "User not found" };
+        }
 
-        const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
+        // 2. Hash the incoming password with the found salt
+        const salt = saltResult[0].salt;
+        const hashedPassword = hashPassword(body.password + salt);
+
+        // 3. Verify credentials and get the Sender's ID
+        const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?";
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
 
+        if (!userRows || userRows.length === 0) {
+            console.error("Authentication failed: Incorrect password for", body.email);
+            return { success: false, error: "Invalid password" };
+        }
 
+        const senderId = userRows[0].id;
+
+        // 4. Insert the message
+        // Note: Using 'reciver_id' as per your original code's spelling
         const insertQuery = "INSERT INTO Friends (sender_id, reciver_id, message_text) VALUES (?, ?, ?)";
-        const res = await conn.query(insertQuery, [userRows[0].id, body.friend_id, body.message]);
+        const res = await conn.query(insertQuery, [senderId, body.friend_id, body.message]);
 
-        //   console.log("Listing created! New Listing ID:", res.insertId);
-        return { success: true, listings: res };
+        return { 
+            success: true, 
+            message: "Message sent!", 
+            insertId: res.insertId 
+        };
 
-    } catch (err)
-    {
-        console.error(err)
-        return { success: false, userExist: false }
-    } finally
-    {
+    } catch (err) {
+        console.error("Database Error:", err);
+        return { success: false, error: "Internal server error" };
+    } finally {
         if (conn) conn.release();
     }
 }
+
 async function switchFile(body)
 {
     let conn;
