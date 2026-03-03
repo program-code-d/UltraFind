@@ -223,10 +223,10 @@ async function getinfolistings(body)
 
 
         const insertQuery = "SELECT * FROM Listings WHERE title LIKE ?;";
-        const res = await conn.query(insertQuery, [`%${body.search}%`]);
+        const res = await conn.query(insertQuery, [`%${body.id}%`]);
 
         //   console.log("Listing created! New Listing ID:", res.insertId);
-        return { success: true, listings: res };
+        return { success: true, listing: res, userExist: true };
 
     } catch (err)
     {
@@ -351,19 +351,20 @@ app.post('/sendmessage', async (req, res) =>
 
 });
 
-app.post('/getinfolisting', async (req, res) =>
+app.post('/getInfoListing', async (req, res) =>
 {
     console.log("Signup request:", req.body);
     try
     {
         const result = await getinfolistings(req.body);
-        if (result && result.emailExist)
+        if (result && result.userExist)
         {
-            return res.json({ message: "Email In Use" })
+            return res.json({ message: "failed" })
         }
         if (result && result.success)
         {
             // res.redirect("/index.html")
+            res.json(result.listings)
         }
 
     } catch (err)
