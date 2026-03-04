@@ -563,4 +563,4 @@ app.post('/sendfriendmessage', async (req, res) =>
 app.listen(PORT, () =>
 {
     console.log(`[server] Running on http://localhost:${PORT}`);
-});
+})
