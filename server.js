@@ -157,6 +157,42 @@ async function getListings(body)
         const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
 
+        const senderId = userRows[0].id;
+
+        const insertQuery = "INSERT INTO Friends (sender_id, receiver_id, message_text) VALUES (?, ?, ?)";
+        const res = await conn.query(insertQuery, [
+            senderId,           // Found from the login check
+            body.friend_id,     // From document.getElementById('user-friend-id')
+            body.message        // From document.getElementById('user-msg')
+        ]);
+
+        return { success: true, insertId: res.insertId, userExist: true };
+
+    } catch (err)
+    {
+        console.error("Database Error:", err);
+        return { success: false, error: "Internal Server Error" };
+    } finally
+    {
+        if (conn) conn.release();
+    }
+}
+
+async function getListings(body)
+{
+    let conn;
+    try
+    {
+        conn = await pool.getConnection();
+
+        // 1. Get the salt (assuming 'query' for salt was defined above)
+        let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
+        const hashedPassword = hashPassword(body.password + saltResult[0].salt);
+
+
+        const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
+        const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
+
 
         const insertQuery = "SELECT * FROM Listings WHERE title LIKE ?;";
         const res = await conn.query(insertQuery, [`%${body.search}%`]);
@@ -191,7 +227,7 @@ async function getNavbar(body)
 
      
         navbar=
-        `    
+        `
         <div class = "main-navbar">
             <div id="Home" onclick="goToDifferentScreen('index.html')">
                 <div>Home</div>
@@ -206,7 +242,7 @@ async function getNavbar(body)
         </div>
         `
         //   console.log("Listing created! New Listing ID:", res.insertId);
-        return { success: true, navbar:navbar, userExist: true };
+        return { success: true, navbar: navbar, userExist: true };
 
     } catch (err)
     {
@@ -461,7 +497,7 @@ app.post('/getListings', async (req, res) =>
 
 app.post('/getNavbar', async (req, res) =>
 {
-   
+
     try
     {
         const result = await getNavbar(req.body);
