@@ -393,7 +393,6 @@ app.post('/createListing', async (req, res) =>
 
 app.post('/getListings', async (req, res) =>
 {
-    console.log("Create Listing request:", req.body);
     try
     {
         const result = await getListings(req.body);
@@ -413,6 +412,30 @@ app.post('/getListings', async (req, res) =>
     }
 
 });
+
+
+app.post('/getNavbar', async (req, res) =>
+{
+   
+    try
+    {
+        const result = await getListings(req.body);
+        if (result && !result.userExist)
+        {
+            return res.json({ message: "failed" })
+        }
+        if (result && result.success)
+        {
+            res.json(result.listings)
+        }
+
+    } catch (err)
+    {
+        res.status(400).send(err.message);
+    }
+
+});
+
 
 app.post('/switchFile', async (req, res) =>
 {
