@@ -10,15 +10,16 @@
 <body onload="main()">
     <div id="listing"></div>
 </body>
+<link rel="stylesheet" href="CSS files/info_listing.css">
 <script>
-    
-        let email
-        let password
-        let id
-        let listing_info={}
+
+    let email
+    let password
+    let id
+    let listing_info = {}
     function main()
     {
-       
+
 
 
         email = localStorage.getItem('email')
@@ -33,26 +34,43 @@
                 'Content-Type': 'application/json'
             },
             // Converts the JavaScript object into a standardized JSON string for transmission.
-            body: JSON.stringify({ email: email, password: password, id:id })
+            body: JSON.stringify({ email: email, password: password, id: id })
         })
             .then(response => response.json())
             .then((data) =>
             {
-                listing_info=data
+                listing_info = data
             })
 
 
     }
     function draw_listings()
     {
-        let listing_drawing=
-        `
+        let listing_drawing =
+            `
             <div class="listing-container">
+                <div class="top-info">
+                    <div class="title">${listing_info.title}</div>
+                    <div class="location">location</div>
+                    <div class="date">date</div>
+                </div>
 
+                <div class="image">image</div>
+                <div class="Age-pay-location">
+                    <div class="price">${listing_info.price}</div>
+                    <div class="age">age</div>
+                    <div class="location-map">map and location</div>
+                </div>
+                
+                <div class="Description-repeats">
+                    <div class="description">${listing_info.description}</div>
+                    <div class="repeats">repeats</div>    
+                </div>
+                <div class="seller-info">seller info</div>    
             </div>
 
         `
-        document.getElementById("listing").innerHTML=listing_drawing
+        document.getElementById("listing").innerHTML = listing_drawing
     }
 
 

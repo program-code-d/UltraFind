@@ -66,9 +66,18 @@
     justify-content: space-between;
 }
 
-.listing-details {
-    margin: 10px 0;
+.listing-price-row {
+    display: flex;
+    justify-content: space-between; /* Puts price on left, description on right */
+    align-items: center;            /* Vertically centers them */
+    margin-top: 10px;
 }
+
+.listing-price-row h2, 
+.listing-price-row p {
+    margin: 0; /* Removes default browser spacing that ruins alignment */
+}
+
 .main-container {
     display: flex;         /* The magic wand */
     flex-direction: row;   /* Keeps them in a line */

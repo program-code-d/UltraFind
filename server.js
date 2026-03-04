@@ -268,7 +268,7 @@ async function getinfolistings(body)
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
 
 
-        const insertQuery = "SELECT * FROM Listings WHERE title LIKE ?;";
+        const insertQuery = "SELECT * FROM Listings WHERE id LIKE ?;";
         const res = await conn.query(insertQuery, [`%${body.id}%`]);
 
         //   console.log("Listing created! New Listing ID:", res.insertId);
@@ -345,7 +345,7 @@ app.post('/signup', async (req, res) =>
 
 app.post('/sendmessage', async (req, res) =>
 {
-    console.log("Signup request:", req.body);
+  //  console.log("Signup request:", req.body);
     try
     {
         const result = await messageFunc(req.body);
@@ -368,7 +368,7 @@ app.post('/sendmessage', async (req, res) =>
 
 app.post('/getInfoListing', async (req, res) =>
 {
-    console.log("Signup request:", req.body);
+   // console.log("Signup request:", req.body);
     try
     {
         const result = await getinfolistings(req.body);
