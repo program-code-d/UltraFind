@@ -379,7 +379,7 @@ app.post('/getInfoListing', async (req, res) =>
         if (result && result.success)
         {
             // res.redirect("/index.html")
-            res.json(result.listings)
+            res.json(result.listing)
         }
 
     } catch (err)

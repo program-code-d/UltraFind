@@ -31,12 +31,20 @@
                             window.location.href = response.url;
                             return;
                         }
+                        else
+                        {
+                            document.getElementById("login").style.display="block"
+                        }
                         return response.json();
                     })
                     .then((data) =>
                     {
 
                     })
+            }
+            else
+            {
+                document.getElementById("login").style.display="block";
             }
         }
         function signUp()
@@ -176,7 +184,7 @@
 </head>
 
 <body onload="main()">
-    <div id="login">
+    <div id="login" style="display: none;">
         <div id="login-card">
             <div onclick="switchToSignUp()">Dont Have An account? Sign Up</div>
 

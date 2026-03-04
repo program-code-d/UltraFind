@@ -38,13 +38,15 @@
 
         while (l < listings.length) {
             listings_div += `
-                <div id="${l}" class="listing-card">
-                    <h1>${listings[l].title}</h1>
+                <div onclick="goToInfoListing(${listings[l].id})" id="${l}" class="listing-card">
+                    <div style="text-align: center;"><h1>${listings[l].title}</h1></div>
                     <div class="listing-details">
                         <h2>$${listings[l].price}</h2>
+                    </div>
+                    <div>
                         <p>${listings[l].description}</p>
                     </div>
-                    <button onclick="goToInfoListing(${listings[l].id})">More Info</button>
+                    
                 </div>`
             l++
         }
