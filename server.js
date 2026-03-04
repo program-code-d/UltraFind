@@ -191,7 +191,7 @@ async function getNavbar(body)
 
      
         navbar=
-        `
+        `    
         <div class = "main-navbar">
             <div id="Home" onclick="goToDifferentScreen('index.html')">
                 <div>Home</div>
