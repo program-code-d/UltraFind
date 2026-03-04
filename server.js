@@ -173,6 +173,51 @@ async function getListings(body)
         if (conn) conn.release();
     }
 }
+async function getNavbar(body)
+{
+    let conn;
+    try
+    {
+        conn = await pool.getConnection();
+
+        // 1. Get the salt (assuming 'query' for salt was defined above)
+        let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
+        const hashedPassword = hashPassword(body.password + saltResult[0].salt);
+
+
+        const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
+        const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
+
+
+     
+        navbar=
+        `
+        <div class = "main-navbar">
+            <div id="Home" onclick="goToDifferentScreen('index.html')">
+                <div>Home</div>
+            </div>
+            <div id="Messages" onclick="goToDifferentScreen('messages.html')">
+                <div>Messages</div>
+            </div>
+            <div id="Friends" onclick="goToDifferentScreen('friends.html')">
+                <div>Friends</div>
+            </div>
+            
+        </div>
+        `
+        //   console.log("Listing created! New Listing ID:", res.insertId);
+        return { success: true, navbar:navbar, userExist: true };
+
+    } catch (err)
+    {
+        console.error(err)
+        return { success: false, userExist: false }
+    } finally
+    {
+        if (conn) conn.release();
+    }
+}
+
 
 async function messageFunc(body)
 {
@@ -419,14 +464,14 @@ app.post('/getNavbar', async (req, res) =>
    
     try
     {
-        const result = await getListings(req.body);
+        const result = await getNavbar(req.body);
         if (result && !result.userExist)
         {
             return res.json({ message: "failed" })
         }
         if (result && result.success)
         {
-            res.json(result.listings)
+            res.json(result.navbar)
         }
 
     } catch (err)
