@@ -173,6 +173,51 @@ async function getListings(body)
         if (conn) conn.release();
     }
 }
+async function getNavbar(body)
+{
+    let conn;
+    try
+    {
+        conn = await pool.getConnection();
+
+        // 1. Get the salt (assuming 'query' for salt was defined above)
+        let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
+        const hashedPassword = hashPassword(body.password + saltResult[0].salt);
+
+
+        const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
+        const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
+
+
+     
+        navbar=
+        `
+        <div class = "main-navbar">
+            <div id="Home" onclick="goToDifferentScreen('index.html')">
+                <div>Home</div>
+            </div>
+            <div id="Messages" onclick="goToDifferentScreen('messages.html')">
+                <div>Messages</div>
+            </div>
+            <div id="Friends" onclick="goToDifferentScreen('friends.html')">
+                <div>Friends</div>
+            </div>
+            
+        </div>
+        `
+        //   console.log("Listing created! New Listing ID:", res.insertId);
+        return { success: true, navbar:navbar, userExist: true };
+
+    } catch (err)
+    {
+        console.error(err)
+        return { success: false, userExist: false }
+    } finally
+    {
+        if (conn) conn.release();
+    }
+}
+
 
 async function messageFunc(body)
 {
@@ -234,50 +279,6 @@ async function getinfolistings(body)
         return { success: false, userExist: false }
     } finally
     {
-        if (conn) conn.release();
-    }
-}
-
-async function sendfriendmessage(body) {
-    let conn;
-    try {
-        conn = await pool.getConnection();
-
-        // 1. Get the salt
-        const saltQuery = "SELECT salt FROM Users WHERE email = ?";
-        const saltResult = await conn.query(saltQuery, [body.email]);
-
-        if (!saltResult || saltResult.length === 0) {
-            return { success: false, error: "User not found" };
-        }
-
-        // 2. Hash and Verify Sender
-        const salt = saltResult[0].salt;
-        const hashedPassword = hashPassword(body.password + salt);
-        const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?";
-        const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
-
-        if (!userRows || userRows.length === 0) {
-            return { success: false, error: "Invalid password" };
-        }
-
-        const senderId = userRows[0].id;
-
-        // 4. Insert the message
-        // Note: Using 'reciver_id' as per your original code's spelling
-        const insertQuery = "INSERT INTO Friends (sender_id, reciver_id, message_text) VALUES (?, ?, ?)";
-        const res = await conn.query(insertQuery, [senderId, body.friend_id, body.message]);
-
-        return { 
-            success: true, 
-            message: "Message sent!", 
-            insertId: res.insertId 
-        };
-
-    } catch (err) {
-        console.error("Database Error:", err);
-        return { success: false, error: "Internal server error" };
-    } finally {
         if (conn) conn.release();
     }
 }
@@ -463,14 +464,14 @@ app.post('/getNavbar', async (req, res) =>
    
     try
     {
-        const result = await getListings(req.body);
+        const result = await getNavbar(req.body);
         if (result && !result.userExist)
         {
             return res.json({ message: "failed" })
         }
         if (result && result.success)
         {
-            res.json(result.listings)
+            res.json(result.navbar)
         }
 
     } catch (err)

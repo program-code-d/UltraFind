@@ -1,23 +1,3 @@
-html, body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse; /* Removes gaps between borders */
-}
-
-table, th, td {
-    border: 1px solid black;
-}
-
-th, td {
-    padding: 10px; /* Optional: Adds space inside cells */
-    text-align: left; /* Optional: Aligns text */
-}
 
 .clean-btn {
     /* 1. Positioning */
@@ -43,4 +23,56 @@ th, td {
     display: inline-block; /* Allows for margin/padding as an inline element */
     /* 4. Ensure keyboard accessibility */
     outline: revert; /* Revert the outline to the browser's default for focus */
+}
+.main-container {
+    display: flex;         /* The magic wand */
+    flex-direction: row;   /* Keeps them in a line */
+    align-items: flex-start; /* Aligns everything to the top */
+    gap: 24px;             /* Spacing between the columns */
+    padding: 20px;
+    width: 100%;
+}
+
+#navbar {
+    width: 200px;          /* Fixed width for your nav */
+    flex-shrink: 0;        /* Prevents the nav from getting squished */
+    border: 3px solid black;
+    padding: 15px;
+    height: 80vh;
+}
+
+#listings {
+    flex-grow: 1;          /* Tells listings to take up all available space */
+    min-width: 0;          /* Prevents overflow bugs */
+}
+
+.action-area {
+    flex-shrink: 0;        /* Keeps the button area from shrinking */
+}
+#listings {
+    display: flex;
+    flex-wrap: wrap; /* This makes listings wrap to the next line when out of room */
+    gap: 18px;
+}
+
+.listing-card {
+    border: 1px solid black;
+    padding: 15px;
+    width: 18vw;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.listing-details {
+    margin: 10px 0;
+}
+.main-container {
+    display: flex;         /* The magic wand */
+    flex-direction: row;   /* Keeps them in a line */
+    align-items: flex-start; /* Aligns everything to the top */
+    gap: 24px;             /* Spacing between the columns */
+    padding: 20px;
+    width: 98%;
 }

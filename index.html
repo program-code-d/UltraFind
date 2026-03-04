@@ -6,150 +6,88 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
 </head>
+<script src="navbar.js"></script>
 <script>
     let listings
     let email
     let password
-    function main()
-    {
 
+    function main() {
         email = localStorage.getItem('email')
         password = localStorage.getItem('password')
 
+        injectNavbar()
+
         fetch("http://localhost:8080/getListings", {
-            // Defines the HTTP verb as POST, which is used for sending data to a server.
             method: 'POST',
             headers: {
-                // Informs the server that the data being sent is formatted as a JSON string.
                 'Content-Type': 'application/json'
             },
-            // Converts the JavaScript object into a standardized JSON string for transmission.
             body: JSON.stringify({ search: "", email: email, password: password })
         })
             .then(response => response.json())
-            .then((data) =>
-            {
+            .then((data) => {
                 listings = data
                 draw_listings()
             })
-
-
-
-
     }
-    function draw_listings()
-    {
+
+    function draw_listings() {
         let listings_div = ``
         let l = 0
 
-        while (l < listings.length)
-        {
-            listings_div += `<div id="${l}" style="display: inline-block;margin:1vw; vertical-align: top; height: 40vh; width: 18vw;">
-                                    <table style="height:80%; width: 100%;">
-                                        <tr style="height:30%">
-                                            <td colspan="2">
-                                                <h1 style="text-align:center">${listings[l].title}</h1>
-                                            </td>
-                                        </tr>
-                                        <tr style="height:20%">
-                                            <td>
-                                                <h2>$${listings[l].price}</h2>
-                                            </td>
-                                            <td>
-                                                <h3> ${listings[l].description}</h3>
-                                            </td>
-                                        </tr>
-                                        <tr style="10%">
-                                            <td>
-                                                <button onclick="goToInfoListing(${listings[l].id})" >More Info</button>
-                                            </td>
-                                        <tr>
-                                    </table>    
-                                </div>`
+        while (l < listings.length) {
+            listings_div += `
+                <div id="${l}" class="listing-card">
+                    <h1>${listings[l].title}</h1>
+                    <div class="listing-details">
+                        <h2>$${listings[l].price}</h2>
+                        <p>${listings[l].description}</p>
+                    </div>
+                    <button onclick="goToInfoListing(${listings[l].id})">More Info</button>
+                </div>`
             l++
         }
 
         document.getElementById("listings").innerHTML = listings_div
     }
-    function goToInfoListing(id)
-    {
+
+    function goToInfoListing(id) {
         sessionStorage.removeItem(`id`)
-        sessionStorage.setItem(`id`,id)
+        sessionStorage.setItem(`id`, id)
         goToDifferentScreen("info_listing.html")
     }
-    function goToDifferentScreen(file)
-    {
-        
-        fetch("http://localhost:8080/switchFile", {
-            // Defines the HTTP verb as POST, which is used for sending data to a server.
-            method: 'POST',
-            headers: {
-                // Informs the server that the data being sent is formatted as a JSON string.
-                'Content-Type': 'application/json'
-            },
 
-            body: JSON.stringify({ email: email,password: password,file:file })
-        })
-            .then(response =>
-            {
-                if (response.redirected)
-                {
-                    localStorage.setItem('email', email);
-                    localStorage.setItem('password', password);
-                    window.location.href = response.url;
-                    return;
-                }
-                return response.json();
-            })
-          
-
-    }
-    function injectNavbar()
-    {
-        let navbar=``
+    function injectNavbar() {
         fetch("http://localhost:8080/getNavbar", {
-            // Defines the HTTP verb as POST, which is used for sending data to a server.
             method: 'POST',
             headers: {
-                // Informs the server that the data being sent is formatted as a JSON string.
                 'Content-Type': 'application/json'
             },
-            // Converts the JavaScript object into a standardized JSON string for transmission.
             body: JSON.stringify({ email: email, password: password })
         })
             .then(response => response.json())
-            .then((data) =>
-            {
-                navbar=data.navbar
+            .then((data) => {
+                document.getElementById("navbar").innerHTML = data
             })
-         document.getElementById("navbar").innerHTML=navbar
     }
 </script>
+<link rel="stylesheet" href="CSS files/navbar.css"></link>
 <link rel="stylesheet" href="CSS files/index.css">
 
 <body onload="main()">
-    <table>
-        <tr>
-            <div id="navbar">
 
-            </div>
-        </tr>
-        <tr>
-            <td colspan="2">
+    <div class="main-container">
+        <nav id="navbar">
+        </nav>
 
-            </td>
-            <td>
-                <button onclick="goToDifferentScreen(`create_listing.html`)" class="clean-btn">+</button>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                <div id="listings">
+        <main id="listings">
+        </main>
 
-                </div>
-            </td>
-        </tr>
-    </table>
+        <div class="action-area">
+            <button onclick="goToDifferentScreen('create_listing.html')" class="clean-btn">+</button>
+        </div>
+    </div>
 
 </body>
 
