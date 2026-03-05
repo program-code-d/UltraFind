@@ -1,17 +1,76 @@
 .listing-container {
+    max-width: 1000px;
+    margin: 20px auto;
+    font-family: 'Segoe UI', sans-serif;
     display: flex;
-    flex-direction: row;
-    /* Keeps them in a line */
-    align-items: flex-start;
-    /* Aligns everything to the top */
-    gap: 24px;
-    /* Spacing between the columns */
+    flex-direction: column;
+    gap: 20px;
     padding: 20px;
+    background-color: #f8f9fa;
 }
 
+/* Header Section */
 .top-info {
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 10px;
+}
+
+.top-info h1 { font-size: 1.5rem; margin-bottom: 5px; }
+.top-info h3 { font-size: 0.9rem; color: #666; display: inline; margin-right: 10px; }
+
+/* The "Meat" of the layout: Image + Sidebar */
+.main-content {
     display: flex;
-    align-items: center;
-    /* Vertically centers them */
-    
+    flex-direction: row; /* Side by side */
+    gap: 20px;
+}
+
+.image {
+    flex: 2; /* Takes up more space */
+    background: #ccc;
+    border-radius: 12px;
+    min-height: 400px;
+}
+
+.Age-pay-location {
+    flex: 1; /* Sidebar style */
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Sidebar Cards */
+.price, .age, .location-map, .seller-info {
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.price {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #3b82f6; /* Blue like the screeny */
+}
+
+/* Bottom Sections */
+.Description-repeats {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.repeats {
+    font-weight: bold;
+    color: #444;
+}
+
+/* Responsive: Stack everything on mobile */
+@media (max-width: 768px) {
+    .main-content {
+        flex-direction: column;
+    }
 }

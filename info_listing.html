@@ -49,26 +49,39 @@
     {
         let listing_drawing =
             `
-            <div class="listing-container">
-                <div class="top-info">
-                    <h1><div class="title"> ${listing_info.title} </div></h1> 
-                    <h3><div class="location"> location </div></h3>
-                    <h3><div class="date"> date</div></h3>
-                </div>
-
-                <div class="image">image</div>
-                <div class="Age-pay-location">
-                    <div class="price">${listing_info.price}</div>
-                    <div class="age">age</div>
-                    <div class="location-map">map and location</div>
-                </div>
-                
-                <div class="Description-repeats">
-                    <div class="description">${listing_info.description}</div>
-                    <div class="repeats">repeats</div>    
-                </div>
-                <div class="seller-info">seller info</div>    
+                   <div class="listing-container">
+            <div class="top-info">
+                <h1><div class="title"> ${listing_info.title} </div></h1>
+                <h3><span class="location"> location </span> • <span class="date"> Jan 30, 2026</span></h3>
             </div>
+        
+            <div class="main-content">
+                <div class="image">
+                    <img src="path_to_image.jpg" style="width:100%; border-radius:12px;">
+                </div>
+            
+                <div class="Age-pay-location">
+                    <div class="price">$${listing_info.price}/hr</div>
+                    <div class="age">age</div>
+                    <div class="location-map">
+                        <strong>Visual Location</strong>
+                        <div style="height:200px; background:#e5e7eb; margin-top:10px;">Map goes here</div>
+                    </div>
+                    <div class="seller-info">
+                        <strong>Seller Info</strong>
+                        <p>Alex ⭐ 0.0</p>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="Description-repeats">
+                <div class="description">
+                    <strong>DESCRIPTION</strong><br>
+                    ${listing_info.description}
+                </div>
+                <div class="repeats">Repeats: Weekly</div>
+            </div>
+        </div>
 
         `
         document.getElementById("listing").innerHTML = listing_drawing
