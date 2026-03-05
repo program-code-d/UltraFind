@@ -18,15 +18,17 @@
         </form>
     </div>
 
-</body>
+</body onload="main()">
 <script>
+    var email
+    var password
+    let friend_id = document.getElementById('user-friend-id')
+    let messages;
+
     function messageFunc(event)
     {
         event.preventDefault();
-        var email
-        var password
         let message = document.getElementById('user-msg');
-        let friend_id = document.getElementById('user-friend-id')
 
         email = localStorage.getItem('email');
         password = localStorage.getItem('password');
@@ -53,8 +55,43 @@
             .then(response => response.json())
             .then((data) =>
             {
-             
+
             })
+    }
+
+    function main()
+    {
+
+        fetch("http://localhost:8080/getfriendmessages", {
+            // Defines the HTTP verb as POST, which is used for sending data to a server.
+            method: 'POST',
+            headers: {
+                // Informs the server that the data being sent is formatted as a JSON string.
+                'Content-Type': 'application/json'
+            },
+            // Converts the JavaScript object into a standardized JSON string for transmission.
+            body: JSON.stringify({ email: email, password: password, friend_id: friend_id.value })
+        })
+            .then(response =>
+            {
+                if (response.redirected)
+                {
+                    window.location.href = response.url;
+                    return;
+                }
+                return response.json();
+            })
+            .then(response => response.json())
+            .then((data) =>
+            {
+                messages = data;
+                displayMessages();
+            })
+    }
+    function displayMessages()
+    {
+         let messages_text = document.getElementById('messages-display');
+         messages_text.innerHTML=messages;
     }
 
 

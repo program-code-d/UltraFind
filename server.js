@@ -190,9 +190,9 @@ async function getNavbar(body)
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
 
 
-     
-        navbar=
-        `
+
+        navbar =
+            `
         <div class = "main-navbar">
             <div id="Home" onclick="goToDifferentScreen('index.html')">
                 <div>Home</div>
@@ -251,6 +251,40 @@ async function messageFunc(body)
         if (conn) conn.release();
     }
 }
+
+
+async function getfriendmessages(body)
+{
+    let conn;
+    try
+    {
+        conn = await pool.getConnection();
+
+        // 1. Get the salt (assuming 'query' for salt was defined above)
+        let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
+        const hashedPassword = hashPassword(body.password + saltResult[0].salt);
+
+
+        const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
+        const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
+
+
+        const userId = userRows[0].id;
+        const insertQuery = "SELECT message_text FROM Friends WHERE sender_id = ? AND receiver_id = ? ";
+        const res = await conn.query(insertQuery, [userId,body.friend_id]);
+
+        return { success: true, messages: res, userExist: true };
+
+    } catch (err)
+    {
+        console.error(err)
+        return { success: false, userExist: false }
+    } finally
+    {
+        if (conn) conn.release();
+    }
+}
+
 async function sendfriendmessage(body)
 {
     let conn;
@@ -267,9 +301,9 @@ async function sendfriendmessage(body)
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
 
 
-        const SenderId=userRows[0].id;
+        const SenderId = userRows[0].id;
         const insertQuery = "INSERT INTO Friends (sender_id,receiver_id,message_text) VALUES (?,?,?)";
-        const res = await conn.query(insertQuery, [SenderId,body.friend_id,body.message]);
+        const res = await conn.query(insertQuery, [SenderId, body.friend_id, body.message]);
 
         return { success: true, listing: res, userExist: true };
 
@@ -377,7 +411,7 @@ app.post('/signup', async (req, res) =>
 
 app.post('/sendmessage', async (req, res) =>
 {
-  //  console.log("Signup request:", req.body);
+    //  console.log("Signup request:", req.body);
     try
     {
         const result = await messageFunc(req.body);
@@ -400,7 +434,7 @@ app.post('/sendmessage', async (req, res) =>
 
 app.post('/getInfoListing', async (req, res) =>
 {
-   // console.log("Signup request:", req.body);
+    // console.log("Signup request:", req.body);
     try
     {
         const result = await getinfolistings(req.body);
@@ -505,6 +539,28 @@ app.post('/getNavbar', async (req, res) =>
         if (result && result.success)
         {
             res.json(result.navbar)
+        }
+
+    } catch (err)
+    {
+        res.status(400).send(err.message);
+    }
+
+});
+
+app.post('/getfriendmessages', async (req, res) =>
+{
+
+    try
+    {
+        const result = await getfriendmessages(req.body);
+        if (result && !result.userExist)
+        {
+            return res.json({ message: "failed" })
+        }
+        if (result && result.success)
+        {
+            res.json(result.messages)
         }
 
     } catch (err)
