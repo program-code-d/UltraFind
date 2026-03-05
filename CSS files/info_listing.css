@@ -1,8 +1,17 @@
-.listing-container
-{
-
+.listing-container {
+    display: flex;
+    flex-direction: row;
+    /* Keeps them in a line */
+    align-items: flex-start;
+    /* Aligns everything to the top */
+    gap: 24px;
+    /* Spacing between the columns */
+    padding: 20px;
 }
-.top-info
-{
+
+.top-info {
+    display: flex;
+    align-items: center;
+    /* Vertically centers them */
     
 }

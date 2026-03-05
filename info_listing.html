@@ -39,7 +39,8 @@
             .then(response => response.json())
             .then((data) =>
             {
-                listing_info = data
+                listing_info = data[0]
+                draw_listings()
             })
 
 
@@ -50,9 +51,9 @@
             `
             <div class="listing-container">
                 <div class="top-info">
-                    <div class="title">${listing_info.title}</div>
-                    <div class="location">location</div>
-                    <div class="date">date</div>
+                    <h1><div class="title"> ${listing_info.title} </div></h1> 
+                    <h3><div class="location"> location </div></h3>
+                    <h3><div class="date"> date</div></h3>
                 </div>
 
                 <div class="image">image</div>

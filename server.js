@@ -300,8 +300,8 @@ async function getinfolistings(body)
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
 
 
-        const insertQuery = "SELECT * FROM Listings WHERE id LIKE ?;";
-        const res = await conn.query(insertQuery, [`%${body.id}%`]);
+        const insertQuery = "SELECT * FROM Listings WHERE id = ?;";
+        const res = await conn.query(insertQuery, [body.id]);
 
         //   console.log("Listing created! New Listing ID:", res.insertId);
         return { success: true, listing: res, userExist: true };
