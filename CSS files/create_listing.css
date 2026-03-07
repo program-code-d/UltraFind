@@ -1,4 +1,4 @@
-/* From Uiverse.io by JayRamoliya */ 
+/* From Uiverse.io by JayRamoliya */
 .input-style {
   padding: 10px;
   border: 2px solid #ccc;
@@ -6,10 +6,24 @@
   font-size: 16px;
   color: #555;
   outline: none;
-  width:7vw
+  width: 20vw;
+  box-sizing: border-box;
 }
 
 .input-style:focus {
   border-color: #007bff;
   box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.create-listing-btn {
+  background: #125490;
+  border-radius: 7px;
+  box-shadow: 0 1px #444444;
+  padding: 0.6vh;
+  color: #ffffff;
+  display: inline-block;
+  font: normal bold 26px/1 "Roboto", sans-serif;
+  text-align: center;
+  width: 20vw;
+  box-sizing: border-box;
 }

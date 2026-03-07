@@ -11,7 +11,7 @@
     let listings
     let email
     let password
-
+     
     function main() {
         email = localStorage.getItem('email')
         password = localStorage.getItem('password')
@@ -59,9 +59,7 @@ function getServerBase()
     }
 
     function goToInfoListing(id) {
-        sessionStorage.removeItem(`id`)
-        sessionStorage.setItem(`id`, id)
-        goToDifferentScreen("info_listing.html")
+        window.location.href = `${getServerBase()}/info_listing.html?id=${id}`
     }
 
     function injectNavbar() {

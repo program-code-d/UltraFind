@@ -25,7 +25,10 @@
 
         email = localStorage.getItem('email')
         password = localStorage.getItem('password')
-        id = sessionStorage.getItem("id")
+        
+        // Get ID from URL query parameter
+        const urlParams = new URLSearchParams(window.location.search)
+        id = urlParams.get('id')
 
         fetch(getServerBase() + "/getInfoListing", {
             // Defines the HTTP verb as POST, which is used for sending data to a server.
@@ -53,48 +56,81 @@
         const port = window.location.port ? ':' + window.location.port : '';
         return `${protocol}//${hostname}${port}`;
     }
-    function draw_listings()
-    {
-        let listing_drawing =
-            `
-                   <div class="listing-container">
-            <div class="top-info">
-                <h1><div class="title"> ${listing_info.title} </div></h1>
-                <h3><span class="location"> location </span> • <span class="date"> Jan 30, 2026</span></h3>
+    const textarea = document.querySelector('.fb-textarea');
+
+textarea.addEventListener('input', function() {
+  this.style.height = 'auto'; // Reset height
+  this.style.height = (this.scrollHeight) + 'px'; // Set to match content
+});
+
+    function draw_listings() {
+    let listing_drawing = `
+    <div class="listing-container">
+        <div class="top-info">
+            <h1><div class="title">${listing_info.title}</div></h1>
+            <h3><span class="location">location</span> • <span class="date">Jan 30, 2026</span></h3>
+        </div>
+
+        <div class="main-content">
+            <div class="image">
+                <img src="path_to_image.jpg" style="width:100%; border-radius:12px;">
             </div>
-        
-            <div class="main-content">
-                <div class="image">
-                    <img src="path_to_image.jpg" style="width:100%; border-radius:12px;">
+
+            <div class="Age-pay-location">
+                <div class="price">$${listing_info.price}/hr</div>
+                <div class="age">age</div>
+                <div class="location-map">
+                    <strong>Visual Location</strong>
+                    <div style="height:200px; background:#e5e7eb; margin-top:10px;">Map goes here</div>
                 </div>
-            
-                <div class="Age-pay-location">
-                    <div class="price">$${listing_info.price}/hr</div>
-                    <div class="age">age</div>
-                    <div class="location-map">
-                        <strong>Visual Location</strong>
-                        <div style="height:200px; background:#e5e7eb; margin-top:10px;">Map goes here</div>
+                
+                <div class="seller-info">
+                    <strong>Seller Info</strong>
+                    <p>Alex ⭐ 0.0</p>
+                </div>
+
+                <div class="message">
+                    <div class="fb-message-box">
+                        <textarea 
+                            id="fb-input"
+                            class="fb-textarea" 
+                            placeholder="Send seller a message"
+                            rows="1"
+                        >Hi, is this available?</textarea>
                     </div>
-                    <div class="seller-info">
-                        <strong>Seller Info</strong>
-                        <p>Alex ⭐ 0.0</p>
-                        <button class ="send-message-btn" onclick="goToDifferentScreen('messages.html')">Send Message</button>
-                    </div>
+
+                    <button class="send-btn">
+                        <div class="svg-wrapper">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
+                                <path fill="none" d="M0 0h24v24H0z"></path>
+                                <path fill="currentColor" d="M1.946 9.315c-.522-.174-.527-.455.01-.634l19.087-6.362c.529-.176.832.12.684.638l-5.454 19.086c-.15.529-.455.547-.679.045L12 14l6-8-8 6-8.054-2.685z"></path>
+                            </svg>
+                        </div>
+                        <span>Send</span>
+                    </button>
                 </div>
-            </div>
-        
-            <div class="Description-repeats">
-                <div class="description">
-                    <strong>DESCRIPTION</strong><br>
-                    ${listing_info.description}
-                </div>
-                <div class="repeats">Repeats: Weekly</div>
             </div>
         </div>
 
-        `
-        document.getElementById("listing").innerHTML = listing_drawing
-    }
+        <div class="Description-repeats">
+            <div class="description">
+                <strong>DESCRIPTION</strong><br>
+                ${listing_info.description}
+            </div>
+            <div class="repeats">Repeats: Weekly</div>
+        </div>
+    </div>
+    `;
+
+    document.getElementById("listing").innerHTML = listing_drawing;
+
+    
+    const textarea = document.getElementById('fb-input');
+    textarea.addEventListener('input', function() {
+        this.style.height = 'auto'; 
+        this.style.height = (this.scrollHeight) + 'px';
+    });
+}
 
 
 
