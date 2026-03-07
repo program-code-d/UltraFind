@@ -7,15 +7,23 @@
 </head>
 
 <body>
+    <link rel="stylesheet" href="CSS files/friends.css">
 
     <div id="messages-display"></div>
 
     <div class="chat-bar">
         <form id="chat-form">
-            <input type="text" id="user-msg" placeholder="Type a message..." required>
-            <input type="number" id="user-friend-id" placeholder="Type The Id of Your Friend..." required>
-            <button onclick="messageFunc(event)" type="submit">Submit</button>
+            <input type="text" id="user-friend-id" placeholder="Type your friends name" required>
+            <button onclick="findFriend(event)" type="submit">Find friend</button>
         </form>
+    </div>
+    <div class="friends-nav">
+        <div id="Home">
+            <div>Home</div>
+        </div>
+    </div>
+    <div class="people">
+        <button onclick="findFriend()">Add friend</button>
     </div>
 
 </body onload="main()">
@@ -24,6 +32,41 @@
     var password
     let friend_id = document.getElementById('user-friend-id')
     let messages;
+    document.querySelector('.chat-bar').style.display = 'none';
+
+    function findFriend()
+    {
+        document.querySelector('.chat-bar').style.display = 'block';
+
+        email = localStorage.getItem('email');
+        password = localStorage.getItem('password');
+
+        fetch(getServerBase() + "/findFriend", {
+
+            method: 'POST',
+            headers: {
+
+                'Content-Type': 'application/json'
+            },
+            // Converts the JavaScript object into a standardized JSON string for transmission.
+            body: JSON.stringify({ email: email, password: password,friend_id: friend_id.value })
+        })
+            .then(response =>
+            {
+                if (response.redirected)
+                {
+                    window.location.href = response.url;
+                    return;
+                }
+                return response.json();
+            })
+            .then(response => response.json())
+            .then((data) =>
+            {
+
+            })
+    }
+
 
     function messageFunc(event)
     {
@@ -34,10 +77,10 @@
         password = localStorage.getItem('password');
 
         fetch(getServerBase() + "/sendfriendmessage", {
-            
+
             method: 'POST',
             headers: {
-           
+
                 'Content-Type': 'application/json'
             },
             // Converts the JavaScript object into a standardized JSON string for transmission.
@@ -58,7 +101,7 @@
 
             })
     }
-function getServerBase()
+    function getServerBase()
     {
         const protocol = window.location.protocol; // 'http:' or 'https:'
         const hostname = window.location.hostname;
@@ -96,8 +139,8 @@ function getServerBase()
     }
     function displayMessages()
     {
-         let messages_text = document.getElementById('messages-display');
-         messages_text.innerHTML=messages;
+        let messages_text = document.getElementById('messages-display');
+        messages_text.innerHTML = messages;
     }
 
 
