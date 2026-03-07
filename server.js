@@ -612,7 +612,7 @@ app.post('/findFriend', async (req, res) =>
         }
         if (result && result.success)
         {
-            res.json(result.messages)
+            res.json(result.friends)
         }
 
     } catch (err)
