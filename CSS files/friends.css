@@ -66,3 +66,14 @@ main,
     width: 300px;
     overflow-y: auto;
 }
+
+.dropdown {
+    display: flex;
+    flex-direction: column;
+    color: rgb(0, 19, 224);
+    position: fixed;
+    top: 100;
+    left: 500px;
+    width: 300px;
+    overflow-y: auto;
+}

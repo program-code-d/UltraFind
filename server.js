@@ -158,11 +158,11 @@ async function findFriend(body)
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
 
 
-        const insertQuery = "SELECT * FROM Listings WHERE title LIKE ?;";
-        const res = await conn.query(insertQuery, [`%${body.search}%`]);
+        const insertQuery = "SELECT id, first_name, last_name FROM Users WHERE CONCAT(first_name, ' ', last_name) LIKE ?;";
+        const res = await conn.query(insertQuery, [`%${body.friend_id}%`]);
 
         //   console.log("Listing created! New Listing ID:", res.insertId);
-        return { success: true, listings: res, userExist: true };
+        return { success: true, friends: res, userExist: true };
 
     } catch (err)
     {

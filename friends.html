@@ -23,8 +23,19 @@
         </div>
     </div>
     <div class="people">
-        <button onclick="findFriend()">Add friend</button>
+        <button onclick="findFriend(event)">Add friend</button>
     </div>
+    <div class="dropdown">
+        <label for="ice-cream-flavor">Choose a flavor:</label>
+        <select name="ice-cream-flavor" id="ice-cream-flavor">
+            <option value="none" selected disabled hidden>Choose a flavor...</option>
+            <option value="vanilla">Vanilla</option>
+            <option value="chocolate">Chocolate</option>
+            <option value="strawberry">Strawberry</option>
+            <option value="cookies-and-cream">Cookies and Cream</option>
+        </select>
+    </div>
+
 
 </body onload="main()">
 <script>
@@ -32,10 +43,13 @@
     var password
     let friend_id = document.getElementById('user-friend-id')
     let messages;
+    let friends;
     document.querySelector('.chat-bar').style.display = 'none';
+    document.querySelector('.dropdown').style.display = 'none';
 
-    function findFriend()
+    function findFriend(event)
     {
+        //preventDefault(event)
         document.querySelector('.chat-bar').style.display = 'block';
 
         email = localStorage.getItem('email');
@@ -49,22 +63,19 @@
                 'Content-Type': 'application/json'
             },
             // Converts the JavaScript object into a standardized JSON string for transmission.
-            body: JSON.stringify({ email: email, password: password,friend_id: friend_id.value })
+            body: JSON.stringify({ email: email, password: password, friend_id: friend_id.value })
         })
             .then(response =>
             {
-                if (response.redirected)
-                {
-                    window.location.href = response.url;
-                    return;
-                }
-                return response.json();
+
             })
             .then(response => response.json())
             .then((data) =>
             {
-
+                friends = res.data;
             })
+              document.querySelector('.dropdown').style.display = 'block';
+
     }
 
 
