@@ -87,7 +87,7 @@ async function login(user)
         query = "SELECT email, password FROM Users WHERE email = ? AND password = ?;"
         const res = await conn.query(query, [user.email, hashedPassword]);
 
-        console.log("User logged in! Insert ID:", res.insertId);
+      //  console.log("User logged in! Insert ID:", res.insertId);
         return { success: true, userExist: true };
     } catch (err)
     {

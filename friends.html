@@ -33,11 +33,11 @@
         email = localStorage.getItem('email');
         password = localStorage.getItem('password');
 
-        fetch("http://localhost:8080/sendfriendmessage", {
-            // Defines the HTTP verb as POST, which is used for sending data to a server.
+        fetch(getServerBase() + "/sendfriendmessage", {
+            
             method: 'POST',
             headers: {
-                // Informs the server that the data being sent is formatted as a JSON string.
+           
                 'Content-Type': 'application/json'
             },
             // Converts the JavaScript object into a standardized JSON string for transmission.
@@ -58,11 +58,17 @@
 
             })
     }
-
+function getServerBase()
+    {
+        const protocol = window.location.protocol; // 'http:' or 'https:'
+        const hostname = window.location.hostname;
+        const port = window.location.port ? ':' + window.location.port : '';
+        return `${protocol}//${hostname}${port}`;
+    }
     function main()
     {
 
-        fetch("http://localhost:8080/getfriendmessages", {
+        fetch(getServerBase() + "/getfriendmessages", {
             // Defines the HTTP verb as POST, which is used for sending data to a server.
             method: 'POST',
             headers: {

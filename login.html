@@ -8,13 +8,14 @@
     <script>
         let email = ""
         let password = ""
+
         function main()
         {
             email = localStorage.getItem("email")
             password = localStorage.getItem("password")
             if ((email != null) && (password != null))
             {
-                fetch("http://localhost:8080/login", {
+                fetch(getServerBase() + "/login", {
                     // Defines the HTTP verb as POST, which is used for sending data to a server.
                     method: 'POST',
                     headers: {
@@ -33,7 +34,7 @@
                         }
                         else
                         {
-                            document.getElementById("login").style.display="block"
+                            document.getElementById("login").style.display = "block"
                         }
                         return response.json();
                     })
@@ -44,7 +45,7 @@
             }
             else
             {
-                document.getElementById("login").style.display="block";
+                document.getElementById("login").style.display = "block";
             }
         }
         function signUp()
@@ -59,7 +60,7 @@
                 {
                     email = document.getElementById("emailSignUP").value
                     password = document.getElementById("passwordSignUp").value
-                    fetch("http://localhost:8080/signup", {
+                    fetch(getServerBase() + "/signup", {
                         // Defines the HTTP verb as POST, which is used for sending data to a server.
                         method: 'POST',
                         headers: {
@@ -95,7 +96,13 @@
                 }
             }
         }
-
+        function getServerBase()
+        {
+            const protocol = window.location.protocol; // 'http:' or 'https:'
+            const hostname = window.location.hostname;
+            const port = window.location.port ? ':' + window.location.port : '';
+            return `${protocol}//${hostname}${port}`;
+        }
         function login()
         {
             if (document.getElementById("signUp").style.display == "block")
@@ -105,7 +112,7 @@
             else
             {
 
-                fetch("http://localhost:8080/login", {
+                fetch(getServerBase() + "/login", {
                     // Defines the HTTP verb as POST, which is used for sending data to a server.
                     method: 'POST',
                     headers: {
@@ -119,6 +126,10 @@
                     {
                         if (response.redirected)
                         {
+                            email = document.getElementById("email").value;
+                            password = document.getElementById("password").value;
+                            localStorage.setItem('email', email);
+                            localStorage.setItem('password', password);
                             window.location.href = response.url;
                             return;
                         }

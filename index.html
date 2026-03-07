@@ -18,7 +18,7 @@
 
         injectNavbar()
 
-        fetch("http://localhost:8080/getListings", {
+        fetch(getServerBase() + "/getListings", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -31,7 +31,13 @@
                 draw_listings()
             })
     }
-
+function getServerBase()
+    {
+        const protocol = window.location.protocol; // 'http:' or 'https:'
+        const hostname = window.location.hostname;
+        const port = window.location.port ? ':' + window.location.port : '';
+        return `${protocol}//${hostname}${port}`;
+    }
     function draw_listings() {
         let listings_div = ``
         let l = 0
@@ -59,7 +65,7 @@
     }
 
     function injectNavbar() {
-        fetch("http://localhost:8080/getNavbar", {
+        fetch(getServerBase() + "/getNavbar", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

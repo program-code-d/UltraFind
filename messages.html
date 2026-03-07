@@ -19,6 +19,13 @@
 
 </body>
 <script>
+    function getServerBase()
+    {
+        const protocol = window.location.protocol; // 'http:' or 'https:'
+        const hostname = window.location.hostname;
+        const port = window.location.port ? ':' + window.location.port : '';
+        return `${protocol}//${hostname}${port}`;
+    }
     function messageFunc()
     {
         var email
@@ -29,7 +36,7 @@
         email = localStorage.getItem('email');
         password = localStorage.getItem('password');
 
-        fetch("http://localhost:8080/sendmessage", {
+        fetch(getServerBase() + "/sendmessage", {
             // Defines the HTTP verb as POST, which is used for sending data to a server.
             method: 'POST',
             headers: {

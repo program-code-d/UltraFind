@@ -27,7 +27,7 @@
         password = localStorage.getItem('password')
         id = sessionStorage.getItem("id")
 
-        fetch("http://localhost:8080/getInfoListing", {
+        fetch(getServerBase() + "/getInfoListing", {
             // Defines the HTTP verb as POST, which is used for sending data to a server.
             method: 'POST',
             headers: {
@@ -45,6 +45,13 @@
             })
 
 
+    }
+    function getServerBase()
+    {
+        const protocol = window.location.protocol; // 'http:' or 'https:'
+        const hostname = window.location.hostname;
+        const port = window.location.port ? ':' + window.location.port : '';
+        return `${protocol}//${hostname}${port}`;
     }
     function draw_listings()
     {

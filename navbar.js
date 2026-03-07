@@ -1,7 +1,7 @@
    function goToDifferentScreen(file)
     {
         
-        fetch("http://localhost:8080/switchFile", {
+        fetch(getServerBase() + "/switchFile", {
             // Defines the HTTP verb as POST, which is used for sending data to a server.
             method: 'POST',
             headers: {
