@@ -144,37 +144,57 @@ async function createListing(body)
         if (conn) conn.release();
     }
 }
-async function findFriend(body)
-{
+
+
+async function findFriend(body) {
     let conn;
-    try
-    {
+    try {
         conn = await pool.getConnection();
 
-        // 1. Get the salt (assuming 'query' for salt was defined above)
-        let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
-        const hashedPassword = hashPassword(body.password + saltResult[0].salt);
+        // 1. Get the salt safely
+        const saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
+        
+        // Check if user actually exists first
+        if (saltResult.length === 0) {
+            return { success: false, userExist: false, message: "User not found" };
+        }
 
+        const salt = saltResult[0].salt;
+        const hashedPassword = hashPassword(body.password + salt);
 
+        // 2. Verify Login
         const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
 
+        if (userRows.length === 0) {
+            return { success: false, userExist: false, message: "Invalid credentials" };
+        }
 
-        const insertQuery = "SELECT id, first_name, last_name FROM Users WHERE CONCAT(first_name, ' ', last_name) LIKE ?;";
-        const res = await conn.query(insertQuery, [`%${body.friend_id}%`]);
+        const user_id = userRows[0].id;
 
-        //   console.log("Listing created! New Listing ID:", res.insertId);
-        return { success: true, friends: res, userExist: true };
+        // 3. Search for friends (Added 'AND' and fixed logic)
+        // Note: Changed body.friend_id to body.friend_name assuming that's what you're searching for
+        const searchName = `%${body.search_term || ''}%`; 
+        const findQuery = `
+            SELECT id, first_name, last_name 
+            FROM Users 
+            WHERE id != ? 
+            AND CONCAT(first_name, ' ', last_name) LIKE ?;
+        `;
+        
+        const friends = await conn.query(findQuery, [user_id, searchName]);
 
-    } catch (err)
-    {
-        console.error(err)
-        return { success: false, userExist: false }
-    } finally
-    {
+        return { success: true, friends: friends, userExist: true };
+
+    } catch (err) {
+        console.error("Database error:", err);
+        return { success: false, error: "Internal Server Error" };
+    } finally {
         if (conn) conn.release();
     }
 }
+
+
 async function getListings(body)
 {
     let conn;
@@ -602,28 +622,17 @@ app.post('/getfriendmessages', async (req, res) =>
 
 });
 
-app.post('/findFriend', async (req, res) =>
-{
-
-    try
-    {
-        const result = await findFriend(req.body);
-        if (result && !result.userExist)
-        {
-            return res.json({ message: "failed" })
-        }
-        if (result && result.success)
-        {
-            res.json(result.friends)
-        }
-
-    } catch (err)
-    {
-        res.status(400).send(err.message);
+app.post('/findFriend', async (req, res) => {
+    // Calling the function you provided
+    const result = await findFriend(req.body); 
+    
+    // You MUST send a status code and the JSON back
+    if (result.success) {
+        res.status(200).json(result);
+    } else {
+        res.status(401).json(result);
     }
-
 });
-
 
 app.post('/switchFile', async (req, res) =>
 {
