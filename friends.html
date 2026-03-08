@@ -1,14 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <title>Friends</title>
+    <link rel="stylesheet" href="CSS files/friends.css">
 </head>
 
-<body>
-    <link rel="stylesheet" href="CSS files/friends.css">
-
+<body onload="main()">
     <div id="messages-display"></div>
 
     <div class="chat-bar">
@@ -17,142 +15,130 @@
             <button onclick="findFriend(event)" type="submit">Find friend</button>
         </form>
     </div>
-    <div class="friends-nav">
-        <div id="Home">
-            <div>Home</div>
+
+    <div class="friends-nav" id="friends-list-nav">
+        <div id="Home" style="cursor:pointer;">
+            <div><strong>Home</strong></div>
         </div>
-    </div>
+        </div>
+
     <div class="people">
-        <button onclick="findFriend(event)">Add friend</button>
+        <button onclick="toggleSearch()">Add friend</button>
     </div>
-    <div class="dropdown">
-        <label for="ice-cream-flavor">Choose a flavor:</label>
-        <select name="ice-cream-flavor" id="ice-cream-flavor">
-            <option value="none" selected disabled hidden>Choose a flavor...</option>
-            <option value="vanilla">Vanilla</option>
-            <option value="chocolate">Chocolate</option>
-            <option value="strawberry">Strawberry</option>
-            <option value="cookies-and-cream">Cookies and Cream</option>
+
+    <div class="dropdown" id="search-results-container">
+        <label for="friend-select">Results found:</label>
+        <select id="friend-select" onchange="selectFriendFromDropdown()">
+            <option value="none" selected disabled>Choose a person...</option>
         </select>
     </div>
 
-
-</body onload="main()">
 <script>
-    var email
-    var password
-    let friend_id = document.getElementById('user-friend-id')
-    let messages;
-    let friends;
+    var email;
+    var password;
+    let friend_input_element = document.getElementById('user-friend-id');
+    let friends_data_cache = []; // Store the search results here
+
+    // UI Initial State
     document.querySelector('.chat-bar').style.display = 'none';
     document.querySelector('.dropdown').style.display = 'none';
 
-    function findFriend(event)
-    {
-        //preventDefault(event)
-        document.querySelector('.chat-bar').style.display = 'block';
-        document.querySelector('.dropdown').style.display = 'none';
+    function toggleSearch() {
+        const bar = document.querySelector('.chat-bar');
+        bar.style.display = bar.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // STEP 1: Search for the friend
+    function findFriend(event) {
+        event.preventDefault();
         email = localStorage.getItem('email');
         password = localStorage.getItem('password');
 
         fetch(getServerBase() + "/findFriend", {
-
             method: 'POST',
-            headers: {
-
-                'Content-Type': 'application/json'
-            },
-            // Converts the JavaScript object into a standardized JSON string for transmission.
-            body: JSON.stringify({ email: email, password: password, friend_id: friend_id.value })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                email: email, 
+                password: password, 
+                search_term: friend_input_element.value 
+            })
         })
-          
-            .then(response => response.json())
-            .then((data) =>
-            {
-                friends = res.data;
-            })
-  //            document.querySelector('.dropdown').style.display = 'block';
-
-    }
-
-
-    function messageFunc(event)
-    {
-        event.preventDefault();
-        let message = document.getElementById('user-msg');
-
-        email = localStorage.getItem('email');
-        password = localStorage.getItem('password');
-
-        fetch(getServerBase() + "/sendfriendmessage", {
-
-            method: 'POST',
-            headers: {
-
-                'Content-Type': 'application/json'
-            },
-            // Converts the JavaScript object into a standardized JSON string for transmission.
-            body: JSON.stringify({ email: email, password: password, message: message.value, friend_id: friend_id.value })
+        .then(response => response.json())
+        .then((data) => {
+            if (data.success && data.friends.length > 0) {
+                friends_data_cache = data.friends; // Save the array
+                populateDropdown(data.friends);
+            } else {
+                alert("No users found with that name.");
+            }
         })
-            .then(response =>
-            {
-                if (response.redirected)
-                {
-                    window.location.href = response.url;
-                    return;
-                }
-                return response.json();
-            })
-            .then(response => response.json())
-            .then((data) =>
-            {
-
-            })
-    }
-    function getServerBase()
-    {
-        const protocol = window.location.protocol; // 'http:' or 'https:'
-        const hostname = window.location.hostname;
-        const port = window.location.port ? ':' + window.location.port : '';
-        return `${protocol}//${hostname}${port}`;
-    }
-    function main()
-    {
-
-        fetch(getServerBase() + "/getfriendmessages", {
-            // Defines the HTTP verb as POST, which is used for sending data to a server.
-            method: 'POST',
-            headers: {
-                // Informs the server that the data being sent is formatted as a JSON string.
-                'Content-Type': 'application/json'
-            },
-            // Converts the JavaScript object into a standardized JSON string for transmission.
-            body: JSON.stringify({ email: email, password: password, friend_id: friend_id.value })
-        })
-            .then(response =>
-            {
-                if (response.redirected)
-                {
-                    window.location.href = response.url;
-                    return;
-                }
-                return response.json();
-            })
-            .then(response => response.json())
-            .then((data) =>
-            {
-                messages = data;
-                displayMessages();
-            })
-    }
-    function displayMessages()
-    {
-        let messages_text = document.getElementById('messages-display');
-        messages_text.innerHTML = messages;
+        .catch(err => console.error("Search Error:", err));
     }
 
+    // STEP 2: Fill the dropdown with results
+    function populateDropdown(friendsList) {
+        const container = document.getElementById('search-results-container');
+        const select = document.getElementById('friend-select');
+        
+        container.style.display = 'block';
+        select.innerHTML = '<option value="none" selected disabled>Select to add...</option>';
+        
+        friendsList.forEach(f => {
+            let opt = document.createElement('option');
+            opt.value = f.id;
+            opt.textContent = f.first_name + " " + f.last_name;
+            select.appendChild(opt);
+        });
+    }
 
+    // STEP 3: Add the selected person to the Nav Bar
+    function selectFriendFromDropdown() {
+        const select = document.getElementById('friend-select');
+        const friendId = select.value;
+        const friendName = select.options[select.selectedIndex].text;
 
+        if (friendId === "none") return;
+
+        addFriendToNav(friendId, friendName);
+        
+        // Hide search tools after adding
+        document.getElementById('search-results-container').style.display = 'none';
+        document.querySelector('.chat-bar').style.display = 'none';
+    }
+
+    function addFriendToNav(id, name) {
+        const nav = document.getElementById('friends-list-nav');
+        
+        // Create the clickable friend element
+        const friendDiv = document.createElement('div');
+        friendDiv.className = "friend-item";
+        friendDiv.style.cursor = "pointer";
+        friendDiv.style.padding = "5px";
+        friendDiv.innerHTML = `<span>👤 ${name}</span>`;
+        
+        // When clicked, it sets this person as the active chat
+        friendDiv.onclick = function() {
+            startChatting(id, name);
+        };
+
+        nav.appendChild(friendDiv);
+    }
+
+    // STEP 4: Open the chat for that person
+    function startChatting(id, name) {
+        console.log("Now chatting with ID:", id);
+        // You would call your message loading functions here
+        // e.g., currentChatFriendId = id; loadMessages();
+        alert("Opening chat with " + name);
+    }
+
+    function getServerBase() {
+        return window.location.origin;
+    }
+
+    function main() {
+        // Initialization logic if needed
+    }
 </script>
-
+</body>
 </html>
