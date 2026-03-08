@@ -77,3 +77,146 @@ main,
     width: 300px;
     overflow-y: auto;
 }
+
+/* Positioning the container at the bottom middle */
+/* 1. Main Container: Bottom-Centered & White Mode */
+.messageBox {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: fit-content;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  padding: 0 15px;
+  border-radius: 12px;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  z-index: 1000;
+}
+
+.messageBox:focus-within {
+  border: 1px solid #007bff;
+}
+
+/* 2. File Upload / Plus Button Fixes */
+.fileUploadWrapper {
+  width: fit-content;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#file {
+  display: none;
+}
+
+.fileUploadWrapper label {
+  cursor: pointer;
+  width: 32px;  /* Constrains the hit area */
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+/* Scaling the Plus Button SVG */
+.fileUploadWrapper label svg {
+  height: 18px; /* Forces the icon to be small */
+  width: 18px;
+}
+
+/* Light Mode Icon Colors */
+.fileUploadWrapper label svg path,
+.fileUploadWrapper label svg circle {
+  stroke: #666; /* Dark gray for visibility on white */
+  transition: all 0.3s;
+}
+
+.fileUploadWrapper label:hover {
+  background-color: #f5f5f5;
+}
+
+.fileUploadWrapper label:hover svg path {
+  stroke: #000;
+}
+
+/* 3. Tooltip (Light Mode) */
+.tooltip {
+  position: absolute;
+  top: -45px;
+  display: none;
+  opacity: 0;
+  color: #444;
+  font-size: 11px;
+  white-space: nowrap;
+  background-color: #ffffff;
+  padding: 6px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s;
+}
+
+.fileUploadWrapper label:hover .tooltip {
+  display: block;
+  opacity: 1;
+}
+
+/* 4. Text Input Field */
+#messageInput {
+  width: 250px;
+  height: 100%;
+  background-color: transparent;
+  outline: none;
+  border: none;
+  padding: 0 12px;
+  color: #222; /* Dark text for light mode */
+  font-family: Arial, sans-serif;
+}
+
+#messageInput::placeholder {
+  color: #999;
+}
+
+/* 5. Send Button */
+#sendButton {
+  width: 32px;
+  height: 32px;
+  background-color: transparent;
+  outline: none;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+#sendButton svg {
+  height: 18px;
+  width: 18px;
+}
+
+#sendButton svg path {
+  fill: #666; /* Default gray icon */
+  transition: all 0.3s;
+}
+
+/* Highlighting the send button when typing */
+#messageInput:focus ~ #sendButton svg path,
+#messageInput:valid ~ #sendButton svg path {
+  fill: #007bff; /* Blue "Active" color */
+}
+
+#sendButton:hover {
+  background-color: #f5f5f5;
+}

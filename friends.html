@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Friends</title>
@@ -20,7 +21,7 @@
         <div id="Home" style="cursor:pointer;">
             <div><strong>Home</strong></div>
         </div>
-        </div>
+    </div>
 
     <div class="people">
         <button onclick="toggleSearch()">Add friend</button>
@@ -32,113 +33,154 @@
             <option value="none" selected disabled>Choose a person...</option>
         </select>
     </div>
+    
+    <div class="messageBox">
+        <div class="fileUploadWrapper">
+            <label for="file">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 337 337">
+                    <circle stroke-width="20" stroke="#6c6c6c" fill="none" r="158.5" cy="168.5" cx="168.5"></circle>
+                    <path stroke-linecap="round" stroke-width="25" stroke="#6c6c6c" d="M167.759 79V259"></path>
+                    <path stroke-linecap="round" stroke-width="25" stroke="#6c6c6c" d="M79 167.138H259"></path>
+                </svg>
+                <span class="tooltip">Add an image</span>
+            </label>
+            <input type="file" id="file" name="file" />
+        </div>
+        <input required="" placeholder="Message..." type="text" id="messageInput" />
+        <button id="sendButton">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 664 663">
+                <path fill="none"
+                    d="M646.293 331.888L17.7538 17.6187L155.245 331.888M646.293 331.888L17.753 646.157L155.245 331.888M646.293 331.888L318.735 330.228L155.245 331.888">
+                </path>
+                <path stroke-linejoin="round" stroke-linecap="round" stroke-width="33.67" stroke="#6c6c6c"
+                    d="M646.293 331.888L17.7538 17.6187L155.245 331.888M646.293 331.888L17.753 646.157L155.245 331.888M646.293 331.888L318.735 330.228L155.245 331.888">
+                </path>
+            </svg>
+        </button>
+    </div>
 
-<script>
-    var email;
-    var password;
-    let friend_input_element = document.getElementById('user-friend-id');
-    let friends_data_cache = []; // Store the search results here
 
-    // UI Initial State
-    document.querySelector('.chat-bar').style.display = 'none';
-    document.querySelector('.dropdown').style.display = 'none';
+    <script>
+        var email;
+        var password;
+        let friend_input_element = document.getElementById('user-friend-id');
+        let friends_data_cache = []; // Store the search results here
 
-    function toggleSearch() {
-        const bar = document.querySelector('.chat-bar');
-        bar.style.display = bar.style.display === 'none' ? 'block' : 'none';
-    }
-
-    // STEP 1: Search for the friend
-    function findFriend(event) {
-        event.preventDefault();
-        email = localStorage.getItem('email');
-        password = localStorage.getItem('password');
-
-        fetch(getServerBase() + "/findFriend", {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                email: email, 
-                password: password, 
-                search_term: friend_input_element.value 
-            })
-        })
-        .then(response => response.json())
-        .then((data) => {
-            if (data.success && data.friends.length > 0) {
-                friends_data_cache = data.friends; // Save the array
-                populateDropdown(data.friends);
-            } else {
-                alert("No users found with that name.");
-            }
-        })
-        .catch(err => console.error("Search Error:", err));
-    }
-
-    // STEP 2: Fill the dropdown with results
-    function populateDropdown(friendsList) {
-        const container = document.getElementById('search-results-container');
-        const select = document.getElementById('friend-select');
-        
-        container.style.display = 'block';
-        select.innerHTML = '<option value="none" selected disabled>Select to add...</option>';
-        
-        friendsList.forEach(f => {
-            let opt = document.createElement('option');
-            opt.value = f.id;
-            opt.textContent = f.first_name + " " + f.last_name;
-            select.appendChild(opt);
-        });
-    }
-
-    // STEP 3: Add the selected person to the Nav Bar
-    function selectFriendFromDropdown() {
-        const select = document.getElementById('friend-select');
-        const friendId = select.value;
-        const friendName = select.options[select.selectedIndex].text;
-
-        if (friendId === "none") return;
-
-        addFriendToNav(friendId, friendName);
-        
-        // Hide search tools after adding
-        document.getElementById('search-results-container').style.display = 'none';
+        // UI Initial State
         document.querySelector('.chat-bar').style.display = 'none';
-    }
+        document.querySelector('.dropdown').style.display = 'none';
 
-    function addFriendToNav(id, name) {
-        const nav = document.getElementById('friends-list-nav');
-        
-        // Create the clickable friend element
-        const friendDiv = document.createElement('div');
-        friendDiv.className = "friend-item";
-        friendDiv.style.cursor = "pointer";
-        friendDiv.style.padding = "5px";
-        friendDiv.innerHTML = `<span>👤 ${name}</span>`;
-        
-        // When clicked, it sets this person as the active chat
-        friendDiv.onclick = function() {
-            startChatting(id, name);
-        };
+        function toggleSearch()
+        {
+            const bar = document.querySelector('.chat-bar');
+            bar.style.display = bar.style.display === 'none' ? 'block' : 'none';
+        }
 
-        nav.appendChild(friendDiv);
-    }
+        // STEP 1: Search for the friend
+        function findFriend(event)
+        {
+             document.querySelector('.chat-bar').style.display = 'none';
+            event.preventDefault();
+            email = localStorage.getItem('email');
+            password = localStorage.getItem('password');
 
-    // STEP 4: Open the chat for that person
-    function startChatting(id, name) {
-        console.log("Now chatting with ID:", id);
-        // You would call your message loading functions here
-        // e.g., currentChatFriendId = id; loadMessages();
-        alert("Opening chat with " + name);
-    }
+            fetch(getServerBase() + "/findFriend", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: email,
+                    password: password,
+                    search_term: friend_input_element.value
+                })
+            })
+                .then(response => response.json())
+                .then((data) =>
+                {
+                    if (data.success && data.friends.length > 0)
+                    {
+                        friends_data_cache = data.friends; // Save the array
+                        populateDropdown(data.friends);
+                    } else
+                    {
+                        alert("No users found with that name.");
+                    }
+                })
+                .catch(err => console.error("Search Error:", err));
+        }
 
-    function getServerBase() {
-        return window.location.origin;
-    }
+        // STEP 2: Fill the dropdown with results
+        function populateDropdown(friendsList)
+        {
+            const container = document.getElementById('search-results-container');
+            const select = document.getElementById('friend-select');
 
-    function main() {
-        // Initialization logic if needed
-    }
-</script>
+            container.style.display = 'block';
+            select.innerHTML = '<option value="none" selected disabled>Select to add...</option>';
+
+            friendsList.forEach(f =>
+            {
+                let opt = document.createElement('option');
+                opt.value = f.id;
+                opt.textContent = f.first_name + " " + f.last_name;
+                select.appendChild(opt);
+            });
+        }
+
+        // STEP 3: Add the selected person to the Nav Bar
+        function selectFriendFromDropdown()
+        {
+            const select = document.getElementById('friend-select');
+            const friendId = select.value;
+            const friendName = select.options[select.selectedIndex].text;
+
+            if (friendId === "none") return;
+
+            addFriendToNav(friendId, friendName);
+
+            // Hide search tools after adding
+            document.getElementById('search-results-container').style.display = 'none';
+            document.querySelector('.chat-bar').style.display = 'none';
+        }
+
+        function addFriendToNav(id, name)
+        {
+            const nav = document.getElementById('friends-list-nav');
+
+            // Create the clickable friend element
+            const friendDiv = document.createElement('div');
+            friendDiv.className = "friend-item";
+            friendDiv.style.cursor = "pointer";
+            friendDiv.style.padding = "5px";
+            friendDiv.innerHTML = `<span>👤 ${name}</span>`;
+
+            // When clicked, it sets this person as the active chat
+            friendDiv.onclick = function ()
+            {
+                startChatting(id, name);
+            };
+
+            nav.appendChild(friendDiv);
+        }
+
+        // STEP 4: Open the chat for that person
+        function startChatting(id, name)
+        {
+            console.log("Now chatting with ID:", id);
+            // You would call your message loading functions here
+            // e.g., currentChatFriendId = id; loadMessages();
+            alert("Opening chat with " + name);
+        }
+
+        function getServerBase()
+        {
+            return window.location.origin;
+        }
+
+        function main()
+        {
+            // Initialization logic if needed
+        }
+    </script>
 </body>
+
 </html>
