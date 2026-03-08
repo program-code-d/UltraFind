@@ -272,7 +272,7 @@ async function getNavbar(body)
 }
 
 
-async function messageFunc(body)
+async function startListingChat(body)
 {
     let conn;
     try
@@ -288,11 +288,11 @@ async function messageFunc(body)
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
 
 
-        const insertQuery = "SELECT * FROM Listings WHERE title LIKE ?;";
-        const res = await conn.query(insertQuery, [`%${body.search}%`]);
+        const insertQuery = "SELECT user_id FROM Listings WHERE id = ?;";
+        const res = await conn.query(insertQuery, [body.listing_id]);
 
         //   console.log("Listing created! New Listing ID:", res.insertId);
-        return { success: true, listings: res };
+        return { success: true, messages: res };
 
     } catch (err)
     {
@@ -461,15 +461,15 @@ app.post('/signup', async (req, res) =>
 });
 
 
-app.post('/sendmessage', async (req, res) =>
+app.post('/sendMessage', async (req, res) =>
 {
     //  console.log("Signup request:", req.body);
     try
     {
-        const result = await messageFunc(req.body);
-        if (result && result.emailExist)
+        const result = await startListingChat(req.body);
+        if (result && !result.emailExist)
         {
-            return res.json({ message: "Email In Use" })
+            return res.json({ message: "Email In Use" })         
         }
         if (result && result.success)
         {
