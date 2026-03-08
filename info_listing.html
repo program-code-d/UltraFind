@@ -69,8 +69,11 @@
         let listing_drawing = `
     <div class="listing-container">
         <div class="top-info">
-            <h1><div class="title">${listing_info.title}</div></h1>
-            <h3><span class="location">${listing_info.location}</span> • <span class="date">Jan 30, 2026</span></h3>
+            <button class="close-btn" onclick="window.history.back()">&times;</button>
+            <div class="title-section">
+                <h1><div class="title">${listing_info.title}</div></h1>
+                <h3><span class="location">${listing_info.location}</span> • <span class="date">Jan 30, 2026</span></h3>
+            </div>
         </div>
 
         <div class="main-content">

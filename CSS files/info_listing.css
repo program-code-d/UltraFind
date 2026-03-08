@@ -10,6 +10,46 @@
 }
 
 /* Header Section */
+.top-info {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.top-info .close-btn {
+    background: none;
+    border: none;
+    font-size: 2.5rem;
+    color: #333;
+    cursor: pointer;
+    padding: 0;
+    min-width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+}
+
+.top-info .close-btn:hover {
+    transform: scale(1.2);
+    color: #f31b1b;
+}
+
+.title-section {
+    flex: 1;
+    text-align: right;
+}
+
+.title-section h1 {
+    margin: 0;
+    padding: 0;
+}
+
+.title-section h3 {
+    margin: 5px 0 0 0;
+    padding: 0;
+}
 
 /* The "Meat" of the layout: Image + Sidebar */
 .main-content {
