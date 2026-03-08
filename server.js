@@ -87,7 +87,7 @@ async function login(user)
         query = "SELECT email, password FROM Users WHERE email = ? AND password = ?;"
         const res = await conn.query(query, [user.email, hashedPassword]);
 
-      //  console.log("User logged in! Insert ID:", res.insertId);
+        //  console.log("User logged in! Insert ID:", res.insertId);
         return { success: true, userExist: true };
     } catch (err)
     {
@@ -146,16 +146,19 @@ async function createListing(body)
 }
 
 
-async function findFriend(body) {
+async function findFriend(body)
+{
     let conn;
-    try {
+    try
+    {
         conn = await pool.getConnection();
 
         // 1. Get the salt safely
         const saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
-        
+
         // Check if user actually exists first
-        if (saltResult.length === 0) {
+        if (saltResult.length === 0)
+        {
             return { success: false, userExist: false, message: "User not found" };
         }
 
@@ -166,7 +169,8 @@ async function findFriend(body) {
         const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
 
-        if (userRows.length === 0) {
+        if (userRows.length === 0)
+        {
             return { success: false, userExist: false, message: "Invalid credentials" };
         }
 
@@ -174,22 +178,24 @@ async function findFriend(body) {
 
         // 3. Search for friends (Added 'AND' and fixed logic)
         // Note: Changed body.friend_id to body.friend_name assuming that's what you're searching for
-        const searchName = `%${body.search_term || ''}%`; 
+        const searchName = `%${body.search_term || ''}%`;
         const findQuery = `
             SELECT id, first_name, last_name 
             FROM Users 
             WHERE id != ? 
             AND CONCAT(first_name, ' ', last_name) LIKE ?;
         `;
-        
+
         const friends = await conn.query(findQuery, [user_id, searchName]);
 
         return { success: true, friends: friends, userExist: true };
 
-    } catch (err) {
+    } catch (err)
+    {
         console.error("Database error:", err);
         return { success: false, error: "Internal Server Error" };
-    } finally {
+    } finally
+    {
         if (conn) conn.release();
     }
 }
@@ -272,7 +278,7 @@ async function getNavbar(body)
 }
 
 
-async function startListingChat(body)
+async function sendMessage(body)
 {
     let conn;
     try
@@ -290,6 +296,10 @@ async function startListingChat(body)
 
         const insertQuery = "SELECT user_id FROM Listings WHERE id = ?;";
         const res = await conn.query(insertQuery, [body.listing_id]);
+
+        const recieverId = res[0].id;
+        const startQuery = "INSERT INTO listingMessage (sender_id,reciever_id,listing_id,message_text) VALUES (?,?,?,?)";
+        const result = await conn.query(insertQuery, [userRows[0].id, recieverId, body.listing_id, body.message]);
 
         //   console.log("Listing created! New Listing ID:", res.insertId);
         return { success: true, messages: res };
@@ -323,7 +333,7 @@ async function getfriendmessages(body)
 
         const userId = userRows[0].id;
         const insertQuery = "SELECT message_text FROM Friends WHERE user_id = ? AND receiver_id = ? ";
-        const res = await conn.query(insertQuery, [userId,body.friend_id]);
+        const res = await conn.query(insertQuery, [userId, body.friend_id]);
 
         return { success: true, messages: res, userExist: true };
 
@@ -461,7 +471,7 @@ app.post('/signup', async (req, res) =>
 });
 
 
-app.post('/startChat', async (req, res) =>
+app.post('/sendMessage', async (req, res) =>
 {
     //  console.log("Signup request:", req.body);
     try
@@ -469,7 +479,7 @@ app.post('/startChat', async (req, res) =>
         const result = await startListingChat(req.body);
         if (result && !result.emailExist)
         {
-            return res.json({ message: "Email In Use" })         
+            return res.json({ message: "Email In Use" })
         }
         if (result && result.success)
         {
@@ -622,14 +632,17 @@ app.post('/getfriendmessages', async (req, res) =>
 
 });
 
-app.post('/findFriend', async (req, res) => {
+app.post('/findFriend', async (req, res) =>
+{
     // Calling the function you provided
-    const result = await findFriend(req.body); 
-    
+    const result = await findFriend(req.body);
+
     // You MUST send a status code and the JSON back
-    if (result.success) {
+    if (result.success)
+    {
         res.status(200).json(result);
-    } else {
+    } else
+    {
         res.status(401).json(result);
     }
 });

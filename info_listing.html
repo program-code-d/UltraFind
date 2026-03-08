@@ -150,7 +150,7 @@
         let message = document.getElementsById("fb-input")
         if (message.value != "")
         {
-            fetch(getServerBase() + "/startChat", {
+            fetch(getServerBase() + "/sendMessage", {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
