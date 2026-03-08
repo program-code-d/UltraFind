@@ -11,7 +11,8 @@ CREATE TABLE Users (
     password VARCHAR(255),
     salt BIGINT UNSIGNED,
     location VARCHAR(255),
-    age TINYINT UNSIGNED
+    age TINYINT UNSIGNED,
+   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE Listings (
@@ -19,6 +20,8 @@ CREATE TABLE Listings (
     user_id INT UNSIGNED NOT NULL, 
     title VARCHAR(255) NOT NULL,
     description TEXT,
+    age TINYINT UNSIGNED,
+    location TEXT,
     price DECIMAL(10, 2),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES Users (id) ON DELETE CASCADE
