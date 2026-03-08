@@ -12,7 +12,7 @@ CREATE TABLE Users (
     salt BIGINT UNSIGNED,
     location VARCHAR(255),
     age TINYINT UNSIGNED,
-   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE Listings (
@@ -29,12 +29,14 @@ CREATE TABLE Listings (
 
 CREATE TABLE Friends (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    sender_id INT UNSIGNED NOT NULL,
-    receiver_id INT UNSIGNED NOT NULL,
-    message_text TEXT NOT NULL,
+    user_id INT UNSIGNED NOT NULL,     -- The person initiating/owning the friend link
+    friend_id INT UNSIGNED NOT NULL,   -- The person being added
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_friend_sender FOREIGN KEY (sender_id) REFERENCES Users (id) ON DELETE CASCADE,
-    CONSTRAINT fk_friend_receiver FOREIGN KEY (receiver_id) REFERENCES Users (id) ON DELETE CASCADE
+    -- Fixed: friend_id now correctly references the Users table
+    CONSTRAINT fk_friend_sender FOREIGN KEY (user_id) REFERENCES Users (id) ON DELETE CASCADE,
+    CONSTRAINT fk_friend_receiver FOREIGN KEY (friend_id) REFERENCES Users (id) ON DELETE CASCADE,
+    -- Bonus: This prevents duplicate rows for the same friendship
+    UNIQUE KEY unique_friendship (user_id, friend_id)
 );
 
 CREATE TABLE Messages (

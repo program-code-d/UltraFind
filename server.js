@@ -322,7 +322,7 @@ async function getfriendmessages(body)
 
 
         const userId = userRows[0].id;
-        const insertQuery = "SELECT message_text FROM Friends WHERE sender_id = ? AND receiver_id = ? ";
+        const insertQuery = "SELECT message_text FROM Friends WHERE user_id = ? AND receiver_id = ? ";
         const res = await conn.query(insertQuery, [userId,body.friend_id]);
 
         return { success: true, messages: res, userExist: true };
@@ -354,7 +354,7 @@ async function sendfriendmessage(body)
 
 
         const SenderId = userRows[0].id;
-        const insertQuery = "INSERT INTO Friends (sender_id,receiver_id,message_text) VALUES (?,?,?)";
+        const insertQuery = "INSERT INTO Friends (user_id,receiver_id,message_text) VALUES (?,?,?)";
         const res = await conn.query(insertQuery, [SenderId, body.friend_id, body.message]);
 
         return { success: true, listing: res, userExist: true };
