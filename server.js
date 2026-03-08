@@ -294,11 +294,11 @@ async function sendMessage(body)
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
 
 
-        const insertQuery = "SELECT user_id FROM Listings WHERE id = ?;";
-        const res = await conn.query(insertQuery, [body.listing_id]);
+        const selectQuery = "SELECT user_id FROM Listings WHERE id = ?;";
+        const res = await conn.query(selectQuery, [body.listing_id]);
 
         const recieverId = res[0].user_id;
-        const startQuery = "INSERT INTO listingMessages (sender_id,receiver_id,listing_id,message_text) VALUES (?,?,?,?)";
+        const insertQuery = "INSERT INTO listingMessages (sender_id,receiver_id,listing_id,message_text) VALUES (?,?,?,?)";
         const result = await conn.query(insertQuery, [userRows[0].id, recieverId, body.listing_id, body.message]);
 
         //   console.log("Listing created! New Listing ID:", res.insertId);
