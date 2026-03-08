@@ -25,7 +25,7 @@
 
         email = localStorage.getItem('email')
         password = localStorage.getItem('password')
-        
+
         // Get ID from URL query parameter
         const urlParams = new URLSearchParams(window.location.search)
         id = urlParams.get('id')
@@ -58,13 +58,15 @@
     }
     const textarea = document.querySelector('.fb-textarea');
 
-textarea.addEventListener('input', function() {
-  this.style.height = 'auto'; // Reset height
-  this.style.height = (this.scrollHeight) + 'px'; // Set to match content
-});
+    textarea.addEventListener('input', function ()
+    {
+        this.style.height = 'auto'; // Reset height
+        this.style.height = (this.scrollHeight) + 'px'; // Set to match content
+    });
 
-    function draw_listings() {
-    let listing_drawing = `
+    function draw_listings()
+    {
+        let listing_drawing = `
     <div class="listing-container">
         <div class="top-info">
             <h1><div class="title">${listing_info.title}</div></h1>
@@ -99,7 +101,7 @@ textarea.addEventListener('input', function() {
                         >Hi, is this available?</textarea>
                     </div>
 
-                    <button class="send-btn">
+                    <button onclick="send()" class="send-btn">
                         <div class="svg-wrapper">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
                                 <path fill="none" d="M0 0h24v24H0z"></path>
@@ -122,17 +124,59 @@ textarea.addEventListener('input', function() {
     </div>
     `;
 
-    document.getElementById("listing").innerHTML = listing_drawing;
-
-    
-    const textarea = document.getElementById('fb-input');
-    textarea.addEventListener('input', function() {
-        this.style.height = 'auto'; 
-        this.style.height = (this.scrollHeight) + 'px';
-    });
-}
+        document.getElementById("listing").innerHTML = listing_drawing;
 
 
+        const textarea = document.getElementById('fb-input');
+        textarea.addEventListener('input', function ()
+        {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+    }
+    function getServerBase()
+    {
+        const protocol = window.location.protocol; // 'http:' or 'https:'
+        const hostname = window.location.hostname;
+        const port = window.location.port ? ':' + window.location.port : '';
+        return `${protocol}//${hostname}${port}`;
+    }
+
+    function send()
+    {
+        let message = document.getElementsById("fb-input")
+        if (message.value != "")
+        {
+            fetch(getServerBase() + "/sendMessage", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: email,
+                    password: password,
+                    message: message.value
+                })
+            })
+                .then(response =>
+                {
+                    if (response.redirected)
+                    {
+                        window.location.href = response.url;
+                        return;
+                    }
+                    return response.json();
+                })
+                .then((data) =>
+                {
+                    // Handle post-creation logic, e.g., error messages
+                })
+        }
+        else
+        {
+            alert("You didn't complete the listing. Please fill out all fields.");
+        }
+    }
 
 </script>
 
