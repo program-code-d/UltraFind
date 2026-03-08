@@ -461,7 +461,7 @@ app.post('/signup', async (req, res) =>
 });
 
 
-app.post('/sendMessage', async (req, res) =>
+app.post('/startChat', async (req, res) =>
 {
     //  console.log("Signup request:", req.body);
     try

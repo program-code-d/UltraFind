@@ -3,356 +3,377 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UltraFind - Ultimate Mix</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
-    <script>
-        if (localStorage.getItem('animation_watched') === 'true') {
-            window.location.replace('login.html');
-        }
-    </script>
+    <title>UltraFind | Welcome</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap" rel="stylesheet">
     <style>
-        /* --- CORE --- */
         :root {
             --brand-orange: #FF5A1F;
-            --neon-purple: #B522ED;
-            --neon-blue: #00C6FF;
-            --brand-dark: #0a0a0a;
-            --snow-color: rgba(255, 255, 255, 0.8);
+            --accent-blue: #00C6FF;
+            --deep-purple: #1A0B2E;
+            --border-white: rgba(255, 255, 255, 0.15);
+            --text-main: #FFFFFF;
+            --easing: cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
         
         body {
-            background-color: #000;
+            background-color: #050505;
             height: 100vh;
             width: 100vw;
             overflow: hidden;
             display: flex;
             justify-content: center;
             align-items: center;
+            color: var(--text-main);
         }
 
-        /* =========================================
-           1. REALISTIC SNOW SYSTEM (FROM MASSIVE EDITION)
-           ========================================= */
-        .snow-container {
+        /* --- GRADIENT MESH BACKGROUND --- */
+        .bg-gradient {
             position: fixed;
-            width: 100%; height: 100%;
-            top: 0; left: 0;
-            pointer-events: none;
-            z-index: 1; /* Behind content */
-            opacity: 1;
+            inset: 0;
+            background: 
+                radial-gradient(circle at 20% 30%, var(--deep-purple) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, #0c142b 0%, transparent 50%);
+            z-index: -2;
         }
 
-        .snow {
-            position: absolute;
-            top: 0; left: 0;
-            border-radius: 50%;
-            background: white;
-            opacity: 0.8;
-        }
-
-        /* Snow Layers */
-        .snow-layer-1 {
-            width: 2px; height: 2px;
-            box-shadow: 
-                10vw 10vh 0 white, 20vw 80vh 0 white, 30vw 30vh 0 white, 40vw 50vh 0 white,
-                50vw 90vh 0 white, 60vw 20vh 0 white, 70vw 70vh 0 white, 80vw 40vh 0 white,
-                90vw 10vh 0 white, 15vw 60vh 0 white, 25vw 20vh 0 white, 35vw 90vh 0 white,
-                45vw 40vh 0 white, 55vw 10vh 0 white, 65vw 80vh 0 white, 75vw 30vh 0 white,
-                85vw 70vh 0 white, 95vw 50vh 0 white, 5vw 30vh 0 white, 98vw 98vh 0 white,
-                12vw 15vh 0 white, 22vw 85vh 0 white, 32vw 35vh 0 white, 42vw 55vh 0 white,
-                52vw 95vh 0 white, 62vw 25vh 0 white, 72vw 75vh 0 white, 82vw 45vh 0 white;
-            animation: fall 10s linear infinite;
-        }
-        .snow-layer-2 {
-            width: 4px; height: 4px;
-            box-shadow: 
-                15vw 15vh 0 rgba(255,255,255,0.6), 35vw 85vh 0 rgba(255,255,255,0.6), 
-                55vw 35vh 0 rgba(255,255,255,0.6), 75vw 55vh 0 rgba(255,255,255,0.6), 
-                95vw 25vh 0 rgba(255,255,255,0.6), 5vw 75vh 0 rgba(255,255,255,0.6),
-                10vw 10vh 0 rgba(255,255,255,0.6), 30vw 80vh 0 rgba(255,255,255,0.6),
-                50vw 30vh 0 rgba(255,255,255,0.6), 70vw 50vh 0 rgba(255,255,255,0.6),
-                90vw 20vh 0 rgba(255,255,255,0.6);
-            animation: fall 15s linear infinite reverse;
-            filter: blur(1px);
-        }
-        .snow-layer-3 {
-            width: 6px; height: 6px;
-            box-shadow: 
-                10vw 90vh 0 rgba(255,255,255,0.4), 40vw 20vh 0 rgba(255,255,255,0.4), 
-                80vw 60vh 0 rgba(255,255,255,0.4);
-            animation: fall 20s linear infinite;
-            filter: blur(3px);
-        }
-
-        @keyframes fall {
-            from { transform: translateY(-100vh) translateX(0); }
-            to { transform: translateY(100vh) translateX(20px); }
-        }
-
-        /* =========================================
-           2. SPLASH ANIMATION (AUTHENTIC INTRO)
-           ========================================= */
-        .splash-layer {
+        /* --- SNOW / PARTICLE CANVAS --- */
+        #snowCanvas {
             position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: 999;
-            pointer-events: none;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .anim-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.6;
         }
 
-        /* Typing Text */
-        .brand-text {
-            font-size: 60px; /* Massive */
-            font-weight: 800;
-            letter-spacing: -2px;
-            
-            background: linear-gradient(90deg, #fff 0%, #fff 40%, #B522ED 50%, #00C6FF 60%, #fff 100%);
-            background-size: 200% auto;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            
-            transform: translateX(-70px);
-            margin-right: 30px;
-            white-space: nowrap;
-            overflow: hidden;
-            width: 0;
-            border-right: 4px solid transparent;
-            
-            animation: 
-                typing 1.5s steps(9, end) forwards, 
-                cursor-show 1.5s steps(1) forwards,
-                gradient-wave 4s linear infinite,
-                text-fade-out 0.5s ease-out forwards;
-            
-            animation-delay: 2.0s, 2.0s, 0s, 10.5s;
+        .ambient-glow {
+            position: fixed;
+            width: 70vw;
+            height: 70vw;
+            background: radial-gradient(circle, rgba(255, 90, 31, 0.05) 0%, transparent 70%);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 0;
         }
 
-        /* Morphing Shape */
-        .shape {
-            width: 140px; height: 140px; /* Massive */
-            background: linear-gradient(270deg, #B522ED, #00C6FF, #B522ED);
-            background-size: 400% 400%;
-            border-radius: 35px;
-            position: absolute;
-            z-index: 10;
-            animation: shapeMorph 12s cubic-bezier(0.83, 0, 0.17, 1) forwards, gradient-shift 4s ease infinite;
+        /* --- SKIP BUTTON --- */
+        .skip-btn {
+            position: fixed;
+            top: 40px;
+            right: 40px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-white);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: 0.3s;
+            backdrop-filter: blur(10px);
+        }
+        .skip-btn:hover {
+            background: var(--brand-orange);
+            border-color: var(--brand-orange);
+            transform: scale(1.05);
         }
 
-        /* =========================================
-           3. FINAL SCREEN (CINEMATIC/REACTOR STYLE)
-           ========================================= */
-        .final-screen {
-            position: absolute;
-            z-index: 100;
+        /* --- ANIMATION SCENE --- */
+        .scene-wrapper {
+            position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
-            opacity: 0;
-            animation: screenReveal 1s ease-out forwards;
-            animation-delay: 12s;
+            z-index: 10;
         }
 
-        /* 3.1 Logo Assembly */
-        .logo-svg {
+        .eye-focus {
+            position: relative;
             width: 160px;
             height: 160px;
-            margin-bottom: 40px;
-            filter: drop-shadow(0 0 30px rgba(255, 90, 31, 0.4));
-        }
-        
-        /* Line Drawing */
-        .logo-path {
-            stroke-dasharray: 300;
-            stroke-dashoffset: 300;
-            animation: drawLines 1.5s ease-out forwards;
-            animation-delay: 12.2s;
-        }
-        
-        /* Plus Pop */
-        .logo-plus {
-            transform-origin: 45px 45px;
-            transform: scale(0) rotate(-180deg);
-            opacity: 0;
-            animation: popPlus 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-            animation-delay: 12.8s;
-        }
-
-        /* 3.2 Hero Text */
-        .hero-title {
-            text-align: center;
             margin-bottom: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        .line-small {
-            display: block;
-            font-size: 18px;
-            font-weight: 600;
-            color: #888;
-            letter-spacing: 4px;
-            text-transform: uppercase;
+        .eye-frame {
+            position: absolute;
+            inset: 0;
+            border: 1px solid var(--border-white);
+            border-radius: 50%;
+            animation: rotateFrame 15s linear infinite; /* SLOWER */
+        }
+
+        .eye-glow-ring {
+            position: absolute;
+            inset: -10px;
+            border: 2px solid transparent;
+            border-top: 2px solid var(--accent-blue);
+            border-bottom: 2px solid var(--brand-orange);
+            border-radius: 50%;
+            opacity: 0.3;
+            animation: rotateFrame 6s linear infinite reverse; /* SLOWER */
+        }
+
+        .rect-deco {
+            position: absolute;
+            width: 24px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--brand-orange), var(--accent-blue));
             opacity: 0;
-            transform: translateY(20px);
-            animation: slideUpFade 0.8s ease-out forwards;
-            animation-delay: 12.5s;
+            animation: rectPulse 2s var(--easing) infinite; /* SLOWER */
+        }
+        .rect-1 { top: -30px; left: 50%; transform: translateX(-50%); animation-delay: 0.2s; }
+        .rect-2 { bottom: -30px; left: 50%; transform: translateX(-50%); animation-delay: 0.5s; }
+
+        .logo-inner {
+            width: 80px;
+            height: 80px;
+            opacity: 0;
+            transform: scale(0.5);
+            animation: logoReveal 1.5s var(--easing) forwards 0.8s; /* SLOWER REVEAL */
         }
 
-        .line-big {
-            display: block;
-            font-size: 72px; /* Cinematic size */
+        .brand-title {
+            font-size: 84px;
             font-weight: 900;
-            line-height: 1;
-            margin-top: 10px;
-            opacity: 0;
-            
-            /* Metal/Neon Gradient */
-            background: linear-gradient(135deg, #fff 0%, #a5a5a5 40%, var(--neon-purple) 60%, var(--neon-blue) 100%);
+            letter-spacing: -4px;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #fff 60%, var(--accent-blue));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            
-            transform: scale(1.5);
-            filter: blur(20px);
-            animation: cinematicImpact 0.6s cubic-bezier(0, 0, 0.2, 1) forwards;
-            animation-delay: 12.7s;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: titleRise 1.5s var(--easing) forwards 1.8s; /* LATER REVEAL */
         }
 
-        /* 3.3 The "Reactor" Button */
-        .reactor-btn {
-            position: relative;
-            padding: 20px 50px;
-            background: transparent;
-            color: white;
-            font-size: 18px;
-            font-weight: 700;
-            border: 2px solid white;
-            border-radius: 100px;
-            cursor: pointer;
+        .visual-blocks {
+            display: flex;
+            gap: 10px;
+            opacity: 0;
+            animation: fadeIn 0.8s forwards 2.5s;
+        }
+
+        .block {
+            width: 35px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
             overflow: hidden;
-            opacity: 0;
-            animation: btnAppear 1s ease-out forwards;
-            animation-delay: 13.2s;
-            transition: 0.3s;
-            box-shadow: 0 0 20px rgba(255,255,255,0.1);
         }
 
-        .reactor-btn::before {
-            content: '';
+        .block-fill {
+            height: 100%;
+            width: 0;
+            background: linear-gradient(90deg, var(--brand-orange), var(--accent-blue));
+            animation: fillBlock 1.8s cubic-bezier(0.65, 0, 0.35, 1) forwards; /* SLOWER FILL */
+        }
+
+        .block:nth-child(1) .block-fill { animation-delay: 2.8s; }
+        .block:nth-child(2) .block-fill { animation-delay: 3.2s; }
+        .block:nth-child(3) .block-fill { animation-delay: 3.6s; }
+        .block:nth-child(4) .block-fill { animation-delay: 4.0s; }
+
+        /* --- FINAL LANDING --- */
+        .landing-stage {
             position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: linear-gradient(90deg, var(--neon-purple), var(--brand-orange));
             opacity: 0;
-            transition: 0.3s;
-            z-index: -1;
+            visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transform: scale(0.95);
+            transition: all 1.5s var(--easing);
         }
 
-        .reactor-btn:hover {
-            border-color: transparent;
-            transform: scale(1.05);
-            box-shadow: 0 0 40px var(--neon-purple);
+        .landing-stage.active {
+            opacity: 1;
+            visibility: visible;
+            transform: scale(1);
         }
+
+        .get-started-btn {
+            margin-top: 40px;
+            padding: 24px 70px;
+            background: #fff;
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.4s var(--easing);
+            box-shadow: 0 10px 40px rgba(0, 198, 255, 0.2);
+        }
+
+        .get-started-btn:hover {
+            transform: translateY(-8px);
+            background: var(--brand-orange);
+            color: #fff;
+            box-shadow: 0 25px 60px rgba(255, 90, 31, 0.4);
+        }
+
+        /* --- KEYFRAMES --- */
+        @keyframes rotateFrame { to { transform: rotate(360deg); } }
         
-        .reactor-btn:hover::before { opacity: 1; }
-
-
-        /* =========================================
-           KEYFRAMES
-           ========================================= */
-
-        /* SPLASH KEYS */
-        @keyframes shapeMorph {
-            0%, 20% { transform: translate(0, -120px) rotate(0deg) scale(1); border-radius: 35px; width: 140px; height: 140px; }
-            40% { transform: translate(0, -120px) rotate(45deg) scale(1.1); width: 140px; height: 140px; border-radius: 35px; }
-            60% { width: 22px; height: 22px; border-radius: 50%; transform: translate(140px, 0) rotate(45deg); }
-            75% { width: 22px; height: 22px; border-radius: 50%; transform: translate(140px, 0) scale(1); }
-            80% { transform: translate(0, 0) scale(1); width: 22px; height: 22px; opacity: 1; }
-            98% { width: 300vmax; height: 300vmax; transform: translate(0, 0); opacity: 1; }
-            100% { width: 300vmax; height: 300vmax; opacity: 0; display: none; }
+        @keyframes rectPulse {
+            0%, 100% { opacity: 0.1; transform: translateX(-50%) scaleX(1); }
+            50% { opacity: 1; transform: translateX(-50%) scaleX(2.5); }
         }
 
-        @keyframes gradient-shift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        @keyframes logoReveal {
+            to { opacity: 1; transform: scale(1); }
         }
 
-        @keyframes typing {
-            0% { width: 0; }
-            100% { width: 300px; }
-        }
-        @keyframes cursor-show {
-            0% { border-right-color: white; }
-            99% { border-right-color: white; }
-            100% { border-right-color: transparent; }
-        }
-        @keyframes gradient-wave {
-            0% { background-position: 200% center; }
-            100% { background-position: -200% center; }
-        }
-        @keyframes text-fade-out {
-            to { opacity: 0; transform: translateX(-70px) scale(0.9); }
+        @keyframes titleRise {
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        /* ENDING KEYS */
-        @keyframes screenReveal { to { opacity: 1; } }
-        @keyframes drawLines { to { stroke-dashoffset: 0; } }
-        @keyframes popPlus { to { transform: scale(1) rotate(0deg); opacity: 1; } }
-        @keyframes slideUpFade { to { opacity: 1; transform: translateY(0); } }
-        @keyframes cinematicImpact { to { opacity: 1; transform: scale(1); filter: blur(0); } }
-        @keyframes btnAppear { to { opacity: 1; } }
+        @keyframes fillBlock { to { width: 100%; } }
+
+        @keyframes fadeIn { to { opacity: 1; } }
+
+        .fade-out {
+            opacity: 0 !important;
+            transform: scale(1.1) !important;
+            pointer-events: none;
+        }
 
     </style>
 </head>
 <body>
 
-    <!-- REALISTIC SNOW LAYER (From Massive Code) -->
-    <div class="snow-container">
-        <div class="snow snow-layer-1"></div>
-        <div class="snow snow-layer-2"></div>
-        <div class="snow snow-layer-3"></div>
-    </div>
+    <div class="bg-gradient"></div>
+    <canvas id="snowCanvas"></canvas>
+    <div class="ambient-glow"></div>
 
-    <!-- PART 1: AUTHENTIC SPLASH (From Massive Code) -->
-    <div class="splash-layer">
-        <div class="anim-wrapper">
-            <div class="brand-text">UltraFind</div>
-            <div class="shape"></div>
+    <button class="skip-btn" id="skipTrigger" onclick="showLanding()">Skip Intro</button>
+
+    <!-- INTRO SCENE -->
+    <div id="intro-container" class="scene-wrapper">
+        <div class="eye-focus">
+            <div class="eye-frame"></div>
+            <div class="eye-glow-ring"></div>
+            <div class="rect-deco rect-1"></div>
+            <div class="rect-deco rect-2"></div>
+            
+            <svg class="logo-inner" viewBox="0 0 100 100" fill="none">
+                <circle cx="45" cy="45" r="25" stroke="white" stroke-width="6"/>
+                <path d="M68 68L85 85" stroke="white" stroke-width="6" stroke-linecap="round"/>
+                <path d="M45 25V65" stroke="var(--brand-orange)" stroke-width="8"/>
+                <path d="M25 45H65" stroke="var(--brand-orange)" stroke-width="8"/>
+            </svg>
+        </div>
+
+        <h1 class="brand-title">UltraFind</h1>
+
+        <div class="visual-blocks">
+            <div class="block"><div class="block-fill"></div></div>
+            <div class="block"><div class="block-fill"></div></div>
+            <div class="block"><div class="block-fill"></div></div>
+            <div class="block"><div class="block-fill"></div></div>
         </div>
     </div>
 
-    <!-- PART 2: FINAL SCREEN (From Cinematic Code) -->
-    <div class="final-screen">
-        
-        <!-- Animated SVG Logo -->
-        <svg class="logo-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle class="logo-path" cx="45" cy="45" r="30" stroke="white" stroke-width="6"/>
-            <path class="logo-path" d="M68 68L85 85" stroke="white" stroke-width="6" stroke-linecap="round"/>
-            <g class="logo-plus">
-                <path d="M45 25V65" stroke="#FF5A1F" stroke-width="8" stroke-linecap="round"/>
-                <path d="M25 45H65" stroke="#FF5A1F" stroke-width="8" stroke-linecap="round"/>
-            </g>
-        </svg>
-
-        <div class="hero-title">
-            <span class="line-small">Welcome to</span>
-            <span class="line-big">UltraFind</span>
-        </div>
-
-        <button class="reactor-btn" onclick="localStorage.setItem('animation_watched', 'true'); window.location.href='login.html'">Get Started</button>
+    <!-- LANDING SCENE -->
+    <div id="landing-container" class="landing-stage">
+        <h1 style="font-size: 110px; font-weight: 900; letter-spacing: -6px; margin-bottom: 10px;">UltraFind</h1>
+        <button class="get-started-btn" onclick="completeIntro()">Get Started</button>
     </div>
 
+    <script>
+        // Check local storage
+        if (localStorage.getItem('ultrafind_intro_watched') === 'true') {
+            window.location.replace('login.html');
+        }
+
+        // --- SNOW ANIMATION ---
+        const canvas = document.getElementById('snowCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.onresize = resize;
+        resize();
+
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2 + 0.5;
+                this.speedX = Math.random() * 0.4 - 0.2;
+                this.speedY = Math.random() * 0.4 + 0.1;
+                this.opacity = Math.random() * 0.5 + 0.2;
+            }
+            update() {
+                this.y += this.speedY;
+                this.x += this.speedX;
+                if (this.y > canvas.height) {
+                    this.y = -10;
+                    this.x = Math.random() * canvas.width;
+                }
+            }
+            draw() {
+                ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        for (let i = 0; i < 100; i++) {
+            particles.push(new Particle());
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        // --- TRANSITION LOGIC ---
+        const intro = document.getElementById('intro-container');
+        const landing = document.getElementById('landing-container');
+        const skip = document.getElementById('skipTrigger');
+
+        function showLanding() {
+            intro.classList.add('fade-out');
+            skip.style.display = 'none';
+            setTimeout(() => {
+                intro.style.display = 'none';
+                landing.classList.add('active');
+            }, 1000);
+        }
+
+        function completeIntro() {
+            localStorage.setItem('ultrafind_intro_watched', 'true');
+            window.location.href = 'login.html';
+        }
+
+        setTimeout(showLanding, 7500);
+
+    </script>
 </body>
 </html>

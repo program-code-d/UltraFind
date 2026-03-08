@@ -104,7 +104,7 @@
                         >Hi, is this available?</textarea>
                     </div>
 
-                    <button onclick="send()" class="send-btn">
+                    <button onclick="startChat()" class="send-btn">
                         <div class="svg-wrapper">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
                                 <path fill="none" d="M0 0h24v24H0z"></path>
@@ -145,12 +145,12 @@
         return `${protocol}//${hostname}${port}`;
     }
 
-    function send()
+    function startChat()
     {
         let message = document.getElementsById("fb-input")
         if (message.value != "")
         {
-            fetch(getServerBase() + "/sendMessage", {
+            fetch(getServerBase() + "/startChat", {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -173,7 +173,7 @@
                 })
                 .then((data) =>
                 {
-                    // Handle post-creation logic, e.g., error messages
+                    
                 })
         }
         else
