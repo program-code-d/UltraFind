@@ -119,12 +119,14 @@ async function createListing(body)
             const userId = userRows[0].id;
 
             // 3. Insert into Listings using that userId
-            const insertQuery = "INSERT INTO Listings (user_id, title, description, price) VALUES (?, ?, ?, ?);";
+            const insertQuery = "INSERT INTO Listings (user_id, title, description, price, location, age) VALUES (?, ?, ?, ?, ?, ?);";
             const res = await conn.query(insertQuery, [
                 userId,           // This links the listing to the user
                 body.name,
                 body.description,
-                body.pay
+                body.pay,
+                body.location,
+                body.age
             ]);
 
             console.log("Listing created! New Listing ID:", res.insertId);

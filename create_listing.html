@@ -1,34 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create A Listing</title>
+    <link rel="stylesheet" href="CSS files/create_listing.css">
 </head>
-
 <body>
-    <h1>Create A Listing</h1>
-    <div>
-        <input id="listing-name" placeholder="Enter The Listing Name Here" class="input-style" type="text">
+    <div class="page-container">
+        <div class="form-container">
+            <h1>Start Here</h1>
+            <div class="form-group">
+                <label for="listing-name">Name:</label>
+                <input id="listing-name" placeholder="Enter The Listing Name Here" class="input-style" type="text" oninput="updatePreview()">
+            </div>
+
+            <div class="form-group">
+                <label for="listing-description">Description:</label>
+                <textarea id="listing-description" placeholder="Describe your listing" class="input-style" rows="4" oninput="updatePreview()"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="listing-price">Price:</label>
+                <div class="price-input-wrapper">
+                    <input id="listing-price" placeholder="0.00" class="input-style" type="number" step="0.01" min="0" oninput="updatePreview()">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="listing-location">Location:</label>
+                <input id="listing-location" placeholder="Enter Your Location Here" class="input-style" type="text" oninput="updatePreview()">
+            </div>
+
+            <div class="form-group age-input">
+                <label for="age">Age requirement:</label>
+                <input type="number" id="age" class="age" name="class" min="13" max="100" value="13" oninput="updatePreview()">
+            </div>
+
+            <button class="create-listing-btn" id="submit-button" onclick="createListing()">Submit</button>
+        </div>
+
+        <!-- Live Preview Section -->
+        <div class="preview-container">
+            <h2 class="preview-title">Live Preview</h2>
+            <div class="listing-container">
+                <div class="main-content">
+                    <div class="image"></div>
+                    <div class="Age-pay-location">
+                        <h1 id="preview-name">Listing Name</h1>
+                        <h3 id="preview-location-header">Location</h3>
+                        <div class="price" id="preview-price">$0.00</div>
+                        <div class="age">Age Requirement: <span id="preview-age">13</span></div>
+                        <div class="seller-info">Seller Info</div>
+                    </div>
+                </div>
+                <div class="Description-repeats">
+                    <p id="preview-description">Your description will appear here.</p>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div>
-        <input id="listing-price" placeholder="Enter The Listing Price" class="input-style" type="number">
-    </div>
-
-    <div>
-        <input id="listing-description" placeholder="Enter The Description Here" class="input-style" type="text">
-    </div>
-
-    <div>
-        <input id="listing-location" placeholder="Enter Your Location Here" class="input-style" type="text">
-    </div>
-    <button class="create-listing-btn" id="submit-buttton" onclick="createListing()">Submit</button>
-
-
-</body>
-<link rel="stylesheet" href="CSS files/create_listing.css">
 <script>
     var email
     var password
@@ -39,27 +71,36 @@
         const port = window.location.port ? ':' + window.location.port : '';
         return `${protocol}//${hostname}${port}`;
     }
+
     function createListing()
     {
         let listingName = document.getElementById('listing-name');
         let listingPrice = document.getElementById('listing-price');
         let listingDescription = document.getElementById('listing-description');
         let listingLocation = document.getElementById('listing-location');
+        let age =document.getElementById('age')
+
+        const price = parseFloat(listingPrice.value || 0);
 
         email = localStorage.getItem('email')
         password = localStorage.getItem('password')
-
-        if (listingName.value && listingPrice.value && listingDescription.value && listingLocation.value != "")
+        
+        if (listingName.value && price > 0 && listingDescription.value && listingLocation.value)
         {
             fetch(getServerBase() + "/createListing", {
-                // Defines the HTTP verb as POST, which is used for sending data to a server.
                 method: 'POST',
                 headers: {
-                    // Informs the server that the data being sent is formatted as a JSON string.
                     'Content-Type': 'application/json'
                 },
-                // Converts the JavaScript object into a standardized JSON string for transmission.
-                body: JSON.stringify({ email: email, password: password, name: listingName.value, pay: listingPrice.value, description: listingDescription.value, location: listingLocation.value })
+                body: JSON.stringify({ 
+                    email: email, 
+                    password: password, 
+                    name: listingName.value, 
+                    pay: price, 
+                    description: listingDescription.value, 
+                    location: listingLocation.value,
+                    age:age.value
+                })
             })
                 .then(response =>
                 {
@@ -72,15 +113,37 @@
                 })
                 .then((data) =>
                 {
-
-
+                    // Handle post-creation logic, e.g., error messages
                 })
         }
         else
         {
-            alert("You didnt complete the listing");
+            alert("You didn't complete the listing. Please fill out all fields.");
         }
     }
+
+    function updatePreview() {
+        // Get values from form
+        let name = document.getElementById('listing-name').value;
+        let price = document.getElementById('listing-price').value;
+        let description = document.getElementById('listing-description').value;
+        let location = document.getElementById('listing-location').value;
+        let age = document.getElementById('age').value;
+
+        // Update preview elements
+        document.getElementById('preview-name').innerText = name || 'Listing Name';
+        
+        const priceValue = parseFloat(price);
+        document.getElementById('preview-price').innerText = !isNaN(priceValue) && priceValue > 0 ? `$${priceValue.toFixed(2)}` : '$0.00';
+        
+        document.getElementById('preview-description').innerText = description || 'Your description will appear here.';
+        
+        document.getElementById('preview-location-header').innerText = location || 'Location';
+        document.getElementById('preview-age').innerText = age || '13';
+    }
+
+    // Initial call to set default values when the page loads
+    updatePreview();
 
 </script>
 

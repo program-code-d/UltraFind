@@ -1,29 +1,174 @@
-/* From Uiverse.io by JayRamoliya */
-.input-style {
-  padding: 10px;
-  border: 2px solid #ccc;
-  border-radius: 5px;
-  font-size: 16px;
-  color: #555;
-  outline: none;
-  width: 20vw;
-  box-sizing: border-box;
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #f4f4f9;
+    margin: 0;
+    padding: 20px;
 }
 
-.input-style:focus {
-  border-color: #007bff;
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+/* Main layout container */
+.page-container {
+    display: flex;
+    flex-direction: row;
+    gap: 40px; /* Space between form and preview */
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
+/* The form on the left */
+.form-container {
+    flex: 0 0 320px; /* Fixed small width */
+    padding: 20px 0;
+    /* Removed background, border, radius to make it "not a card" */
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 25px;
+    margin-top: 0;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label, .age-input label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #555;
+}
+
+/* General input styling */
+.input-style,
+.age {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-sizing: border-box; /* Important for width calculation */
+    font-size: 16px;
+}
+
+.input-style:focus,
+.age:focus {
+    outline: none;
+    border-color: #007bff;
+}
+
+/* Price input with '$' sign */
+.price-input-wrapper {
+    position: relative;
+}
+
+.price-input-wrapper::before {
+    content: '$';
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #555;
+    font-size: 16px;
+    pointer-events: none; /* So you can click through it */
+}
+
+#listing-price {
+    padding-left: 28px; /* Make space for the '$' */
+}
+
+/* Submit button */
 .create-listing-btn {
-  background: #125490;
-  border-radius: 7px;
-  box-shadow: 0 1px #444444;
-  padding: 0.6vh;
-  color: #ffffff;
-  display: inline-block;
-  font: normal bold 26px/1 "Roboto", sans-serif;
-  text-align: center;
-  width: 20vw;
-  box-sizing: border-box;
+    width: 100%;
+    padding: 15px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.create-listing-btn:hover {
+    background-color: #0056b3;
+}
+
+/* The preview on the right */
+.preview-container {
+    flex: 1; /* Takes up the other half */
+    position: sticky; /* Makes it stick on scroll */
+    top: 20px;
+}
+
+.preview-title {
+    text-align: center;
+    color: #666;
+    font-weight: 500;
+    margin-bottom: 15px;
+}
+
+/* Styles copied from info_listing.css for exact preview match */
+.listing-container {
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+    font-family: 'Segoe UI', sans-serif;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 12px; /* Added for preview container look */
+}
+
+.main-content {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+}
+
+.image {
+    flex: 2;
+    background: #ccc;
+    border-radius: 12px;
+    min-height: 400px;
+}
+
+.Age-pay-location {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.Age-pay-location h1 { font-size: 1.5rem; margin-bottom: 5px; }
+.Age-pay-location h3 { font-size: 0.9rem; color: #666; margin-top: -10px; margin-bottom: 10px; }
+
+
+.price, .age, .location-map, .seller-info {
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.price {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #3b82f6;
+}
+
+.Description-repeats {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        flex-direction: column;
+    }
 }

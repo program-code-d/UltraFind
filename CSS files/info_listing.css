@@ -10,13 +10,6 @@
 }
 
 /* Header Section */
-.top-info {
-    border-bottom: 1px solid #ddd;
-    padding-bottom: 10px;
-}
-
-.top-info h1 { font-size: 1.5rem; margin-bottom: 5px; }
-.top-info h3 { font-size: 0.9rem; color: #666; display: inline; margin-right: 10px; }
 
 /* The "Meat" of the layout: Image + Sidebar */
 .main-content {
@@ -38,6 +31,9 @@
     flex-direction: column;
     gap: 15px;
 }
+
+.Age-pay-location h1 { font-size: 1.5rem; margin-bottom: 5px; }
+.Age-pay-location h3 { font-size: 0.9rem; color: #666; margin-top: -10px; margin-bottom: 10px; }
 
 /* Sidebar Cards */
 .price, .age, .location-map, .seller-info {
@@ -197,4 +193,3 @@ button:active {
 .send-btn:active {
     transform: scale(0.97);
 }
-
