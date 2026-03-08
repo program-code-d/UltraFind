@@ -68,7 +68,7 @@ textarea.addEventListener('input', function() {
     <div class="listing-container">
         <div class="top-info">
             <h1><div class="title">${listing_info.title}</div></h1>
-            <h3><span class="location">location</span> • <span class="date">Jan 30, 2026</span></h3>
+            <h3><span class="location">${listing_info.location}</span> • <span class="date">Jan 30, 2026</span></h3>
         </div>
 
         <div class="main-content">
@@ -78,7 +78,7 @@ textarea.addEventListener('input', function() {
 
             <div class="Age-pay-location">
                 <div class="price">$${listing_info.price}/hr</div>
-                <div class="age">age</div>
+                <div class="age">${listing_info.age}+ Age Requirement</div>
                 <div class="location-map">
                     <strong>Visual Location</strong>
                     <div style="height:200px; background:#e5e7eb; margin-top:10px;">Map goes here</div>
