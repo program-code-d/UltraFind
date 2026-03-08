@@ -147,7 +147,7 @@
 
     function startChat()
     {
-        let message = document.getElementsById("fb-input")
+        let message = document.getElementById("fb-input")
         if (message.value != "")
         {
             fetch(getServerBase() + "/sendMessage", {

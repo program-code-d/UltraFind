@@ -297,8 +297,8 @@ async function sendMessage(body)
         const insertQuery = "SELECT user_id FROM Listings WHERE id = ?;";
         const res = await conn.query(insertQuery, [body.listing_id]);
 
-        const recieverId = res[0].id;
-        const startQuery = "INSERT INTO listingMessage (sender_id,reciever_id,listing_id,message_text) VALUES (?,?,?,?)";
+        const recieverId = res[0].user_id;
+        const startQuery = "INSERT INTO listingMessages (sender_id,receiver_id,listing_id,message_text) VALUES (?,?,?,?)";
         const result = await conn.query(insertQuery, [userRows[0].id, recieverId, body.listing_id, body.message]);
 
         //   console.log("Listing created! New Listing ID:", res.insertId);
@@ -476,7 +476,7 @@ app.post('/sendMessage', async (req, res) =>
     //  console.log("Signup request:", req.body);
     try
     {
-        const result = await startListingChat(req.body);
+        const result = await sendMessage(req.body);
         if (result && !result.emailExist)
         {
             return res.json({ message: "Email In Use" })
