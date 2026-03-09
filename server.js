@@ -347,6 +347,39 @@ async function getfriendmessages(body)
     }
 }
 
+
+async function getfriendsfornav(body)
+{
+    let conn;
+    try
+    {
+        conn = await pool.getConnection();
+
+        // 1. Get the salt (assuming 'query' for salt was defined above)
+        let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
+        const hashedPassword = hashPassword(body.password + saltResult[0].salt);
+
+
+        const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
+        const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
+
+
+        const userId = userRows[0].id;
+        const insertQuery = "SELECT message_text FROM Friends WHERE user_id = ? AND receiver_id = ? ";
+        const res = await conn.query(insertQuery, [userId, body.friend_id]);
+
+        return { success: true, messages: res, userExist: true };
+
+    } catch (err)
+    {
+        console.error(err)
+        return { success: false, userExist: false }
+    } finally
+    {
+        if (conn) conn.release();
+    }
+}
+
 async function sendfriendmessage(body)
 {
     let conn;
@@ -493,6 +526,30 @@ app.post('/sendMessage', async (req, res) =>
     }
 
 });
+
+
+app.post('/getfriendsfornav', async (req, res) =>
+{
+    try
+    {
+        const result = await getfriendsfornav(req.body);
+        if (result && !result.emailExist)
+        {
+            return res.json({ message: "Email In Use" })
+        }
+        if (result && result.success)
+        {
+    
+        }
+
+    } catch (err)
+    {
+
+        res.status(400).send(err.message);
+    }
+
+});
+
 
 app.post('/getInfoListing', async (req, res) =>
 {
