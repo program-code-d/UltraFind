@@ -15,7 +15,7 @@
     /* Aligns to the top */
     left: 0;
     /* Aligns to the left */
-    width: 200px;
+    width: 16em;
     /* Set a specific width so it doesn't collapse */
     overflow-y: auto;
     /* Adds a scrollbar if you have too many friends to list */
@@ -35,6 +35,7 @@ main,
     font-family: sans-serif;
     font-weight: 500;
     transition: background 0.2s ease;
+  
 }
 
 .friends-nav>div:hover {

@@ -348,7 +348,7 @@ async function getfriendmessages(body)
 }
 
 
-async function getfriendsfornav(body)
+async function getFriends(body)
 {
     let conn;
     try
@@ -528,11 +528,11 @@ app.post('/sendMessage', async (req, res) =>
 });
 
 
-app.post('/getfriendsfornav', async (req, res) =>
+app.post('/getFriends', async (req, res) =>
 {
     try
     {
-        const result = await getfriendsfornav(req.body);
+        const result = await getFriends(req.body);
         if (result && !result.emailExist)
         {
             return res.json({ message: "Email In Use" })
