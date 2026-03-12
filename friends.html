@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Friends</title>
-    <link rel="stylesheet" href="CSS files/friends.css">
+    <link rel="stylesheet" href="CSS files/messages.css">
 </head>
 
 <body onload="main()">
@@ -24,7 +24,7 @@
     </div>
 
     <div class="people">
-        <button onclick="toggleSearch()">Add friend</button>
+        <button onclick="startaddingfriend(event)">Add friend</button>
     </div>
 
     <div class="dropdown" id="search-results-container">
@@ -64,7 +64,13 @@
         var email;
         var password;
         let friend_input_element = document.getElementById('user-friend-id');
-        let friends_data_cache = []; // Store the search results here
+        document.getElementsByClassName('dropdown')
+        function startaddingfriend(event)
+        {
+            event.preventDefault();
+
+
+        }
 
     </script>
 </body>
