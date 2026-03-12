@@ -4,10 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <title>Friends</title>
-    <link rel="stylesheet" href="CSS files/friends.css">
+    <link rel="stylesheet" href="CSS files/messages.css">
 </head>
 
-<body onload="main()">
+<body>
     <div id="messages-display"></div>
 
     <div class="chat-bar">
@@ -24,15 +24,15 @@
     </div>
 
     <div class="people">
-        <button onclick="toggleSearch()">Add friend</button>
+        <button onclick="startaddingfriend(event)">Add friend</button>
     </div>
 
-    <div class="dropdown" id="search-results-container">
-        <label for="friend-select">Results found:</label>
-        <select id="friend-select" onchange="selectFriendFromDropdown()">
-            <option value="none" selected disabled>Choose a person...</option>
-        </select>
-    </div>
+    <label for="friend-select">Choose a person:</label>
+    <select id="friend-select">
+        <option value="none" selected disabled>Select an option...</option>
+        <option value="1">John Doe</option>
+        <option value="2">Jane Smith</option>
+    </select>
 
     <div class="messageBox">
         <div class="fileUploadWrapper">
@@ -63,8 +63,50 @@
     <script>
         var email;
         var password;
+        email = localStorage.getItem('email')
+        password = localStorage.getItem('password')
         let friend_input_element = document.getElementById('user-friend-id');
-        let friends_data_cache = []; // Store the search results here
+        let friendSearch = document.getElementById('chat-form');
+        let friendsResults;
+        document.querySelector('.dropdown').style.display = 'none';
+        document.querySelector('.chat-bar').style.display = 'none';
+
+        function startaddingfriend(event)
+        {
+            event.preventDefault();
+            document.querySelector('.chat-bar').style.display = 'block';
+        }
+
+        function findFriend(event)
+        {
+            event.preventDefault();
+            fetch(getServerBase() + "/findFriend", {
+                // Defines the HTTP verb as POST, which is used for sending data to a server.
+                method: 'POST',
+                headers: {
+                    // Informs the server that the data being sent is formatted as a JSON string.
+                    'Content-Type': 'application/json'
+                },
+                // Converts the JavaScript object into a standardized JSON string for transmission.
+                body: JSON.stringify({ email: email, password: password, friendSearch: friendSearch.value })
+            })
+                .then(response => response.json())
+                .then((data) =>
+                {
+                    friendsResults = data.friends;
+                    console.log(friendsResults);
+                    
+                })
+
+        }
+        function getServerBase()
+        {
+            const protocol = window.location.protocol; // 'http:' or 'https:'
+            const hostname = window.location.hostname;
+            const port = window.location.port ? ':' + window.location.port : '';
+            return `${protocol}//${hostname}${port}`;
+        }
+
 
     </script>
 </body>
