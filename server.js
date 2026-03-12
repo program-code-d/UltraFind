@@ -155,37 +155,23 @@ async function findFriend(body)
 
         // 1. Get the salt safely
         const saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
-
-        // Check if user actually exists first
-        if (saltResult.length === 0)
-        {
-            return { success: false, userExist: false, message: "User not found" };
-        }
-
         const salt = saltResult[0].salt;
         const hashedPassword = hashPassword(body.password + salt);
 
         // 2. Verify Login
         const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
-
-        if (userRows.length === 0)
-        {
-            return { success: false, userExist: false, message: "Invalid credentials" };
-        }
-
         const user_id = userRows[0].id;
 
         // 3. Search for friends (Added 'AND' and fixed logic)
         // Note: Changed body.friend_id to body.friend_name assuming that's what you're searching for
-        const searchName = `%${body.search_term || ''}%`;
+        const searchName = `%${body.friendSearch || ''}%`;
         const findQuery = `
             SELECT id, first_name, last_name 
             FROM Users 
             WHERE id != ? 
             AND CONCAT(first_name, ' ', last_name) LIKE ?;
         `;
-
         const friends = await conn.query(findQuery, [user_id, searchName]);
 
         return { success: true, friends: friends, userExist: true };
