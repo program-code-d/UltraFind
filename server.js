@@ -62,6 +62,35 @@ async function findFriend(body)
         if (conn) conn.release();
     }
 }
+
+async function addfriend(body)
+{
+    let conn;
+    try
+    {
+        conn = await pool.getConnection();
+        const saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
+        const salt = saltResult[0].salt;
+        const hashedPassword = hashPassword(body.password + salt);
+
+        const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
+        const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
+        const user_id = userRows[0].id;
+
+        // FIXED: Uses the new Friendships table and body.selectedFriendId from your frontend
+        const findQuery = "INSERT INTO Friendships (user_id, friend_id) VALUES (?, ?)";
+        const friends = await conn.query(findQuery, [user_id, body.selectedFriendId]);
+
+        return { success: true, friends: friends, userExist: true };
+    } catch (err)
+    {
+        console.error("Database error:", err);
+        return { success: false, error: "Internal Server Error" };
+    } finally
+    {
+        if (conn) conn.release();
+    }
+}
 async function registerUser(user)
 {
     let conn;
@@ -302,32 +331,32 @@ async function getfriendmessages(body)
     try
     {
         conn = await pool.getConnection();
-
-        // 1. Get the salt (assuming 'query' for salt was defined above)
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
         const hashedPassword = hashPassword(body.password + saltResult[0].salt);
 
-
         const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
-
-
         const userId = userRows[0].id;
-        const insertQuery = "SELECT message_text FROM Friends WHERE user_id = ? AND receiver_id = ? ";
-        const res = await conn.query(insertQuery, [userId, body.friend_id]);
+
+        // FIXED: Table name and logic to see messages sent OR received
+        const query = `
+            SELECT message_text, sender_id 
+            FROM DirectMessages 
+            WHERE (sender_id = ? AND receiver_id = ?) 
+            OR (sender_id = ? AND receiver_id = ?)
+            ORDER BY created_at ASC`;
+        const res = await conn.query(query, [userId, body.friend_id, body.friend_id, userId]);
 
         return { success: true, messages: res, userExist: true };
-
     } catch (err)
     {
-        console.error(err)
-        return { success: false, userExist: false }
+        console.error(err);
+        return { success: false, userExist: false };
     } finally
     {
         if (conn) conn.release();
     }
 }
-
 
 async function getFriends(body)
 {
@@ -335,50 +364,46 @@ async function getFriends(body)
     try
     {
         conn = await pool.getConnection();
-
-        // 1. Get the salt (assuming 'query' for salt was defined above)
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
         const hashedPassword = hashPassword(body.password + saltResult[0].salt);
 
-
         const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
-
-
         const userId = userRows[0].id;
-        const insertQuery = "SELECT message_text FROM Friends WHERE user_id = ? AND receiver_id = ? ";
-        const res = await conn.query(insertQuery, [userId, body.friend_id]);
 
-        return { success: true, messages: res, userExist: true };
+        // FIXED: Joins Friendships with Users to get the friend's actual name
+        const query = `
+            SELECT u.id, u.first_name, u.last_name 
+            FROM Users u
+            JOIN Friendships f ON u.id = f.friend_id
+            WHERE f.user_id = ?`;
+        const res = await conn.query(query, [userId]);
 
+        return { success: true, friends: res, userExist: true };
     } catch (err)
     {
-        console.error(err)
-        return { success: false, userExist: false }
+        console.error(err);
+        return { success: false, userExist: false };
     } finally
     {
         if (conn) conn.release();
     }
 }
-
 async function sendfriendmessage(body)
 {
     let conn;
     try
     {
         conn = await pool.getConnection();
-
-        // 1. Get the salt (assuming 'query' for salt was defined above)
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
         const hashedPassword = hashPassword(body.password + saltResult[0].salt);
-
 
         const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
 
-
         const SenderId = userRows[0].id;
-        const insertQuery = "INSERT INTO Friends (user_id,receiver_id,message_text) VALUES (?,?,?)";
+        // Changed Table to DirectMessages and column to sender_id
+        const insertQuery = "INSERT INTO DirectMessages (sender_id,receiver_id,message_text) VALUES (?,?,?)";
         const res = await conn.query(insertQuery, [SenderId, body.friend_id, body.message]);
 
         return { success: true, listing: res, userExist: true };
@@ -487,17 +512,32 @@ app.post('/signup', async (req, res) =>
 
 app.post('/sendMessage', async (req, res) =>
 {
-    //  console.log("Signup request:", req.body);
     try
     {
         const result = await sendMessage(req.body);
+        if (result && result.success)
+        {
+            res.json({ success: true }); // Simple success response
+        }
+    } catch (err)
+    {
+        res.status(400).send(err.message);
+    }
+});
+
+
+app.post('/getFriends', async (req, res) =>
+{
+    try
+    {
+        const result = await getFriends(req.body);
         if (result && !result.emailExist)
         {
             return res.json({ message: "Email In Use" })
         }
         if (result && result.success)
         {
-            // res.redirect("/index.html")
+
         }
 
     } catch (err)
@@ -508,12 +548,11 @@ app.post('/sendMessage', async (req, res) =>
 
 });
 
-
-app.post('/getFriends', async (req, res) =>
+app.post('/addfriend', async (req, res) =>
 {
     try
     {
-        const result = await getFriends(req.body);
+        const result = await addfriend(req.body);
         if (result && !result.emailExist)
         {
             return res.json({ message: "Email In Use" })

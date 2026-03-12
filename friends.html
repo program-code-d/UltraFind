@@ -124,6 +124,45 @@
         }
 
 
+        // 1. Get a reference to the dropdown
+        const friendSelect = document.getElementById('friend-select');
+
+        // 2. Listen for when the user picks an option
+        friendSelect.addEventListener('change', function ()
+        {
+            // This gets the 'value' (friend.id) you assigned in findFriend()
+            const selectedFriendId = this.value;
+
+            // This gets the actual name (e.g., "John Doe")
+            const selectedFriendName = this.options[this.selectedIndex].text;
+
+            // For now, let's log it to the console to prove it works
+            console.log("User selected Friend ID:", selectedFriendId);
+            console.log("User selected Name:", selectedFriendName);
+
+            // Logic: You can now use selectedFriendId to filter messages or start a chat
+            if (selectedFriendId !== "none")
+            {
+                alert("You are now chatting with " + selectedFriendName);
+                fetch(getServerBase() + "/addfriend", {
+                    // Defines the HTTP verb as POST, which is used for sending data to a server.
+                    method: 'POST',
+                    headers: {
+                        // Informs the server that the data being sent is formatted as a JSON string.
+                        'Content-Type': 'application/json'
+                    },
+                    // Converts the JavaScript object into a standardized JSON string for transmission.
+                    body: JSON.stringify({ email: email, password: password, selectedFriendId})
+                })
+                    .then(response => response.json())
+                    .then((data) =>
+                    {
+                       
+                    })
+
+            }
+        });
+
     </script>
 </body>
 
