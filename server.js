@@ -24,6 +24,44 @@ function hashPassword(passw_string)
     return crypto.createHash("sha256").update(String(passw_string)).digest("hex");
 }
 
+async function findFriend(body)
+{
+    let conn;
+    try
+    {
+        conn = await pool.getConnection();
+
+        // 1. Get the salt safely
+        const saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
+        const salt = saltResult[0].salt;
+        const hashedPassword = hashPassword(body.password + salt);
+
+        // 2. Verify Login
+        const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
+        const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
+        const user_id = userRows[0].id;
+
+        // 3. Search for friends (Added 'AND' and fixed logic)
+        // Note: Changed body.friend_id to body.friend_name assuming that's what you're searching for
+        const findQuery = `
+            SELECT id, first_name, last_name 
+            FROM Users 
+            WHERE id != ? 
+            AND CONCAT(first_name, ' ', last_name) LIKE ?;
+        `;
+        const friends = await conn.query(findQuery, [user_id, `%${body.friendSearch}%`]);
+
+        return { success: true, friends: friends, userExist: true };
+
+    } catch (err)
+    {
+        console.error("Database error:", err);
+        return { success: false, error: "Internal Server Error" };
+    } finally
+    {
+        if (conn) conn.release();
+    }
+}
 async function registerUser(user)
 {
     let conn;
@@ -38,7 +76,7 @@ async function registerUser(user)
 
         const firstName = user.firstName || user.first_name;
         const lastName = user.lastName || user.last_name;
-       // //const code=
+        // //const code=
 
         const query = "INSERT INTO Users (first_name,last_name,email,password,age,location,salt) VALUES (?, ?, ?, ?, ?, ?, ?)";
         const res = await conn.query(query, [firstName, lastName, user.email, hashedPassword, user.age, "", salt]);
@@ -144,49 +182,6 @@ async function createListing(body)
         if (conn) conn.release();
     }
 }
-
-
-async function findFriend(body)
-{
-    let conn;
-    try
-    {
-        conn = await pool.getConnection();
-
-        // 1. Get the salt safely
-        const saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
-        const salt = saltResult[0].salt;
-        const hashedPassword = hashPassword(body.password + salt);
-
-        // 2. Verify Login
-        const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
-        const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
-        const user_id = userRows[0].id;
-
-        // 3. Search for friends (Added 'AND' and fixed logic)
-        // Note: Changed body.friend_id to body.friend_name assuming that's what you're searching for
-        const searchName = `%${body.friendSearch || ''}%`;
-        const findQuery = `
-            SELECT id, first_name, last_name 
-            FROM Users 
-            WHERE id != ? 
-            AND CONCAT(first_name, ' ', last_name) LIKE ?;
-        `;
-        const friends = await conn.query(findQuery, [user_id, searchName]);
-
-        return { success: true, friends: friends, userExist: true };
-
-    } catch (err)
-    {
-        console.error("Database error:", err);
-        return { success: false, error: "Internal Server Error" };
-    } finally
-    {
-        if (conn) conn.release();
-    }
-}
-
-
 async function getListings(body)
 {
     let conn;
@@ -525,7 +520,7 @@ app.post('/getFriends', async (req, res) =>
         }
         if (result && result.success)
         {
-    
+
         }
 
     } catch (err)

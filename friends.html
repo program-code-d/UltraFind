@@ -19,7 +19,7 @@
 
     <div class="friends-nav" id="friends-list-nav">
         <div id="Home" style="cursor:pointer;">
-            <div><strong>Home</strong></div>
+            <div><strong>Friends</strong></div>
         </div>
     </div>
 
@@ -28,10 +28,9 @@
     </div>
 
     <label for="friend-select">Choose a person:</label>
-    <select id="friend-select">
-        <option value="none" selected disabled>Select an option...</option>
-        <option value="1">John Doe</option>
-        <option value="2">Jane Smith</option>
+    <select id="friend-select" class="dropdown">
+        <option value="none" selected disabled>Select Your Friend</option>
+
     </select>
 
     <div class="messageBox">
@@ -88,17 +87,34 @@
                     'Content-Type': 'application/json'
                 },
                 // Converts the JavaScript object into a standardized JSON string for transmission.
-                body: JSON.stringify({ email: email, password: password, friendSearch: friendSearch.value })
+                body: JSON.stringify({ email: email, password: password, friendSearch: friendSearch.elements['user-friend-id'].value })
             })
                 .then(response => response.json())
                 .then((data) =>
                 {
                     friendsResults = data.friends;
-                    console.log(friendsResults);
-                    
+                    // 1. Get the select element
+                    const select = document.getElementById('friend-select');
+
+                    // 2. Clear out old results (keep the first "Choose a person" option)
+                    select.innerHTML = '<option value="none" selected disabled>Choose a person...</option>';
+
+                    // 3. Loop through the friends and add them
+                    data.friends.forEach(friend =>
+                    {
+                        const option = document.createElement('option');
+                        option.value = friend.id; // The ID from your database
+                        option.textContent = `${friend.first_name} ${friend.last_name}`; // The name
+                        select.appendChild(option);
+                    });
+
+                    // 4. Make the dropdown container visible
+                    document.querySelector('.dropdown').style.display = 'block';
                 })
 
+
         }
+
         function getServerBase()
         {
             const protocol = window.location.protocol; // 'http:' or 'https:'
