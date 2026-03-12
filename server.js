@@ -38,7 +38,7 @@ async function registerUser(user)
 
         const firstName = user.firstName || user.first_name;
         const lastName = user.lastName || user.last_name;
-        //const code=
+       // //const code=
 
         const query = "INSERT INTO Users (first_name,last_name,email,password,age,location,salt) VALUES (?, ?, ?, ?, ?, ?, ?)";
         const res = await conn.query(query, [firstName, lastName, user.email, hashedPassword, user.age, "", salt]);
