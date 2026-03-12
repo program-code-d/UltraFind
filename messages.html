@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <title>Friends</title>
     <link rel="stylesheet" href="CSS files/messages.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body onload="main()">
@@ -67,16 +68,26 @@
                     <div>
                         <h3>
                             <strong>
-                                Code: 
+                                Code:${getMyCode()}
                             </strong>
                         </h3>
                     </div>
-                    <div>
-                    <input placeholder="Type email, code, or name here"></input>    
+                    <div style="display: flex; align-items: center; gap: 10px; width: 100%;">
+                        <input id="search" placeholder="Type email, code, or name here" style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;"></input>
+                        <i id="find" onclick="find()" class="fa-solid fa-magnifying-glass fa-shake" style="font-size: 20px; color: #6c6c6c; cursor: pointer; flex-shrink: 0;"></i>
                     </div>
                  </div>
                  
             `
+        }
+        function isEmailCodeName(search)
+        {
+            
+        }
+        function find()
+        {
+            let search=document.getElementById("search").value
+            isEmailCodeName(search)
         }
     </script>
 </body>
