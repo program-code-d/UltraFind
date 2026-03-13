@@ -152,7 +152,11 @@
                         'Content-Type': 'application/json'
                     },
                     // Converts the JavaScript object into a standardized JSON string for transmission.
-                    body: JSON.stringify({ email: email, password: password, selectedFriendId })
+                    body: JSON.stringify({
+                        email: email,
+                        password: password,
+                        selectedFriendId: friendSearch.elements['user-friend-id'].value // Match the backend name!
+                    })
                 })
                     .then(response => response.json())
                     .then((data) =>

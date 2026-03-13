@@ -78,11 +78,21 @@ async function addfriend(body)
         const user_id = userRows[0].id;
 
         // FIXED: Uses the new Friendships table and body.selectedFriendId from your frontend
-        const findQuery = "INSERT INTO Friendships (user_id, friend_id) VALUES (?, ?)";
+        const findQuery = "INSERT IGNORE INTO Friendships (user_id, friend_id) VALUES (?, ?)";
         const friend = await conn.query(findQuery, [user_id, body.selectedFriendId]);
 
-        const query = "SELECT friend_id FROM Friendships WHERE user_id = ?";
-        const friends = await conn.query(query, [user_id]);
+        // This finds friends where you are the sender OR the receiver
+        const query = `
+        SELECT 
+            CASE 
+                WHEN user_id = ? THEN friend_id 
+                ELSE user_id 
+            END AS friend_id
+        FROM Friendships 
+        WHERE (user_id = ? OR friend_id = ?) 
+        AND status = 'pending'`;
+
+        const friends = await conn.query(query, [user_id, user_id, user_id]);
 
         return { success: true, friends: friends, userExist: true };
     } catch (err)
