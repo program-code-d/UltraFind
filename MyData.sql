@@ -49,7 +49,7 @@ CREATE TABLE
         id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         user_id INT UNSIGNED NOT NULL,
         friend_id INT UNSIGNED NOT NULL,
-        status ENUM ('pending', 'accepted', 'blocked') DEFAULT 'accepted',
+        status ENUM ('pending', 'accepted', 'blocked') DEFAULT 'pending',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT fk_friend_user FOREIGN KEY (user_id) REFERENCES Users (id) ON DELETE CASCADE,
         CONSTRAINT fk_friend_friend FOREIGN KEY (friend_id) REFERENCES Users (id) ON DELETE CASCADE,
