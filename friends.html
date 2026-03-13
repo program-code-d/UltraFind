@@ -152,12 +152,42 @@
                         'Content-Type': 'application/json'
                     },
                     // Converts the JavaScript object into a standardized JSON string for transmission.
-                    body: JSON.stringify({ email: email, password: password, selectedFriendId})
+                    body: JSON.stringify({ email: email, password: password, selectedFriendId })
                 })
                     .then(response => response.json())
                     .then((data) =>
                     {
-                       
+                        const nav = document.getElementById('friends-list-nav');
+                        const friends = data.friends; // Your array of names
+
+                        friends.forEach(friendName =>
+                        {
+                            // 1. Create the outer wrapper div
+                            const friendDiv = document.createElement('div');
+                            friendDiv.className = 'friend-item'; // Good for CSS styling later
+                            friendDiv.style.cursor = 'pointer';
+
+                            // 2. Create the inner div for the name
+                            const nameContainer = document.createElement('div');
+
+                            // 3. Create the strong tag for the text
+                            const strongName = document.createElement('strong');
+                            strongName.textContent = friendName;
+
+                            // 4. Assemble: strong -> inner div -> outer div
+                            nameContainer.appendChild(strongName);
+                            friendDiv.appendChild(nameContainer);
+
+                            // 5. Add a click event so you can actually do something!
+                            friendDiv.onclick = () =>
+                            {
+                                console.log(`You clicked on ${friendName}`);
+                            };
+
+                            // 6. Put it in the navigation menu
+                            nav.appendChild(friendDiv);
+                        });
+
                     })
 
             }
