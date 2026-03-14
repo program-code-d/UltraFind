@@ -94,21 +94,10 @@
                 {
                     friendsResults = data.friends;
                     // 1. Get the select element
-                    const select = document.getElementById('friend-select');
-
-                    // 2. Clear out old results (keep the first "Choose a person" option)
-                    select.innerHTML = '<option value="none" selected disabled>Choose a person...</option>';
-
-                    // 3. Loop through the friends and add them
-                    data.friends.forEach(friend =>
+                    for (let i = 0; i <= data.friends.length; i++)
                     {
-                        const option = document.createElement('option');
-                        option.value = friend.id; // The ID from your database
-                        option.textContent = `${friend.first_name} ${friend.last_name}`; // The name
-                        select.appendChild(option);
-                    });
-
-                    // 4. Make the dropdown container visible
+                      data.friends[i]
+                    }
                     document.querySelector('.dropdown').style.display = 'block';
                 })
 
