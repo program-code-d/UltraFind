@@ -198,7 +198,7 @@ async function createListing(body)
                 body.description,
                 body.pay,
                 body.location,
-                body.age
+                body.age                                                           
             ]);
 
             console.log("Listing created! New Listing ID:", res.insertId);
