@@ -94,9 +94,25 @@
                 {
                     friendsResults = data.friends;
                     // 1. Get the select element
-                    for (let i = 0; i <= data.friends.length; i++)
+                    // 1. Get the parent container from the HTML
+                    // 1. Find the parent <div> where the friends will be placed
+                    const nav = document.getElementById('friends-list-nav');
+
+                    // 2. Start the loop to go through every friend in your list
+                    for (let i = 0; i < friendsResults.length; i++)
                     {
-                      data.friends[i]
+
+                        // 3. Create a shortcut variable for the specific friend at the current position 'i'
+                        const friend = friendsResults[i];
+
+                        // 4. Create a string of HTML using backticks to inject the friend's data
+                        const friendHTML = `
+                         <div class="friend-item" data-id="${friend.id}" style="cursor:pointer; padding:10px;">
+                           <strong>${friend.first_name} ${friend.last_name}</strong>
+                         </div>`;
+
+                        // 5. Add this new HTML block into the nav, right before the </div> ends
+                        nav.insertAdjacentHTML('beforeend', friendHTML);
                     }
                     document.querySelector('.dropdown').style.display = 'block';
                 })
