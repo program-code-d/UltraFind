@@ -2,9 +2,9 @@
 .clean-btn {
     /* 1. Positioning */
     position: fixed; /* Positions the button relative to the browser window */
-    top: 10px;      /* Places it 10px from the top edge */
+    top: 80px;      /* Adjusted to be below the top navbar */
     right: 10px;    /* Places it 10px from the right edge */
-    z-index: 1000;  /* Ensures the button is above other content */
+    z-index: 999;   /* Below the navbar but above other content */
 
     /* 2. Reset/Remove default styles */
     all: unset; /* Modern way, well-supported except IE */
@@ -24,13 +24,15 @@
     /* 4. Ensure keyboard accessibility */
     outline: revert; /* Revert the outline to the browser's default for focus */
 }
+
 .main-container {
     display: flex;         /* The magic wand */
     flex-direction: row;   /* Keeps them in a line */
     align-items: flex-start; /* Aligns everything to the top */
     gap: 24px;             /* Spacing between the columns */
     padding: 20px;
-    width: 100%;
+    width: 98%;
+    margin-top: 70px;      /* Space below fixed top navbar */
 }
 
 #navbar {

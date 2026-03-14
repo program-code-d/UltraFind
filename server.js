@@ -266,18 +266,24 @@ async function getNavbar(body)
 
         navbar =
             `
-        <div class = "main-navbar">
-            <div id="Home" onclick="goToDifferentScreen('index.html')">
-                <div>Home</div>
+        <nav class="top-navbar">
+            <div class="navbar-container">
+                <div class="navbar-logo" onclick="goToDifferentScreen('index.html')">
+                     <span>UltraFind</span>
+                </div>
+                <div class="navbar-links">
+                    <div class="nav-item" onclick="goToDifferentScreen('index.html')">
+                        <span>Home</span>
+                    </div>
+                    <div class="nav-item" onclick="goToDifferentScreen('friends.html')">
+                        <span>Friends</span>
+                    </div>
+                    <div class="nav-item" onclick="goToDifferentScreen('manage_listings.html')">
+                        <span>Manage Listings</span>
+                    </div>
+                </div>
             </div>
-            <div id="Messages" onclick="goToDifferentScreen('messages.html')">
-                <div>Messages</div>
-            </div>
-            <div id="Friends" onclick="goToDifferentScreen('friends.html')">
-                <div>Friends</div>
-            </div>
-            
-        </div>
+        </nav>
         `
         //   console.log("Listing created! New Listing ID:", res.insertId);
         return { success: true, navbar: navbar, userExist: true };
