@@ -26,3 +26,88 @@
 .main-navbar div div {
     user-select: none; /* Prevents text highlighting on click */
 }
+
+/* ========================================
+   TOP NAVIGATION BAR STYLING
+   ======================================== */
+
+/* 1. Main Top Navbar Container */
+.top-navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background-color: #ffffff;
+    border-bottom: 2px solid #ddd;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 2. Navbar Inner Container - Flex Layout */
+.navbar-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    max-width: 100%;
+    gap: 40px;
+}
+
+/* 3. Logo/Brand Section */
+.navbar-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 20px;
+    font-weight: 700;
+    color: #333;
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.2s ease;
+    flex-shrink: 0;
+}
+
+.navbar-logo:hover {
+    color: #0066cc;
+}
+
+.navbar-logo span {
+    font-family: sans-serif;
+}
+
+/* 4. Navigation Links Container */
+.navbar-links {
+    display: flex;
+    flex-direction: row;
+    gap: 30px;
+    align-items: center;
+    flex-grow: 1;
+    justify-content: flex-end;
+}
+
+/* 5. Individual Navigation Items */
+.nav-item {
+    cursor: pointer;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-family: sans-serif;
+    font-weight: 500;
+    font-size: 15px;
+    color: #555;
+    transition: all 0.2s ease;
+    user-select: none;
+    border: 2px solid transparent;
+}
+
+.nav-item:hover {
+    background-color: #f0f0f0;
+    color: #333;
+}
+
+/* 6. Active Navigation Item */
+.nav-item.active {
+    color: #0066cc;
+    border-bottom: 2px solid #0066cc;
+    background-color: #f0f8ff;
+}

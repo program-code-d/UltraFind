@@ -31,13 +31,26 @@
                 draw_listings()
             })
     }
-function getServerBase()
-    {
+
+    function getServerBase() {
         const protocol = window.location.protocol; // 'http:' or 'https:'
         const hostname = window.location.hostname;
         const port = window.location.port ? ':' + window.location.port : '';
         return `${protocol}//${hostname}${port}`;
     }
+
+    function goToHome() {
+        window.location.href = 'index.html'
+    }
+
+    function goToFriends() {
+        window.location.href = 'friends.html'
+    }
+
+    function goToManageListings() {
+        window.location.href = 'manage_listings.html'
+    }
+
     function draw_listings() {
         let listings_div = ``
         let l = 0
@@ -72,7 +85,7 @@ function getServerBase()
         })
             .then(response => response.json())
             .then((data) => {
-                document.getElementById("navbar").innerHTML = data
+                document.getElementById("navbar-container").innerHTML = data
             })
     }
 </script>
@@ -81,9 +94,12 @@ function getServerBase()
 
 <body onload="main()">
 
+    <!-- 1. Top Navigation Bar (Injected from server) -->
+    <div id="navbar-container"></div>
+
+    <!-- 2. Main Container with Sidebar -->
     <div class="main-container">
-        <nav id="navbar">
-        </nav>
+        
 
         <main id="listings">
         </main>
