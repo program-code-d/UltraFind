@@ -26,12 +26,15 @@
     <div class="people">
         <button onclick="startaddingfriend(event)">Add friend</button>
     </div>
-
+       <div id="friends-select-box" >
     <label for="friend-select">Choose a person:</label>
     <select id="friend-select" class="dropdown">
         <option value="none" selected disabled>Select Your Friend</option>
 
     </select>
+    </div>
+    
+ 
 
     <div class="messageBox">
         <div class="fileUploadWrapper">
@@ -94,10 +97,21 @@
                 {
                     friendsResults = data.friends;
                     // 1. Get the select element
-                    for (let i = 0; i <= data.friends.length; i++)
+                    const select = document.getElementById('friend-select');
+
+                    // 2. Clear out old results (keep the first "Choose a person" option)
+                    select.innerHTML = '<option value="none" selected disabled>Choose a person...</option>';
+
+                    // 3. Loop through the friends and add them
+                    data.friends.forEach(friend =>
                     {
-                      data.friends[i]
-                    }
+                        const option = document.createElement('option');
+                        option.value = friend.id; // The ID from your database
+                        option.textContent = `${friend.first_name} ${friend.last_name}`; // The name
+                        select.appendChild(option);
+                    });
+
+                    // 4. Make the dropdown container visible
                     document.querySelector('.dropdown').style.display = 'block';
                 })
 
