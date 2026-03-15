@@ -101,6 +101,14 @@ async function registerUser(user)
     let conn;
     try
     {
+        if (user.age < 13)
+        {
+            return { notunderage: false };
+        }
+        if (!isEmail(user.email))
+        {
+            return {EmailFormat:false}
+        }
         if (!user.email) throw new Error("Email is required");
         let salt = Math.trunc((Math.random() * (10099999 - 0) + 0) * 78 - 12.2)
 
@@ -247,6 +255,37 @@ async function getListings(body)
         if (conn) conn.release();
     }
 }
+async function getMyListings(body)
+{
+    let conn;
+    try
+    {
+        conn = await pool.getConnection();
+
+        // 1. Get the salt (assuming 'query' for salt was defined above)
+        let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
+        const hashedPassword = hashPassword(body.password + saltResult[0].salt);
+
+
+        const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
+        const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
+
+
+        const insertQuery = "SELECT * FROM Listings WHERE user_id = ?;";
+        const res = await conn.query(insertQuery, [userRows[0].id]);
+
+        //   console.log("Listing created! New Listing ID:", res.insertId);
+        return { success: true, listings: res, userExist: true };
+
+    } catch (err)
+    {
+        console.error(err)
+        return { success: false, userExist: false }
+    } finally
+    {
+        if (conn) conn.release();
+    }
+}
 async function getNavbar(body)
 {
     let conn;
@@ -264,7 +303,7 @@ async function getNavbar(body)
 
 
 
-       navbar =
+        navbar =
             `
         <nav class="top-navbar">
             <div class="navbar-container">
@@ -273,13 +312,13 @@ async function getNavbar(body)
                 </div>
                 <div class="navbar-links">
                     <div class="nav-item" onclick="goToDifferentScreen('index.html')">
-                        <span>Home</span>
+                        <span><i class="fa fa-home" style="font-size:4vh"></i></span>
                     </div>
                     <div class="nav-item" onclick="goToDifferentScreen('friends.html')">
-                        <span>Friends</span>
+                        <span> <i class="fa fa-group" style="font-size:3.3vh"></i></span>
                     </div>
                     <div class="nav-item" onclick="goToDifferentScreen('manage_listings.html')">
-                        <span>Manage Listings</span>
+                        <span><i class="fa fa-folder-open" style="font-size:4vh"></i></span>
                     </div>
                 </div>
             </div>
@@ -503,9 +542,9 @@ app.post('/signup', async (req, res) =>
     try
     {
         const result = await registerUser(req.body);
-        if (result && result.emailExist)
+        if ((result && result.emailExist)|| (!result.notunderage) || (!result.EmailFormat))
         {
-            return res.json({ message: "Email In Use" })
+            return res.json({ message: "failed" })
         }
         if (result && result.success)
         {
@@ -658,6 +697,29 @@ app.post('/getListings', async (req, res) =>
     try
     {
         const result = await getListings(req.body);
+        if (result && !result.userExist)
+        {
+            return res.json({ message: "failed" })
+        }
+        if (result && result.success)
+        {
+            // res.redirect("/index.html")
+            res.json(result.listings)
+        }
+
+    } catch (err)
+    {
+        res.status(400).send(err.message);
+    }
+
+});
+
+
+app.post('/getMyListings', async (req, res) =>
+{
+    try
+    {
+        const result = await getMyListings(req.body);
         if (result && !result.userExist)
         {
             return res.json({ message: "failed" })

@@ -14,13 +14,16 @@
     let email
     let password
 
-    function main() {
+    function main()
+    {
         email = localStorage.getItem('email')
         password = localStorage.getItem('password')
         injectNavbar()
+        getMyListings()
     }
 
-    function goToDifferentScreen(file) {
+    function goToDifferentScreen(file)
+    {
         fetch(getServerBase() + "/switchFile", {
             method: 'POST',
             headers: {
@@ -28,8 +31,10 @@
             },
             body: JSON.stringify({ email: email, password: password, file: file })
         })
-            .then(response => {
-                if (response.redirected) {
+            .then(response =>
+            {
+                if (response.redirected)
+                {
                     localStorage.setItem('email', email);
                     localStorage.setItem('password', password);
                     window.location.href = response.url;
@@ -39,14 +44,16 @@
             })
     }
 
-    function getServerBase() {
+    function getServerBase()
+    {
         const protocol = window.location.protocol;
         const hostname = window.location.hostname;
         const port = window.location.port ? ':' + window.location.port : '';
         return `${protocol}//${hostname}${port}`;
     }
 
-    function injectNavbar() {
+    function injectNavbar()
+    {
         fetch(getServerBase() + "/getNavbar", {
             method: 'POST',
             headers: {
@@ -55,11 +62,70 @@
             body: JSON.stringify({ email: email, password: password })
         })
             .then(response => response.json())
-            .then((data) => {
-                document.getElementById("navbar-container").innerHTML = data.navbar
+            .then((data) =>
+            {
+                document.getElementById("navbar-container").innerHTML = data
             })
     }
+    function getMyListings()
+    {
+
+        fetch(getServerBase() + "/getMyListings", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email: email, password: password })
+        })
+            .then(response => response.json())
+            .then((data) =>
+            {
+                drawMyListings(data)
+            })
+    }
+
+
+
+    function drawMyListings(myListings) {
+    let htmlContent = "";
+    
+    for (let i = 0; i < myListings.length; i++) {
+        let item = myListings[i];
+        
+        htmlContent += `
+            <div onclick="goToInfoListing(${item.id})" class="listing-card-square">
+                
+                <div class="image-placeholder">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                </div>
+
+                <div class="card-content">
+                    <h1>${item.title}</h1>
+                    <div class="card-price">$${item.price}/hr</div>
+                    <p class="card-desc">${item.description}</p>
+                    
+                    <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.75rem; color: #999; font-weight: 600; text-transform: uppercase;">
+                            ${item.location} • Due: Date
+                        </span>
+                        <span style="font-size: 0.75rem; color: #9c27b0; font-weight: bold;">
+                            ACTIVE
+                        </span>
+                    </div>
+                </div>
+
+            </div>`;
+    }
+    
+    document.getElementById("manage-listings-container").innerHTML = htmlContent;
+}
+
 </script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
 <body onload="main()">
     <!-- 1. Top Navigation Bar (Injected from server) -->
@@ -68,8 +134,7 @@
     <!-- 2. Main Content Area -->
     <main class="main-content">
         <div id="manage-listings-container">
-            <h1>Manage Your Listings</h1>
-            <!-- Content will go here -->
+
         </div>
     </main>
 

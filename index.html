@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
 </head>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
 <script src="navbar.js"></script>
 <script>
     let listings
@@ -84,7 +86,7 @@
         })
             .then(response => response.json())
             .then((data) => {
-                document.getElementById("navbar-container").innerHTML = data.navbar
+                document.getElementById("navbar-container").innerHTML = data
             })
     }
 </script>
@@ -98,14 +100,14 @@
 
     <!-- 2. Main Container with Sidebar -->
     <div class="main-container">
-        <nav id="navbar">
-        </nav>
+        
 
         <main id="listings">
         </main>
 
         <div class="action-area">
             <button onclick="goToDifferentScreen('create_listing.html')" class="clean-btn">+</button>
+           
         </div>
     </div>
 
