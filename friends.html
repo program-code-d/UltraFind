@@ -4,139 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <title>Friends</title>
-    <link rel="stylesheet" href="CSS files/navbar.css">
     <link rel="stylesheet" href="CSS files/messages.css">
 </head>
 
-<script src="navbar.js"></script>
-<script>
-    var email;
-    var password;
-    
-    function main() {
-        email = localStorage.getItem('email')
-        password = localStorage.getItem('password')
-        injectNavbar()
-    }
-
-    function getServerBase() {
-        const protocol = window.location.protocol; // 'http:' or 'https:'
-        const hostname = window.location.hostname;
-        const port = window.location.port ? ':' + window.location.port : '';
-        return `${protocol}//${hostname}${port}`;
-    }
-
-    function injectNavbar() {
-        fetch(getServerBase() + "/getNavbar", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ email: email, password: password })
-        })
-            .then(response => response.json())
-            .then((data) => {
-                document.getElementById("navbar-container").innerHTML = data.navbar
-            })
-    }
-
-    let friendSearch;
-    let friendsResults;
-    
-    function startaddingfriend(event) {
-        event.preventDefault();
-        document.querySelector('.chat-bar').style.display = 'block';
-    }
-
-    function findFriend(event) {
-        event.preventDefault();
-        friendSearch = document.getElementById('chat-form');
-        
-        fetch(getServerBase() + "/findFriend", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ email: email, password: password, friendSearch: friendSearch.elements['user-friend-id'].value })
-        })
-            .then(response => response.json())
-            .then((data) => {
-                friendsResults = data.friends;
-                for (let i = 0; i < data.friends.length; i++) {
-                    console.log(data.friends[i])
-                }
-                document.querySelector('.dropdown').style.display = 'block';
-            })
-    }
-
-    function sendMessage(event) {
-        event.preventDefault();
-    }
-</script>
-
-<body onload="main()">
-    <!-- 1. Top Navigation Bar (Injected from server) -->
-    <div id="navbar-container"></div>
-
-    <!-- 2. Main Content Area -->
-    <main class="friends-main-content">
-        <div id="messages-display"></div>
-
-        <div class="chat-bar">
-            <form id="chat-form">
-                <input type="text" id="user-friend-id" placeholder="Type your friends name" required>
-                <button onclick="findFriend(event)" type="submit">Find friend</button>
-            </form>
-        </div>
-
-        <div class="friends-nav" id="friends-list-nav">
-            <div id="Home" style="cursor:pointer;">
-                <div><strong>Friends</strong></div>
-            </div>
-        </div>
-
-        <div class="people">
-            <button onclick="startaddingfriend(event)">Add friend</button>
-        </div>
-
-        <label for="friend-select">Choose a person:</label>
-        <select id="friend-select" class="dropdown">
-            <option value="none" selected disabled>Select Your Friend</option>
-        </select>
-
-        <div class="messageBox">
-            <div class="fileUploadWrapper">
-                <label for="file">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 337 337">
-                        <circle stroke-width="20" stroke="#6c6c6c" fill="none" r="158.5" cy="168.5" cx="168.5"></circle>
-                        <path stroke-linecap="round" stroke-width="25" stroke="#6c6c6c" d="M167.759 79V259"></path>
-                        <path stroke-linecap="round" stroke-width="25" stroke="#6c6c6c" d="M79 167.138H259"></path>
-                    </svg>
-                    <span class="tooltip">Add an image</span>
-                </label>
-                <input type="file" id="file" name="file" />
-            </div>
-            <input required="" placeholder="Message..." type="text" id="messageInput" />
-            <button id="sendButton" onclick="sendMessage(event)">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 664 663">
-                    <path fill="none" d="M646.293 331.888L17.7538 17.6187L155.245 331.888M646.293 331.888L17.753 646.157L155.245 331.888M646.293 331.888L318.735 330.228L155.245 331.888"></path>
-                    <path stroke-linejoin="round" stroke-linecap="round" stroke-width="33.67" stroke="#6c6c6c" d="M646.293 331.888L17.7538 17.6187L155.245 331.888M646.293 331.888L17.753 646.157L155.245 331.888M646.293 331.888L318.735 330.228L155.245 331.888"></path>
-                </svg>
-            </button>
-        </div>
-    </main>
-
-    <script>
-        document.querySelector('.dropdown').style.display = 'none';
-        document.querySelector('.chat-bar').style.display = 'none';
-    </script>
-</body>
-
-</html>
-
-    <!-- 2. Main Content Area -->
-    <main class="friends-main-content">
-        <div id="messages-display"></div>
+<body>
+    <div id="messages-display"></div>
 
     <div class="chat-bar">
         <form id="chat-form">
@@ -197,7 +69,7 @@
         password = localStorage.getItem('password')
         let friend_input_element = document.getElementById('user-friend-id');
         let friendSearch = document.getElementById('chat-form');
-        
+        let friendsResults;
         document.querySelector('.dropdown').style.display = 'none';
         document.querySelector('.chat-bar').style.display = 'none';
 
@@ -225,7 +97,6 @@
                 {
                     friendsResults = data.friends;
                     // 1. Get the select element
-<<<<<<< HEAD
                     const select = document.getElementById('friend-select');
 
                     // 2. Clear out old results (keep the first "Choose a person" option)
@@ -241,28 +112,6 @@
                     });
 
                     // 4. Make the dropdown container visible
-=======
-                    // 1. Get the parent container from the HTML
-                    // 1. Find the parent <div> where the friends will be placed
-                    const nav = document.getElementById('friends-list-nav');
-
-                    // 2. Start the loop to go through every friend in your list
-                    for (let i = 0; i < friendsResults.length; i++)
-                    {
-
-                        // 3. Create a shortcut variable for the specific friend at the current position 'i'
-                        const friend = friendsResults[i];
-
-                        // 4. Create a string of HTML using backticks to inject the friend's data
-                        const friendHTML = `
-                         <div class="friend-item" data-id="${friend.id}" style="cursor:pointer; padding:10px;">
-                           <strong>${friend.first_name} ${friend.last_name}</strong>
-                         </div>`;
-
-                        // 5. Add this new HTML block into the nav, right before the </div> ends
-                        nav.insertAdjacentHTML('beforeend', friendHTML);
-                    }
->>>>>>> d517efdbef86309f1eadc91892449d8576f14b62
                     document.querySelector('.dropdown').style.display = 'block';
                 })
 
