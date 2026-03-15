@@ -26,15 +26,12 @@
     <div class="people">
         <button onclick="startaddingfriend(event)">Add friend</button>
     </div>
-       <div id="friends-select-box" >
+
     <label for="friend-select">Choose a person:</label>
     <select id="friend-select" class="dropdown">
         <option value="none" selected disabled>Select Your Friend</option>
 
     </select>
-    </div>
-    
- 
 
     <div class="messageBox">
         <div class="fileUploadWrapper">
@@ -165,36 +162,26 @@
                     .then((data) =>
                     {
                         const nav = document.getElementById('friends-list-nav');
-                        const friends = data.friends; // Your array of names
 
-                        friends.forEach(friendName =>
-                        {
-                            // 1. Create the outer wrapper div
-                            const friendDiv = document.createElement('div');
-                            friendDiv.className = 'friend-item'; // Good for CSS styling later
-                            friendDiv.style.cursor = 'pointer';
+                        // 1. Use the data coming back from your server
+                        const friends = data.friends;
+                        console.log("entered .then")
+                        // 2. ONLY ONE LOOP - Use the standard for loop as you requested
+                        for (let i = 0; i < friends.length; i++)
+                        { // Use < not <=
 
-                            // 2. Create the inner div for the name
-                            const nameContainer = document.createElement('div');
+                            const friend = friends[i];
 
-                            // 3. Create the strong tag for the text
-                            const strongName = document.createElement('strong');
-                            strongName.textContent = friendName;
+                            // 3. Create the HTML
+                            const friendHTML = `
+                            <div class="friend-item" data-id="${friend.id}" style="cursor:pointer; padding:10px;">
+                                <strong>${friend.first_name} ${friend.last_name}</strong>
+                            </div>`;
+                            console.error(`${friend.id}   ${friend.first_name}    ${friend.last_name}`)
 
-                            // 4. Assemble: strong -> inner div -> outer div
-                            nameContainer.appendChild(strongName);
-                            friendDiv.appendChild(nameContainer);
-
-                            // 5. Add a click event so you can actually do something!
-                            friendDiv.onclick = () =>
-                            {
-                                console.log(`You clicked on ${friendName}`);
-                            };
-
-                            // 6. Put it in the navigation menu
-                            nav.appendChild(friendDiv);
-                        });
-
+                            // 4. Add it to the div
+                            nav.insertAdjacentHTML('beforeend', friendHTML);
+                        }
                     })
 
             }
