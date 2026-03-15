@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "express": "^5.2.1",
-    "mariadb": "^3.5.1"
+    "mariadb": "^3.5.1",
+    "multer": "^2.1.1"
   }
 }

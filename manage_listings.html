@@ -86,13 +86,15 @@
 
 
 
-    function drawMyListings(myListings) {
-    let htmlContent = "";
-    
-    for (let i = 0; i < myListings.length; i++) {
-        let item = myListings[i];
-        
-        htmlContent += `
+    function drawMyListings(myListings)
+    {
+        let htmlContent = "";
+
+        for (let i = 0; i < myListings.length; i++)
+        {
+            let item = myListings[i];
+
+            htmlContent += `
             <div onclick="goToInfoListing(${item.id})" class="listing-card-square">
                 
                 <div class="image-placeholder">
@@ -107,22 +109,22 @@
                     <h1>${item.title}</h1>
                     <div class="card-price">$${item.price}/hr</div>
                     <p class="card-desc">${item.description}</p>
-                    
+                    <span style="font-size: 0.75rem; color: #9c27b0; font-weight: bold;">
+                            ACTIVE
+                        </span>
                     <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
                         <span style="font-size: 0.75rem; color: #999; font-weight: 600; text-transform: uppercase;">
                             ${item.location} • Due: Date
                         </span>
-                        <span style="font-size: 0.75rem; color: #9c27b0; font-weight: bold;">
-                            ACTIVE
-                        </span>
+                        <i class="fa-solid fa-ellipsis"></i>
                     </div>
                 </div>
 
             </div>`;
+        }
+
+        document.getElementById("manage-listings-container").innerHTML = htmlContent;
     }
-    
-    document.getElementById("manage-listings-container").innerHTML = htmlContent;
-}
 
 </script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">

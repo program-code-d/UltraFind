@@ -3,6 +3,7 @@ const crypto = require("crypto");
 const mariadb = require('mariadb'); // 1. Import MariaDB
 const app = express();
 const PORT = 8080;
+const multer = require('multer');
 const path = require('path');
 const { create } = require('domain');
 
@@ -19,6 +20,23 @@ const pool = mariadb.createPool({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(__dirname, { index: false }));
+
+// 1. Configure where to save the files and what to name them
+const storage = multer.diskStorage({
+    destination: (req, file, cb) =>
+    {
+        cb(null, 'images/'); // Make sure this folder exists!
+    },
+    filename: (req, file, cb) =>
+    {
+        // Keeps the original name or adds a timestamp to avoid duplicates
+        const uniqueName = Date.now() + '-' + file.originalname;
+        cb(null, uniqueName);
+    }
+});
+
+const upload = multer({ storage: storage });
+
 function hashPassword(passw_string)
 {
     return crypto.createHash("sha256").update(String(passw_string)).digest("hex");
@@ -107,7 +125,7 @@ async function registerUser(user)
         }
         if (!isEmail(user.email))
         {
-            return {EmailFormat:false}
+            return { EmailFormat: false }
         }
         if (!user.email) throw new Error("Email is required");
         let salt = Math.trunc((Math.random() * (10099999 - 0) + 0) * 78 - 12.2)
@@ -312,13 +330,13 @@ async function getNavbar(body)
                 </div>
                 <div class="navbar-links">
                     <div class="nav-item" onclick="goToDifferentScreen('index.html')">
-                        <span><i class="fa fa-home" style="font-size:4vh"></i></span>
+                        <span><svg class="icon"><use href="icons.svg#house"></use></svg> 
                     </div>
                     <div class="nav-item" onclick="goToDifferentScreen('friends.html')">
-                        <span> <i class="fa fa-group" style="font-size:3.3vh"></i></span>
+                        <span><svg class="icon"><use href="icons.svg#user-friends"></use></svg></span></span>
                     </div>
                     <div class="nav-item" onclick="goToDifferentScreen('manage_listings.html')">
-                        <span><i class="fa fa-folder-open" style="font-size:4vh"></i></span>
+                        <span><svg class="icon"><use href="icons.svg#folder"></use></svg></span>
                     </div>
                 </div>
             </div>
@@ -542,7 +560,7 @@ app.post('/signup', async (req, res) =>
     try
     {
         const result = await registerUser(req.body);
-        if ((result && result.emailExist)|| (!result.notunderage) || (!result.EmailFormat))
+        if ((result && result.emailExist) || (!result.notunderage) || (!result.EmailFormat))
         {
             return res.json({ message: "failed" })
         }
@@ -598,25 +616,30 @@ app.post('/getFriends', async (req, res) =>
 
 });
 
-app.post('/addfriend', async (req, res) => {
-    try {
+app.post('/addfriend', async (req, res) =>
+{
+    try
+    {
         const result = await addfriend(req.body);
-        
+
         // Handle user not found/password wrong
-        if (result && !result.userExist) {
+        if (result && !result.userExist)
+        {
             return res.json({ success: false, message: "failed" });
         }
 
         // Handle success
-        if (result && result.success) {
+        if (result && result.success)
+        {
             // FIX: Wrap 'friends' in an object so frontend data.friends works!
             return res.json({ success: true, friends: result.friends });
         }
-        
+
         // Handle potential edge cases where result might be weird
         res.json({ success: false, error: "Something went wrong" });
 
-    } catch (err) {
+    } catch (err)
+    {
         console.error(err);
         res.status(400).send(err.message);
     }
@@ -739,7 +762,16 @@ app.post('/getMyListings', async (req, res) =>
 
 });
 
-
+app.post('/upload-listing', upload.single('listingImage'), (req, res) =>
+{
+    if (!req.file)
+    {
+        return res.status(400).send('No file uploaded.');
+    }
+    // You now have the path to save in your database!
+    const imagePath = `/imges/${req.file.filename}`;
+    res.json({ success: true, path: imagePath });
+});
 app.post('/getNavbar', async (req, res) =>
 {
 
