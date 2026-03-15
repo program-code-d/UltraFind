@@ -107,7 +107,7 @@ async function registerUser(user)
         }
         if (!isEmail(user.email))
         {
-            return {EmailFormat:false}
+            return { EmailFormat: false }
         }
         if (!user.email) throw new Error("Email is required");
         let salt = Math.trunc((Math.random() * (10099999 - 0) + 0) * 78 - 12.2)
@@ -429,7 +429,7 @@ async function getFriends(body)
             WHERE f.user_id = ?`;
         const res = await conn.query(query, [userId]);
 
-        return { success: true, friends: res, userExist: true };
+        return { success: true, friendslist: res, userExist: true };
     } catch (err)
     {
         console.error(err);
@@ -542,7 +542,7 @@ app.post('/signup', async (req, res) =>
     try
     {
         const result = await registerUser(req.body);
-        if ((result && result.emailExist)|| (!result.notunderage) || (!result.EmailFormat))
+        if ((result && result.emailExist) || (!result.notunderage) || (!result.EmailFormat))
         {
             return res.json({ message: "failed" })
         }
@@ -576,47 +576,62 @@ app.post('/sendMessage', async (req, res) =>
 });
 
 
-app.post('/getFriends', async (req, res) =>
+app.post('/getfriends', async (req, res) =>
 {
     try
     {
         const result = await getFriends(req.body);
-        if (result && !result.emailExist)
+
+        // 1. Handle case where user authentication/existence fails
+        if (result && !result.userExist)
         {
-            return res.json({ message: "Email In Use" })
+            return res.json({ success: false, message: "User not found or invalid credentials" });
         }
+
+        // 2. Handle success: Wrap 'friends' in an object for frontend consistency
         if (result && result.success)
         {
-
+            return res.json({
+                success: true,
+                friends: result.friends
+            });
         }
+
+        // 3. Fallback for unexpected results
+        res.json({ success: false, error: "Unable to retrieve friends list" });
 
     } catch (err)
     {
-
+        // Log the error for the developer and send the message to the client
+        console.error("Route Error (/getfriends):", err);
         res.status(400).send(err.message);
     }
-
 });
 
-app.post('/addfriend', async (req, res) => {
-    try {
+app.post('/addfriend', async (req, res) =>
+{
+    try
+    {
         const result = await addfriend(req.body);
-        
+
         // Handle user not found/password wrong
-        if (result && !result.userExist) {
+        if (result && !result.userExist)
+        {
             return res.json({ success: false, message: "failed" });
         }
 
         // Handle success
-        if (result && result.success) {
+        if (result && result.success)
+        {
             // FIX: Wrap 'friends' in an object so frontend data.friends works!
             return res.json({ success: true, friends: result.friends });
         }
-        
+
         // Handle potential edge cases where result might be weird
         res.json({ success: false, error: "Something went wrong" });
 
-    } catch (err) {
+    } catch (err)
+    {
         console.error(err);
         res.status(400).send(err.message);
     }
