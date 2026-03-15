@@ -83,7 +83,7 @@ async function addfriend(body)
         const friend = await conn.query(findQuery, [user_id, friend_id]);
 
         // This finds friends where you are the sender OR the receiver
-        const query = `SELECT first_name,last_name FROM Users WHERE id= ?`;
+        const query = `SELECT first_name,last_name,id FROM Users WHERE id= ?`;
         const friends = await conn.query(query, [friend_id]);
 
         return { success: true, friends: friends, userExist: true };
@@ -598,26 +598,28 @@ app.post('/getFriends', async (req, res) =>
 
 });
 
-app.post('/addfriend', async (req, res) =>
-{
-    try
-    {
+app.post('/addfriend', async (req, res) => {
+    try {
         const result = await addfriend(req.body);
-        if (result && !result.emailExist)
-        {
-            return res.json({ message: "Email In Use" })
-        }
-        if (result && result.success)
-        {
-
+        
+        // Handle user not found/password wrong
+        if (result && !result.userExist) {
+            return res.json({ success: false, message: "failed" });
         }
 
-    } catch (err)
-    {
+        // Handle success
+        if (result && result.success) {
+            // FIX: Wrap 'friends' in an object so frontend data.friends works!
+            return res.json({ success: true, friends: result.friends });
+        }
+        
+        // Handle potential edge cases where result might be weird
+        res.json({ success: false, error: "Something went wrong" });
 
+    } catch (err) {
+        console.error(err);
         res.status(400).send(err.message);
     }
-
 });
 
 
