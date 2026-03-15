@@ -50,6 +50,10 @@
     function goToManageListings() {
         window.location.href = 'manage_listings.html'
     }
+<<<<<<< HEAD
+=======
+
+>>>>>>> d517efdbef86309f1eadc91892449d8576f14b62
     function draw_listings() {
         let listings_div = ``
         let l = 0
@@ -84,7 +88,11 @@
         })
             .then(response => response.json())
             .then((data) => {
+<<<<<<< HEAD
                 document.getElementById("navbar-container").innerHTML = data.navbar
+=======
+                document.getElementById("navbar-container").innerHTML = data
+>>>>>>> d517efdbef86309f1eadc91892449d8576f14b62
             })
     }
 </script>
@@ -98,8 +106,7 @@
 
     <!-- 2. Main Container with Sidebar -->
     <div class="main-container">
-        <nav id="navbar">
-        </nav>
+        
 
         <main id="listings">
         </main>
