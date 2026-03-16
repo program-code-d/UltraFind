@@ -560,7 +560,7 @@ app.post('/signup', async (req, res) =>
     try
     {
         const result = await registerUser(req.body);
-        if ((result && result.emailExist) || (!result.notunderage) || (!result.EmailFormat))
+        if ((result && result.emailExist) || (result.notunderage != undefined) || (result.EmailFormat != undefined))
         {
             return res.json({ message: "failed" })
         }
