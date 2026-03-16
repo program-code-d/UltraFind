@@ -1,3 +1,8 @@
+/* Base Reset */
+* {
+    box-sizing: border-box;
+}
+
 body {
     font-family: 'Segoe UI', sans-serif;
     background-color: #f4f4f9;
@@ -9,16 +14,16 @@ body {
 .page-container {
     display: flex;
     flex-direction: row;
-    gap: 40px; /* Space between form and preview */
+    gap: 40px; 
     max-width: 1400px;
     margin: 0 auto;
+    align-items: flex-start;
 }
 
 /* The form on the left */
 .form-container {
-    flex: 0 0 320px; /* Fixed small width */
+    flex: 0 0 350px; 
     padding: 20px 0;
-    /* Removed background, border, radius to make it "not a card" */
 }
 
 h1 {
@@ -46,8 +51,8 @@ h1 {
     padding: 12px;
     border: 1px solid #ccc;
     border-radius: 8px;
-    box-sizing: border-box; /* Important for width calculation */
     font-size: 16px;
+    background-color: white;
 }
 
 .input-style:focus,
@@ -69,11 +74,48 @@ h1 {
     transform: translateY(-50%);
     color: #555;
     font-size: 16px;
-    pointer-events: none; /* So you can click through it */
+    pointer-events: none;
 }
 
 #listing-price {
-    padding-left: 28px; /* Make space for the '$' */
+    padding-left: 28px;
+}
+
+/* Upload styling */
+.upload-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.image-placeholder {
+    width: 100%;
+    height: 150px;
+    background-color: #eeeeee;
+    border: 2px dashed #ccc;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: 0.2s;
+    text-align: center;
+    color: #888;
+}
+
+.image-placeholder:hover {
+    background-color: #e8e8e8;
+    border-color: #007bff;
+}
+
+.assign-btn {
+    padding: 10px;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
 }
 
 /* Submit button */
@@ -87,6 +129,7 @@ h1 {
     font-size: 18px;
     font-weight: bold;
     cursor: pointer;
+    margin-top: 10px;
 }
 
 .create-listing-btn:hover {
@@ -95,8 +138,8 @@ h1 {
 
 /* The preview on the right */
 .preview-container {
-    flex: 1; /* Takes up the other half */
-    position: sticky; /* Makes it stick on scroll */
+    flex: 1; 
+    position: sticky;
     top: 20px;
 }
 
@@ -107,18 +150,18 @@ h1 {
     margin-bottom: 15px;
 }
 
-/* Styles copied from info_listing.css for exact preview match */
+/* Listing Preview Styling */
 .listing-container {
     width: 100%;
     max-width: 1000px;
     margin: 0 auto;
-    font-family: 'Segoe UI', sans-serif;
     display: flex;
     flex-direction: column;
     gap: 20px;
     padding: 20px;
     background-color: #f8f9fa;
-    border-radius: 12px; /* Added for preview container look */
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
 }
 
 .main-content {
@@ -127,11 +170,14 @@ h1 {
     gap: 20px;
 }
 
-.image {
+.image-preview-box {
     flex: 2;
     background: #ccc;
     border-radius: 12px;
     min-height: 400px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 
 .Age-pay-location {
@@ -141,21 +187,20 @@ h1 {
     gap: 15px;
 }
 
-.Age-pay-location h1 { font-size: 1.5rem; margin-bottom: 5px; }
+.Age-pay-location h1 { font-size: 1.5rem; margin-bottom: 5px; color: #333; }
 .Age-pay-location h3 { font-size: 0.9rem; color: #666; margin-top: -10px; margin-bottom: 10px; }
 
-
-.price, .age, .location-map, .seller-info {
+.price-box, .age-box, .seller-info {
     background: white;
     padding: 15px;
     border-radius: 12px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
-.price {
+.price-box {
     font-size: 1.5rem;
     font-weight: bold;
-    color: #3b82f6;
+    color: #007bff;
 }
 
 .Description-repeats {
@@ -165,27 +210,18 @@ h1 {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    min-height: 100px;
 }
 
-@media (max-width: 768px) {
+/* Responsiveness */
+@media (max-width: 900px) {
+    .page-container {
+        flex-direction: column;
+    }
+    .form-container {
+        width: 100%;
+    }
     .main-content {
         flex-direction: column;
     }
-}
-.image-placeholder {
-    width: 300px;
-    height: 300px;
-    background-color: #eeeeee;
-    border: 2px dashed #ccc;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-.image-placeholder:hover {
-    background-color: #e8e8e8;
-    border-color: #9c27b0;
 }
