@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="CSS files/messages.css">
 </head>
 
-<body onload="main()">
+<body>
     <div id="messages-display"></div>
 
     <div class="chat-bar">
@@ -62,10 +62,11 @@
     <script>
         var email;
         var password;
+        email = localStorage.getItem('email')
+        password = localStorage.getItem('password')
         let friend_input_element = document.getElementById('user-friend-id');
         let friendSearch = document.getElementById('chat-form');
         let friendsResults;
-        let friendList;
         document.querySelector('.dropdown').style.display = 'none';
         document.querySelector('.chat-bar').style.display = 'none';
 
@@ -74,89 +75,58 @@
             event.preventDefault();
             document.querySelector('.chat-bar').style.display = 'block';
         }
-        function main()
-        {
-            const currentEmail = localStorage.getItem('email');
-            const currentPassword = localStorage.getItem('password');
-            fetch(getServerBase() + "/getfriends", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ email: email, password: password })
-            })
-                .then(response => response.json())
-                .then((data) =>
-                {
-                    const nav = document.getElementById('friends-list-nav');
-
-                    // FIX 1: Match the name 'friends' from your backend
-                   const friends = data.friends; // Changed friends to friendslist
-                   
-
-                    console.log("Entering .then. Friends count:", friends ? friends.length : 0);
-
-                    if (!friends)
-                    {
-                        console.error("No friends array found in response!");
-                        return;
-                    }
-
-                    for (let i = 0; i < friends.length; i++)
-                    {
-                        const friend = friends[i];
-
-                        // FIX 3: Pass friend.id into openChat
-                        const friendHTML = `
-                        <button type="button" onclick="openChat(${friend.id})" class="friend-item" data-id="${friend.id}" style="display:block; width:100%; cursor:pointer; padding:10px; text-align:left; background:none; border:none; border-bottom:1px solid #333; color:inherit;">
-                            <strong>${friend.first_name} ${friend.last_name}</strong>
-                        </button>`;
-
-                        console.log(`Adding friend: ${friend.first_name}`);
-                        nav.insertAdjacentHTML('beforeend', friendHTML);
-                    }
-                    console.log(friends);
-                })
-                .catch(err => console.error("Fetch error in main():", err));
-        }
 
         function findFriend(event)
         {
             event.preventDefault();
+
             fetch(getServerBase() + "/findFriend", {
-                // Defines the HTTP verb as POST, which is used for sending data to a server.
                 method: 'POST',
                 headers: {
-                    // Informs the server that the data being sent is formatted as a JSON string.
                     'Content-Type': 'application/json'
                 },
-                // Converts the JavaScript object into a standardized JSON string for transmission.
-                body: JSON.stringify({ email: email, password: password, friendSearch: friendSearch.elements['user-friend-id'].value })
+                body: JSON.stringify({
+                    email: email,
+                    password: password,
+                    friendSearch: friendSearch.elements['user-friend-id'].value
+                })
             })
                 .then(response => response.json())
                 .then((data) =>
                 {
-                    friendsResults = data.friends;
-                    // 1. Get the select element
+                    // Assign results (ensure friendsResults is declared elsewhere or use let/const)
+                    const friendsList = data.friends;
                     const select = document.getElementById('friend-select');
 
-                    // 2. Clear out old results (keep the first "Choose a person" option)
+                    // Clear out old results
                     select.innerHTML = '<option value="none" selected disabled>Choose a person...</option>';
 
-                    // 3. Loop through the friends and add them
-                    data.friends.forEach(friend =>
+                    // --- Traditional For Loop ---
+                    if (friendsList && friendsList.length > 0)
                     {
-                        const option = document.createElement('option');
-                        option.value = friend.id; // The ID from your database
-                        option.textContent = `${friend.first_name} ${friend.last_name}`; // The name
-                        select.appendChild(option);
-                    });
+                        for (let i = 0; i < friendsList.length; i++)
+                        {
+                            // Access the specific friend using the index [i]
+                            const friend = friendsList[i];
 
-                    // 4. Make the dropdown container visible
-                    document.querySelector('.dropdown').style.display = 'block';
+                            const option = document.createElement('option');
+                            option.value = friend.id;
+                            option.textContent = friend.first_name + " " + friend.last_name;
+
+                            select.appendChild(option);
+                        }
+
+                        // Show the dropdown if we found people
+                        document.querySelector('.dropdown').style.display = 'block';
+                    } else
+                    {
+                        console.log("No friends found in the database.");
+                    }
                 })
-
-
+                .catch(error =>
+                {
+                    console.error("Error fetching friends:", error);
+                });
         }
 
         function getServerBase()
@@ -206,34 +176,40 @@
                     .then((data) =>
                     {
                         const nav = document.getElementById('friends-list-nav');
+                        const friends = data.friends; // Your array of names
 
-                        // 1. Use the data coming back from your server
-                        const friends = data.friends;
-                        console.log("entered .then")
-                        // 2. ONLY ONE LOOP - Use the standard for loop as you requested
-                        for (let i = 0; i < friends.length; i++)
-                        { // Use < not <=
+                        friends.forEach(friendName =>
+                        {
+                            // 1. Create the outer wrapper div
+                            const friendDiv = document.createElement('div');
+                            friendDiv.className = 'friend-item'; // Good for CSS styling later
+                            friendDiv.style.cursor = 'pointer';
 
-                            const friend = friends[i];
+                            // 2. Create the inner div for the name
+                            const nameContainer = document.createElement('div');
 
-                            // 3. Create the HTML
-                            const friendHTML = `
-                            <div  onclick="openChat()" class="friend-item" data-id="${friend.id}" style="cursor:pointer; padding:10px;">
-                                <strong>${friend.first_name} ${friend.last_name}</strong>
-                            </div>`;
-                            console.error(`${friend.id}   ${friend.first_name}    ${friend.last_name}`)
+                            // 3. Create the strong tag for the text
+                            const strongName = document.createElement('strong');
+                            strongName.textContent = friendName;
 
-                            // 4. Add it to the div
-                            nav.insertAdjacentHTML('beforeend', friendHTML);
-                        }
+                            // 4. Assemble: strong -> inner div -> outer div
+                            nameContainer.appendChild(strongName);
+                            friendDiv.appendChild(nameContainer);
+
+                            // 5. Add a click event so you can actually do something!
+                            friendDiv.onclick = () =>
+                            {
+                                console.log(`You clicked on ${friendName}`);
+                            };
+
+                            // 6. Put it in the navigation menu
+                            nav.appendChild(friendDiv);
+                        });
+
                     })
 
             }
         });
-        function openChat()
-        {
-
-        }
 
     </script>
 </body>

@@ -37,6 +37,7 @@ function hashPassword(passw_string)
     return crypto.createHash("sha256").update(String(passw_string)).digest("hex");
 }
 
+<<<<<<< HEAD
 
 function isEmail(email)
 {
@@ -47,25 +48,59 @@ function isEmail(email)
 
 async function findFriend(body)
 {
+=======
+async function findFriend(body) {
+>>>>>>> bc8aa2ed1a32d464cb6f6b4489d28cca8af9fb75
     let conn;
-    try
-    {
+    try {
         conn = await pool.getConnection();
+<<<<<<< HEAD
+=======
+
+        // 1. Get the salt
+>>>>>>> bc8aa2ed1a32d464cb6f6b4489d28cca8af9fb75
         const saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
+        if (saltResult.length === 0) return { success: false, error: "User not found" };
+        
         const salt = saltResult[0].salt;
         const hashedPassword = hashPassword(body.password + salt);
         const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
+        
+        // CRITICAL: Prevent crash if login fails
+        if (userRows.length === 0) {
+            return { success: false, error: "Authentication failed" };
+        }
         const user_id = userRows[0].id;
+<<<<<<< HEAD
         const findQuery = "SELECT id, first_name, last_name FROM Users WHERE id != ? AND CONCAT(first_name, ' ', last_name) LIKE ?;";
         const friends = await conn.query(findQuery, [user_id, `%${body.friendSearch}%`]);
         return { success: true, friends: friends, userExist: true };
     } catch (err)
     {
         console.error(err);
+=======
+
+        // 3. Search for friends
+        const findQuery = `
+            SELECT id, first_name, last_name 
+            FROM Users 
+            WHERE id != ? 
+            AND CONCAT(first_name, ' ', last_name) LIKE ?;
+        `;
+        
+        // Ensure friendSearch exists, default to empty string if not
+        const searchTerm = body.friendSearch || "";
+        const friends = await conn.query(findQuery, [user_id, `%${searchTerm}%`]);
+
+        // Return results (ensure it's a clean array)
+        return { success: true, friends: [...friends], userExist: true };
+
+    } catch (err) {
+        console.error("Database error:", err);
+>>>>>>> bc8aa2ed1a32d464cb6f6b4489d28cca8af9fb75
         return { success: false, error: "Internal Server Error" };
-    } finally
-    {
+    } finally {
         if (conn) conn.release();
     }
 }
