@@ -61,7 +61,7 @@
             },
             body: JSON.stringify({ email: email, password: password })
         })
-            .then(response => response.json())
+            .then(response => response.text())
             .then((data) =>
             {
                 document.getElementById("navbar-container").innerHTML = data
