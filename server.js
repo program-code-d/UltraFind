@@ -15,7 +15,7 @@ const pool = mariadb.createPool({
     user: 'root',
     password: 'chicken55441',
     database: 'test',
-    connectionLimit: 5
+    connectionLimit: 400
 });
 
 
