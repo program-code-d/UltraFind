@@ -26,7 +26,7 @@ async function runTests() {
     }
     console.log(`Successfully created ${users.length} users.`);
 
-    // 2. CREATE 50 LISTINGS (WITH IMAGES)
+    // 2. CREATE 50 LISTINGS (WITH Images)
     console.log("Creating 50 listings with image uploads...");
     const listingIds = [];
     if (!fs.existsSync(IMAGE_PATH)) {
