@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="CSS files/messages.css">
 </head>
 
-<body>
+<body onload="main()">
     <div id="messages-display"></div>
 
     <div class="chat-bar">
@@ -74,6 +74,99 @@
         {
             event.preventDefault();
             document.querySelector('.chat-bar').style.display = 'block';
+        }
+
+        async function main()
+        {
+            try
+            {
+                console.log("Attempting fetch...");
+
+                // Use the variables from localStorage defined at the top of your script
+                if (!email || !password)
+                {
+                    console.log("User not logged in.");
+                    return;
+                }
+
+                // FIX: Match the backend route exactly: "/getfriends"
+                const response = await fetch(getServerBase() + "/getfriends", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    })
+                });
+
+                if (!response.ok)
+                {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log("Data received:", data);
+
+                if (data.success)
+                {
+                    renderFriends(data.friends); // Backend sends 'friends' in the route handler
+                }
+
+            } catch (error)
+            {
+                console.error("The fetch failed:", error);
+            }
+        }
+
+        // Add this function to handle the display logic
+        function renderFriends(friendsList)
+        {
+            const nav = document.getElementById('friends-list-nav');
+
+            // Clear old list first (except header)
+            nav.innerHTML = '<div id="Home" style="cursor:pointer;"><div><strong>Friends</strong></div></div>';
+
+            friendsList.forEach(friend =>
+            {
+                const friendDiv = document.createElement('div');
+                friendDiv.className = 'friend-item';
+                friendDiv.style.cursor = 'pointer';
+                friendDiv.style.padding = '10px'; // Make it easier to click
+
+                friendDiv.innerHTML = `<strong>${friend.first_name} ${friend.last_name}</strong>`;
+
+                // --- THIS IS THE PART THAT CALLS THE OTHER FUNCTION ---
+                friendDiv.onclick = () =>
+                {
+                    // We pass the friend's ID and name to our next function
+                    startChatWithFriend(friend.id, friend.first_name, friend.last_name);
+                };
+
+                nav.appendChild(friendDiv);
+            });
+        }
+        function startChatWithFriend(friendid, friendfirst, friendlast)
+        {
+            fetch(getServerBase() + "/getfriendmessages", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: email,
+                    password: password,
+                    friendId: friendId
+                })
+            })
+                .then(response => response.json())
+                .then((data) =>
+                {
+                  
+                })
+                .catch(error =>
+                {
+                    console.error("Error fetching messages:", error);
+                });
         }
 
         function findFriend(event)
