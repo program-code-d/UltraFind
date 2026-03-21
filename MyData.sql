@@ -39,6 +39,7 @@ CREATE TABLE
         age TINYINT UNSIGNED,
         location TEXT,
         price DECIMAL(10, 2),
+        is_active BOOLEAN NOT NULL DEFAULT TRUE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES Users (id) ON DELETE CASCADE
     );
