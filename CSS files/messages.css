@@ -1,105 +1,161 @@
 .friends-nav {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    padding: 10px;
-    background-color: #f4f4f4;
-    height: calc(100vh - 70px);
-    /* Adjusted for top navbar */
-    border-right: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  padding: 10px;
+  background-color: #f4f4f4;
+  height: calc(100vh - 70px);
+  /* Adjusted for top navbar */
+  border-right: 1px solid #ddd;
 
-    /* Positioning logic */
-    position: fixed;
-    /* Fixes it to the viewport */
-    top: 70px;
-    /* Aligns below the top navbar */
-    left: 0;
-    /* Aligns to the left */
-    width: 20em;
-    /* Set a specific width so it doesn't collapse */
-    overflow-y: auto;
-    /* Adds a scrollbar if you have too many friends to list */
+  /* Positioning logic */
+  position: fixed;
+  /* Fixes it to the viewport */
+  top: 70px;
+  /* Aligns below the top navbar */
+  left: 0;
+  /* Aligns to the left */
+  width: 20em;
+  /* Set a specific width so it doesn't collapse */
+  overflow-y: auto;
+  /* Adds a scrollbar if you have too many friends to list */
+}
+
+/* Container for all messages */
+#messages-display {
+  margin-left: 22em;
+  /* Adjusted to sit next to your sidebar */
+  margin-bottom: 80px;
+  /* Space for the message box at bottom */
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: calc(100vh - 160px);
+  overflow-y: auto;
+  background-color: #f9f9f9;
+}
+
+/* Individual message bubble base */
+.message {
+  max-width: 60%;
+  padding: 10px 15px;
+  border-radius: 18px;
+  font-family: sans-serif;
+  font-size: 14px;
+  line-height: 1.4;
+  position: relative;
+  word-wrap: break-word;
+}
+
+/* Messages sent by ME */
+.message.sent {
+  align-self: flex-end;
+  background-color: #007bff;
+  color: white;
+  border-bottom-right-radius: 2px;
+}
+
+/* Messages received from FRIEND */
+.message.received {
+  align-self: flex-start;
+  background-color: #e9e9eb;
+  color: #333;
+  border-bottom-left-radius: 2px;
+}
+
+/* Chat Header (Optional but looks good) */
+.chat-header {
+  margin-left: 22em;
+  padding: 15px 20px;
+  background: white;
+  border-bottom: 1px solid #ddd;
+  font-family: sans-serif;
+  font-weight: bold;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 /* Add a margin to your main content so it doesn't hide behind the sidebar */
 main,
 .content,
 .friends-main-content {
-    margin-left: 330px;
-    /* Should be width + padding of the nav */
-    margin-top: 70px;
-    /* Space below fixed top navbar */
-    padding: 20px;
+  margin-left: 330px;
+  /* Should be width + padding of the nav */
+  margin-top: 70px;
+  /* Space below fixed top navbar */
+  padding: 20px;
 }
 
 .friends-nav>div {
-    cursor: pointer;
-    padding: 12px 16px;
-    border-radius: 8px;
-    font-family: sans-serif;
-    font-weight: 500;
-    transition: background 0.2s ease;
-  
+  cursor: pointer;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-family: sans-serif;
+  font-weight: 500;
+  transition: background 0.2s ease;
+
 }
 
 .friends-nav div div {
-    user-select: none;
+  user-select: none;
 }
 
 .people {
-    display: flex;
-    flex-direction: column;
-    position: fixed;
-    top: 80px;
-    /* Adjusted to be below the navbar */
-    right: 30px;
-    width: 100;
-    overflow-y: 300;
-    z-index: 999;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 80px;
+  /* Adjusted to be below the navbar */
+  right: 30px;
+  width: 100;
+  overflow-y: 300;
+  z-index: 999;
 }
 
 .people button {
-    border: none;
-    background-color: #ffffff;
-    color: #333;
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
-    font-size: 24px;
-    font-weight: bold;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background-color 0.2s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: none;
+  background-color: #ffffff;
+  color: #333;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .people button:hover {
-    background-color: #f0f0f0;
+  background-color: #f0f0f0;
 }
 
 .chat-bar {
-    display: flex;
-    flex-direction: column;
-    color: aqua;
-    position: fixed;
-    top: 80px;
-    /* Adjusted to be below the navbar */
-    left: 500px;
-    width: 300px;
-    overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  color: aqua;
+  position: fixed;
+  top: 80px;
+  /* Adjusted to be below the navbar */
+  left: 500px;
+  width: 300px;
+  overflow-y: auto;
 }
 
 .dropdown {
-    display: flex;
-    flex-direction: column;
-    color: rgb(0, 19, 224);
-    position: fixed;
-    top: 100;
-    left: 500px;
-    width: 300px;
-    overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  color: rgb(0, 19, 224);
+  position: fixed;
+  top: 100;
+  left: 500px;
+  width: 300px;
+  overflow-y: auto;
 }
 
 /* Positioning the container at the bottom middle */
@@ -141,7 +197,8 @@ main,
 
 .fileUploadWrapper label {
   cursor: pointer;
-  width: 32px;  /* Constrains the hit area */
+  width: 32px;
+  /* Constrains the hit area */
   height: 32px;
   display: flex;
   align-items: center;
@@ -153,14 +210,16 @@ main,
 
 /* Scaling the Plus Button SVG */
 .fileUploadWrapper label svg {
-  height: 18px; /* Forces the icon to be small */
+  height: 18px;
+  /* Forces the icon to be small */
   width: 18px;
 }
 
 /* Light Mode Icon Colors */
 .fileUploadWrapper label svg path,
 .fileUploadWrapper label svg circle {
-  stroke: #666; /* Dark gray for visibility on white */
+  stroke: #666;
+  /* Dark gray for visibility on white */
   transition: all 0.3s;
 }
 
@@ -202,7 +261,8 @@ main,
   outline: none;
   border: none;
   padding: 0 12px;
-  color: #222; /* Dark text for light mode */
+  color: #222;
+  /* Dark text for light mode */
   font-family: Arial, sans-serif;
 }
 
@@ -231,14 +291,16 @@ main,
 }
 
 #sendButton svg path {
-  fill: #666; /* Default gray icon */
+  fill: #666;
+  /* Default gray icon */
   transition: all 0.3s;
 }
 
 /* Highlighting the send button when typing */
-#messageInput:focus ~ #sendButton svg path,
-#messageInput:valid ~ #sendButton svg path {
-  fill: #007bff; /* Blue "Active" color */
+#messageInput:focus~#sendButton svg path,
+#messageInput:valid~#sendButton svg path {
+  fill: #007bff;
+  /* Blue "Active" color */
 }
 
 #sendButton:hover {

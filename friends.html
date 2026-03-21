@@ -46,7 +46,8 @@
             <input type="file" id="file" name="file" />
         </div>
         <input required="" placeholder="Message..." type="text" id="messageInput" />
-        <button id="sendButton" onclick="sendMessage(event)">
+        <!-- We pass the event AND the current value of the input box -->
+        <button id="sendButton" onclick="sendMessage(event, document.getElementById('messageInput').value)">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 664 663">
                 <path fill="none"
                     d="M646.293 331.888L17.7538 17.6187L155.245 331.888M646.293 331.888L17.753 646.157L155.245 331.888M646.293 331.888L318.735 330.228L155.245 331.888">
@@ -58,6 +59,18 @@
         </button>
     </div>
 
+    <div class="chat-container" id="chatbox"></div>
+
+    <!-- This won't show up on the page until called -->
+    <template id="message-template">
+        <div class="message">
+            <img src="" alt="Avatar">
+            <p></p>
+            <span class="time-right"></span>
+        </div>
+    </template>
+
+
 
     <script>
         var email;
@@ -67,24 +80,21 @@
         let friend_input_element = document.getElementById('user-friend-id');
         let friendSearch = document.getElementById('chat-form');
         let friendsResults;
+        let currentChatFriendId = null;
         document.querySelector('.dropdown').style.display = 'none';
         document.querySelector('.chat-bar').style.display = 'none';
 
-        function startaddingfriend(event)
-        {
+        function startaddingfriend(event) {
             event.preventDefault();
             document.querySelector('.chat-bar').style.display = 'block';
         }
 
-        async function main()
-        {
-            try
-            {
+        async function main() {
+            try {
                 console.log("Attempting fetch...");
 
                 // Use the variables from localStorage defined at the top of your script
-                if (!email || !password)
-                {
+                if (!email || !password) {
                     console.log("User not logged in.");
                     return;
                 }
@@ -99,78 +109,117 @@
                     })
                 });
 
-                if (!response.ok)
-                {
+                if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
                 const data = await response.json();
                 console.log("Data received:", data);
 
-                if (data.success)
-                {
+                if (data.success) {
                     renderFriends(data.friends); // Backend sends 'friends' in the route handler
                 }
 
-            } catch (error)
-            {
+            } catch (error) {
                 console.error("The fetch failed:", error);
             }
         }
 
         // Add this function to handle the display logic
-        function renderFriends(friendsList)
-        {
+        function renderFriends(friendsList) {
             const nav = document.getElementById('friends-list-nav');
 
-            // Clear old list first (except header)
+            // 1. Clear old list and add the header
             nav.innerHTML = '<div id="Home" style="cursor:pointer;"><div><strong>Friends</strong></div></div>';
 
-            friendsList.forEach(friend =>
-            {
+            // 2. Use a standard for loop
+            for (let i = 0; i < friendsList.length; i++) {
+                const friend = friendsList[i];
+
+                // Create the container element
                 const friendDiv = document.createElement('div');
                 friendDiv.className = 'friend-item';
                 friendDiv.style.cursor = 'pointer';
-                friendDiv.style.padding = '10px'; // Make it easier to click
+                friendDiv.style.padding = '10px';
 
-                friendDiv.innerHTML = `<strong>${friend.first_name} ${friend.last_name}</strong>`;
+                // Create the name label safely
+                const strong = document.createElement('strong');
+                strong.textContent = friend.first_name + " " + friend.last_name;
 
-                // --- THIS IS THE PART THAT CALLS THE OTHER FUNCTION ---
-                friendDiv.onclick = () =>
-                {
-                    // We pass the friend's ID and name to our next function
+                friendDiv.appendChild(strong);
+
+                // 3. Attach the click event
+                // Using 'let' inside the for loop ensures 'friend' stays correct for each click
+                friendDiv.onclick = function () {
                     startChatWithFriend(friend.id, friend.first_name, friend.last_name);
                 };
 
+                // 4. Add to the nav
                 nav.appendChild(friendDiv);
-            });
+            }
         }
-        function startChatWithFriend(friendid, friendfirst, friendlast)
-        {
+        // Global variable to track current chat
+
+
+        function startChatWithFriend(friendid, friendfirst, friendlast) {
+            currentChatFriendId = friendid; // Set the global ID for the sendMessage function
+
+            const display = document.getElementById('messages-display');
+            display.innerHTML = `<div class="chat-header">Chatting with ${friendfirst} ${friendlast}</div>`;
+
             fetch(getServerBase() + "/getfriendmessages", {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     email: email,
                     password: password,
-                    friendId: friendId
+                    friendId: friendid
                 })
             })
-                .then(response => response.json())
-                .then((data) =>
-                {
-                  
+                .then(res => res.json())
+                .then(data => {
+                    renderMessages(data);
+                });
+        }
+        function sendMessage(event, message) {
+            event.preventDefault();
+            if (!message.trim() || !currentChatFriendId) return;
+            fetch(getServerBase() + "/sendfriendmessage", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: email,
+                    password: password,
+                    friendId: currentChatFriendId,
+                    message: message
                 })
-                .catch(error =>
-                {
-                    console.error("Error fetching messages:", error);
+            })
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('messageInput').value = "";
+
+                    const display = document.getElementById('messages-display');
+
+                    const msgDiv = document.createElement('div');
+                    msgDiv.className = 'message outgoing';
+
+                    const p = document.createElement('p');
+                    p.textContent = message; // Fixed: using the correct variable name
+
+                    const span = document.createElement('span');
+                    span.className = 'time-right';
+                    span.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                    msgDiv.appendChild(p);
+                    msgDiv.appendChild(span);
+                    display.appendChild(msgDiv);
+
+                    // 3. Scroll to bottom
+                    display.scrollTop = display.scrollHeight;
                 });
         }
 
-        function findFriend(event)
-        {
+        function findFriend(event) {
             event.preventDefault();
 
             fetch(getServerBase() + "/findFriend", {
@@ -185,8 +234,7 @@
                 })
             })
                 .then(response => response.json())
-                .then((data) =>
-                {
+                .then((data) => {
                     // Assign results (ensure friendsResults is declared elsewhere or use let/const)
                     const friendsList = data.friends;
                     const select = document.getElementById('friend-select');
@@ -195,10 +243,8 @@
                     select.innerHTML = '<option value="none" selected disabled>Choose a person...</option>';
 
                     // --- Traditional For Loop ---
-                    if (friendsList && friendsList.length > 0)
-                    {
-                        for (let i = 0; i < friendsList.length; i++)
-                        {
+                    if (friendsList && friendsList.length > 0) {
+                        for (let i = 0; i < friendsList.length; i++) {
                             // Access the specific friend using the index [i]
                             const friend = friendsList[i];
 
@@ -211,19 +257,45 @@
 
                         // Show the dropdown if we found people
                         document.querySelector('.dropdown').style.display = 'block';
-                    } else
-                    {
+                    } else {
                         console.log("No friends found in the database.");
                     }
                 })
-                .catch(error =>
-                {
+                .catch(error => {
                     console.error("Error fetching friends:", error);
                 });
         }
+        function renderMessages(messages) {
+            const display = document.getElementById('messages-display');
 
-        function getServerBase()
-        {
+            for (let i = 0; i < messages.length; i++) {
+                const msg = messages[i];
+
+                // 1. Create the main div
+                const msgDiv = document.createElement('div');
+                const type = (msg.sender_id === currentChatFriendId) ? 'incoming' : 'outgoing';
+                msgDiv.className = 'message ' + type;
+
+                // 2. Create the text (textContent makes it SECURE from hackers)
+                const p = document.createElement('p');
+                p.textContent = msg.message_text;
+
+                // 3. Create the time
+                const span = document.createElement('span');
+                span.className = 'time-right';
+                span.textContent = msg.timestamp;
+
+                // 4. Put it all together and add to screen
+                msgDiv.appendChild(p);
+                msgDiv.appendChild(span);
+                display.appendChild(msgDiv);
+            }
+
+            // Auto-scroll to latest message
+            display.scrollTop = display.scrollHeight;
+        }
+
+        function getServerBase() {
             const protocol = window.location.protocol; // 'http:' or 'https:'
             const hostname = window.location.hostname;
             const port = window.location.port ? ':' + window.location.port : '';
@@ -235,8 +307,7 @@
         const friendSelect = document.getElementById('friend-select');
 
         // 2. Listen for when the user picks an option
-        friendSelect.addEventListener('change', function ()
-        {
+        friendSelect.addEventListener('change', function () {
             // This gets the 'value' (friend.id) you assigned in findFriend()
             const selectedFriendId = this.value;
 
@@ -248,8 +319,7 @@
             console.log("User selected Name:", selectedFriendName);
 
             // Logic: You can now use selectedFriendId to filter messages or start a chat
-            if (selectedFriendId !== "none")
-            {
+            if (selectedFriendId !== "none") {
                 alert("You are now chatting with " + selectedFriendName);
                 fetch(getServerBase() + "/addfriend", {
                     // Defines the HTTP verb as POST, which is used for sending data to a server.
@@ -266,13 +336,11 @@
                     })
                 })
                     .then(response => response.json())
-                    .then((data) =>
-                    {
+                    .then((data) => {
                         const nav = document.getElementById('friends-list-nav');
                         const friends = data.friends; // Your array of names
 
-                        friends.forEach(friendName =>
-                        {
+                        friends.forEach(friendName => {
                             // 1. Create the outer wrapper div
                             const friendDiv = document.createElement('div');
                             friendDiv.className = 'friend-item'; // Good for CSS styling later
@@ -290,8 +358,7 @@
                             friendDiv.appendChild(nameContainer);
 
                             // 5. Add a click event so you can actually do something!
-                            friendDiv.onclick = () =>
-                            {
+                            friendDiv.onclick = () => {
                                 console.log(`You clicked on ${friendName}`);
                             };
 
