@@ -15,7 +15,11 @@ const pool = mariadb.createPool({
     user: 'root',
     password: 'chicken55441',
     database: 'test',
+<<<<<<< HEAD
     connectionLimit: 50
+=======
+    connectionLimit: 4
+>>>>>>> b9491453757d520b07a48d213ae1069ec5ed7074
 });
 
 
@@ -285,25 +289,44 @@ async function sendMessage(body)
 }
 
 
-async function getfriendmessages(body)
-{
+async function getfriendmessages(body) {
     let conn;
-    try
-    {
+    try {
         conn = await pool.getConnection();
+        
+        // 1. Authenticate the user
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
+        if (saltResult.length === 0) return { success: false, message: "User not found" };
+        
         const hashedPassword = hashPassword(body.password + saltResult[0].salt);
         const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
-        const userId = userRows[0].id;
-        const query = "SELECT message_text, sender_id FROM DirectMessages WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?) ORDER BY created_at ASC";
+        
+        if (userRows.length === 0) return { success: false, message: "Invalid credentials" };
+        
+        const userId = userRows[0].id; // This is the ID of the person logged in
+
+        // 2. Get the messages (Added 'id' and 'created_at')
+        const query = `
+            SELECT id, message_text, sender_id, created_at 
+            FROM DirectMessages 
+            WHERE (sender_id = ? AND receiver_id = ?) 
+               OR (sender_id = ? AND receiver_id = ?) 
+            ORDER BY created_at ASC`;
+            
         const res = await conn.query(query, [userId, body.friend_id, body.friend_id, userId]);
-        return { success: true, messages: res, userExist: true };
-    } catch (err)
-    {
+
+        // Return the messages AND the userId so the frontend knows "who am I?"
+        return { 
+            success: true, 
+            messages: res, 
+            currentUserId: userId, 
+            userExist: true 
+        };
+    } catch (err) {
+        console.error(err);
         return { success: false, userExist: false };
-    } finally
-    {
+    } finally {
         if (conn) conn.release();
     }
 }
@@ -320,11 +343,18 @@ async function getFriends(body)
         const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
         const userId = userRows[0].id;
-        const query = "SELECT u.id, u.first_name, u.last_name FROM Users u JOIN Friendships f ON u.id = f.friend_id WHERE f.user_id = ?";
-        const res = await conn.query(query, [userId]);
-        return { success: true, friendslist: res, userExist: true };
+        const query = `
+            SELECT Users.id, Users.first_name, Users.last_name 
+            FROM Friendships 
+            JOIN Users ON Friendships.friend_id = Users.id 
+            WHERE Friendships.user_id = ?`;
+        const friends = await conn.query(query, [userId]);
+
+        // FIX: Changed 'res' to 'friends'
+        return { success: true, friendslist: friends, userExist: true };
     } catch (err)
     {
+        console.error(err);
         return { success: false, userExist: false };
     } finally
     {
