@@ -15,7 +15,7 @@ const pool = mariadb.createPool({
     user: 'root',
     password: 'chicken55441',
     database: 'test',
-    connectionLimit: 400
+    connectionLimit: 50
 });
 
 
@@ -398,6 +398,14 @@ async function getinfolistings(body)
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
         const insertQuery = "SELECT * FROM Listings WHERE id = ?;";
         const res = await conn.query(insertQuery, [body.id]);
+        if (userRows[0].id == res[0].user_id)
+        {
+            res[0].my_listing=1
+        }
+        else
+        {
+             res[0].my_listing=0
+        }
         return { success: true, listing: res, userExist: true };
     } catch (err)
     {

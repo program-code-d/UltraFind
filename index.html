@@ -6,15 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
 </head>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
 
 <script src="navbar.js"></script>
 <script>
     let listings
     let email
     let password
-     
-    function main() {
+
+    function main()
+    {
         email = localStorage.getItem('email')
         password = localStorage.getItem('password')
 
@@ -28,35 +29,46 @@
             body: JSON.stringify({ search: "", email: email, password: password })
         })
             .then(response => response.json())
-            .then((data) => {
+            .then((data) =>
+            {
+                if (data == `{"message":"failed"}`)
+                {
+                    window.location.href = "login.html"
+                }
                 listings = data
                 draw_listings()
             })
     }
 
-    function getServerBase() {
+    function getServerBase()
+    {
         const protocol = window.location.protocol; // 'http:' or 'https:'
         const hostname = window.location.hostname;
         const port = window.location.port ? ':' + window.location.port : '';
         return `${protocol}//${hostname}${port}`;
     }
 
-    function goToHome() {
+    function goToHome()
+    {
         window.location.href = 'index.html'
     }
 
-    function goToFriends() {
+    function goToFriends()
+    {
         window.location.href = 'friends.html'
     }
 
-    function goToManageListings() {
+    function goToManageListings()
+    {
         window.location.href = 'manage_listings.html'
     }
-    function draw_listings() {
+    function draw_listings()
+    {
         let listings_div = ``
         let l = 0
 
-        while (l < listings.length) {
+        while (l < listings.length)
+        {
             listings_div += `
                <div onclick="goToInfoListing(${listings[l].id})" id="${l}" class="listing-card">
                   <div style="text-align: center;"><h1>${listings[l].title}</h1></div>
@@ -72,11 +84,13 @@
         document.getElementById("listings").innerHTML = listings_div
     }
 
-    function goToInfoListing(id) {
+    function goToInfoListing(id)
+    {
         window.location.href = `${getServerBase()}/info_listing.html?id=${id}`
     }
 
-    function injectNavbar() {
+    function injectNavbar()
+    {
         fetch(getServerBase() + "/getNavbar", {
             method: 'POST',
             headers: {
@@ -85,12 +99,18 @@
             body: JSON.stringify({ email: email, password: password })
         })
             .then(response => response.text())
-            .then((data) => {
+            .then((data) =>
+            {
+                if (data == `{"message":"failed"}`)
+                {
+                    window.location.href = "login.html"
+                }
                 document.getElementById("navbar-container").innerHTML = data
             })
     }
 </script>
-<link rel="stylesheet" href="CSS files/navbar.css"></link>
+<link rel="stylesheet" href="CSS files/navbar.css">
+</link>
 <link rel="stylesheet" href="CSS files/index.css">
 
 <body onload="main()">
@@ -100,14 +120,14 @@
 
     <!-- 2. Main Container with Sidebar -->
     <div class="main-container">
-        
+
 
         <main id="listings">
         </main>
 
         <div class="action-area">
             <button onclick="goToDifferentScreen('create_listing.html')" class="clean-btn">+</button>
-           
+
         </div>
     </div>
 

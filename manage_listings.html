@@ -85,7 +85,10 @@
     }
 
 
-
+    function goToInfoListing(listing)
+    {
+        goToDifferentScreen("info_listing.html?id="+listing)
+    }
     function drawMyListings(myListings)
     {
         let htmlContent = "";
@@ -95,35 +98,100 @@
             let item = myListings[i];
 
             htmlContent += `
-            <div onclick="goToInfoListing(${item.id})" class="listing-card-square">
-                
-                <div class="image-placeholder">
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                        <polyline points="21 15 16 10 5 21"></polyline>
-                    </svg>
-                </div>
+            <div class="listing-card-square" data-id="${item.id}">
+                <div onclick="goToInfoListing(${item.id})">
+                    <div class="image-placeholder">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                        </svg>
+                    </div>
 
-                <div class="card-content">
-                    <h1>${item.title}</h1>
-                    <div class="card-price">$${item.price}/hr</div>
-                    <p class="card-desc">${item.description}</p>
-                    <span style="font-size: 0.75rem; color: #9c27b0; font-weight: bold;">
-                            ACTIVE
-                        </span>
-                    <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-size: 0.75rem; color: #999; font-weight: 600; text-transform: uppercase;">
-                            ${item.location} • Due: Date
-                        </span>
-                        <i class="fa-solid fa-ellipsis"></i>
+                    <div class="card-content">
+                        <h1>${item.title}</h1>
+                        <div class="card-price">$${item.price}/hr</div>
+                        <p class="card-desc">${item.description}</p>
+                        <span style="font-size: 0.75rem; color: #9c27b0; font-weight: bold;">
+                                ACTIVE
+                            </span>
+                        <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 0.75rem; color: #999; font-weight: 600; text-transform: uppercase;">
+                                ${item.location} • Due: Date
+                            </span>
+                        </div>
                     </div>
                 </div>
 
+                <div class="card-menu-button" onclick="event.stopPropagation(); toggleCardMenu(event, ${item.id})">
+                  <span><svg class="icon"><use href="icons.svg#ellipsis"></use></svg></span>
+                </div>
+
+                <div class="card-menu-dropdown" id="menu-${item.id}" onclick="event.stopPropagation()">
+                    <div class="menu-item" onclick="editListing(${item.id})">
+                        <span><svg class="icon"><use href="icons.svg#pencil"></use></svg></span>Edit
+                    </div>
+                    <div class="menu-item" onclick="deactivateListing(${item.id})">
+                      <span><svg class="icon"><use href="icons.svg#ban"></use></svg></span> Deactivate
+                    </div>
+                    <div class="menu-item delete" onclick="deleteListing(${item.id})">
+                        <span><svg class="icon"><use href="icons.svg#trash"></use></svg></span> Delete
+                    </div>
+                </div>
             </div>`;
         }
 
         document.getElementById("manage-listings-container").innerHTML = htmlContent;
+        attachMenuEventListeners();
+    }
+
+    function toggleCardMenu(event, listingId)
+    {
+        const menu = document.getElementById(`menu-${listingId}`);
+        const isOpen = menu.classList.contains('active');
+        
+        // Close all other menus
+        document.querySelectorAll('.card-menu-dropdown.active').forEach(m => {
+            if (m.id !== `menu-${listingId}`) {
+                m.classList.remove('active');
+            }
+        });
+        
+        // Toggle current menu
+        if (isOpen) {
+            menu.classList.remove('active');
+        } else {
+            menu.classList.add('active');
+        }
+    }
+
+    function attachMenuEventListeners()
+    {
+        // Close menu when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.card-menu-button') && !event.target.closest('.card-menu-dropdown')) {
+                document.querySelectorAll('.card-menu-dropdown.active').forEach(menu => {
+                    menu.classList.remove('active');
+                });
+            }
+        });
+    }
+
+    function editListing(listingId)
+    {
+        goToDifferentScreen(`info_listing.html?id=${listingId}`);
+    }
+
+    function deactivateListing(listingId)
+    {
+        console.log(`Deactivate listing: ${listingId}`);
+        // Add your deactivation logic here
+    }
+
+    function deleteListing(listingId)
+    {
+        console.log(`Delete listing: ${listingId}`);
+        // Add your deletion logic here
     }
 
 </script>

@@ -1,23 +1,62 @@
 <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <defs>
+    <filter id="glitch">
+      <feOffset in="SourceGraphic" dx="-4" dy="0" result="orangeLayer" />
+      <feFlood flood-color="#ff9a00" result="orangeColor" />
+      <feComposite in="orangeColor" in2="orangeLayer" operator="in" result="orangeFinal" />
+
+      <feOffset in="SourceGraphic" dx="4" dy="0" result="blueLayer" />
+      <feFlood flood-color="#00aaff" result="blueColor" />
+      <feComposite in="blueColor" in2="blueLayer" operator="in" result="blueFinal" />
+
+      <feMerge>
+        <feMergeNode in="orangeFinal" />
+        <feMergeNode in="blueFinal" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
 
   <symbol id="house" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+    <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    <polyline points="9 22 9 12 15 12 15 22" />
   </symbol>
 
   <symbol id="bell-ring" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><path d="M4 2C2.8 3.7 2 5.7 2 8"/><path d="M22 8c0-2.3-.8-4.3-2-6"/>
+    <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+    <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+    <path d="M4 2C2.8 3.7 2 5.7 2 8" />
+    <path d="M22 8c0-2.3-.8-4.3-2-6" />
   </symbol>
 
   <symbol id="folder" viewBox="0 0 512 512" fill="none" stroke="currentColor" stroke-width="32" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M440 432H72a40 40 0 0 1-40-40V120a40 40 0 0 1 40-40h75.89a40 40 0 0 1 29.29 12.69l42.64 46.62a8 8 0 0 0 5.86 2.69H440a40 40 0 0 1 40 40v211.31a40 40 0 0 1-40 40z"/><path d="M32 192h448"/>
+    <path d="M440 432H72a40 40 0 0 1-40-40V120a40 40 0 0 1 40-40h75.89a40 40 0 0 1 29.29 12.69l42.64 46.62a8 8 0 0 0 5.86 2.69H440a40 40 0 0 1 40 40v211.31a40 40 0 0 1-40 40z" />
+    <path d="M32 192h448" />
   </symbol>
 
   <symbol id="user-friends" viewBox="0 0 640 512" fill="currentColor">
-    <path d="M192 256c61.9 0 112-50.1 112-112S253.9 32 192 32 80 82.1 80 144s50.1 112 112 112zm76.8 32h-8.3c-20.8 10-43.9 16-68.5 16s-47.6-6-68.5-16h-8.3C51.6 288 0 339.6 0 403.2V432c0 26.5 21.5 48 48 48h288c26.5 0 48-21.5 48-48v-28.8c0-63.6-51.6-115.2-115.2-115.2zM480 256c53 0 96-43 96-96s-43-96-96-96-96 43-96 96 43 96 96 96zm48 32h-3.8c-13.9 4.8-28.6 8-44.2 8s-30.3-3.2-44.2-8H432c-20.4 0-39.2 4.4-56 11.9 26.1 23.9 42.6 57.7 42.6 95.3v33.4c0 14.8-3.3 28.7-9.2 41.4H608c17.7 0 32-14.3 32-32v-26.7c0-51.3-41.5-92.8-92.8-92.8z"/>
+    <path d="M192 256c61.9 0 112-50.1 112-112S253.9 32 192 32 80 82.1 80 144s50.1 112 112 112zm76.8 32h-8.3c-20.8 10-43.9 16-68.5 16s-47.6-6-68.5-16h-8.3C51.6 288 0 339.6 0 403.2V432c0 26.5 21.5 48 48 48h288c26.5 0 48-21.5 48-48v-28.8c0-63.6-51.6-115.2-115.2-115.2zM480 256c53 0 96-43 96-96s-43-96-96-96-96 43-96 96 43 96 96 96zm48 32h-3.8c-13.9 4.8-28.6 8-44.2 8s-30.3-3.2-44.2-8H432c-20.4 0-39.2 4.4-56 11.9 26.1 23.9 42.6 57.7 42.6 95.3v33.4c0 14.8-3.3 28.7-9.2 41.4H608c17.7 0 32-14.3 32-32v-26.7c0-51.3-41.5-92.8-92.8-92.8z" />
   </symbol>
 
   <symbol id="ellipsis" viewBox="0 0 512 512" fill="currentColor">
-    <circle cx="256" cy="256" r="64"/><circle cx="448" cy="256" r="64"/><circle cx="64" cy="256" r="64"/>
+    <circle cx="256" cy="256" r="64" />
+    <circle cx="448" cy="256" r="64" />
+    <circle cx="64" cy="256" r="64" />
   </symbol>
 
+  <symbol id="ellipsis-glitch" viewBox="0 0 256 256">
+    <path filter="url(#glitch)" fill="currentColor" d="M72 128a28 28 0 1 1-56 0 28 28 0 0 1 56 0zm84 0a28 28 0 1 1-56 0 28 28 0 0 1 56 0zm84 0a28 28 0 1 1-56 0 28 28 0 0 1 56 0z" />
+  </symbol>
+
+  <symbol id="pencil" viewBox="0 0 800 800" fill="currentColor">
+    <path d="M583.5 106.3c-23.4-23.4-61.4-23.4-84.8 0L121.3 483.7c-4.4 4.4-7.5 9.9-8.9 16l-39.4 167c-3 12.6 8.3 23.9 20.9 20.9l167-39.4c6-1.4 11.6-4.5 16-8.9l377.4-377.4c23.4-23.4 23.4-61.4 0-84.8L583.5 106.3zM514.8 191.1l82.1 82.1L249 621.1l-82.1-82.1L514.8 191.1zm-119.3 408L313.4 517l40.1-40.1 82.1 82.1-40.1 40.1z" />
+  </symbol>
+
+  <symbol id="trash" viewBox="0 0 800 800" fill="currentColor">
+    <path d="M300 100h200c11 0 20 9 20 20v40h100c22.1 0 40 17.9 40 40v40c0 11-9 20-20 20H160c-11 0-20-9-20-20v-40c0-22.1 17.9-40 40-40h100v-40c0-11 9-20 20-20zM200 300h400l-33.3 366.3C563.3 689.1 544.1 700 523 700H277c-21.1 0-40.3-10.9-43.7-33.7L200 300zM360 380v200c0 11-9 20-20 20s-20-9-20-20V380c0-11 9-20 20-20s20 9 20 20zm120 0v200c0 11-9 20-20 20s-20-9-20-20V380c0-11 9-20 20-20s20 9 20 20z" />
+  </symbol>
+
+  <symbol id="ban" viewBox="0 0 800 800" fill="currentColor">
+    <path d="M400 80c-176.7 0-320 143.3-320 320s143.3 320 320 320 320-143.3 320-320S576.7 80 400 80zm0 60c63.7 0 122.3 22.4 168.4 59.8L200.2 568.4c-37.4-46.1-59.8-104.7-59.8-168.4 0-143.6 116.4-260 260-260zm168.2 91.8c37.4 46.1 59.8 104.7 59.8 168.2 0 143.6-116.4 260-260 260-63.5 0-122.1-22.4-168.2-59.8L568.2 231.8z" />
+  </symbol>
 </svg>

@@ -1,172 +1,173 @@
-/**
- * test.js
- * Run this with: node test.js
- * No dependencies required (uses native Node.js fetch)
- */
-
 const fs = require('fs');
-const path = require('path');
 
 const BASE_URL = 'http://localhost:8080';
-const IMAGE_FILE = './image.png';
+const IMAGE_PATH = './image.png';
 
-async function runTest() {
+async function runTests() {
     console.log("--- STARTING DATABASE SEEDING ---");
 
-    // 1. Create 200 Users
+    // 1. CREATE 200 USERS
     const users = [];
+    console.log("Creating 200 users...");
     for (let i = 1; i <= 200; i++) {
-        const user = {
+        const userData = {
             firstName: `User${i}`,
             lastName: `Test${i}`,
-            email: `user${i}@example.com`,
-            password: `password${i}`,
+            email: `tester${i}@example.com`,
+            password: `pass123_${i}`,
             age: 20 + (i % 30)
         };
-        
         const res = await fetch(`${BASE_URL}/signup`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(user)
+            body: JSON.stringify(userData)
         });
-        
-        if (res.ok) {
-            users.push(user);
-            if (i % 50 === 0) console.log(`Created ${i}/200 users...`);
+        if (res.ok) users.push(userData);
+    }
+    console.log(`Successfully created ${users.length} users.`);
+
+    // 2. CREATE 50 LISTINGS (WITH IMAGES)
+    console.log("Creating 50 listings with image uploads...");
+    const listingIds = [];
+    if (!fs.existsSync(IMAGE_PATH)) {
+        console.error("Error: image.png not found. Cannot upload images.");
+    } else {
+        for (let i = 0; i < 50; i++) {
+            const user = users[i];
+            
+            // First: Upload the image
+            const formData = new FormData();
+            const fileBuffer = fs.readFileSync(IMAGE_PATH);
+            const blob = new Blob([fileBuffer], { type: 'image/png' });
+            formData.append('file', blob, 'image.png');
+
+            const uploadRes = await fetch(`${BASE_URL}/upload-listing`, {
+                method: 'POST',
+                body: formData
+            });
+            const uploadData = await uploadRes.json();
+
+            // Second: Create the listing
+            const listRes = await fetch(`${BASE_URL}/createListing`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: user.email,
+                    password: user.password,
+                    name: `Amazing Item ${i}`,
+                    description: `This is the description for item ${i}`,
+                    pay: 50 + i,
+                    location: "New York",
+                    age: 18,
+                    image_path: uploadData.path // Simulating the link
+                })
+            });
+            // We need to find the ID. Since createListing redirects, 
+            // we'll fetch the user's listings to get the latest ID.
+            const myListsRes = await fetch(`${BASE_URL}/getMyListings`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: user.email, password: user.password })
+            });
+            const myListings = await myListsRes.json();
+            if (myListings.length > 0) listingIds.push(myListings[0].id);
         }
     }
+    console.log(`Created 50 listings.`);
 
-    const mainUser = users[0];
-    const targetUser = users[1];
-
-    // 2. Create Friendships
-    console.log("Creating friendships...");
-    for (let i = 1; i <= 5; i++) {
+    // 3. CREATE 50 FRIENDSHIPS
+    console.log("Creating 50 friendships...");
+    for (let i = 0; i < 50; i++) {
         await fetch(`${BASE_URL}/addfriend`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                email: mainUser.email,
-                password: mainUser.password,
-                selectedFriendId: i + 1
+                email: users[i].email,
+                password: users[i].password,
+                selectedFriendId: i + 2 // Friend the next person
             })
         });
     }
 
-    // 3. Create Listing with Image Upload
-    console.log("Creating listing with image...");
-    if (fs.existsSync(IMAGE_FILE)) {
-        // Simulate Multipart Upload
-        const formData = new FormData();
-        const blob = new Blob([fs.readFileSync(IMAGE_FILE)], { type: 'image/png' });
-        formData.append('file', blob, 'image.png');
-
-        const uploadRes = await fetch(`${BASE_URL}/upload-listing`, {
+    // 4. CREATE 50 LISTING MESSAGES
+    console.log("Creating 50 listing messages...");
+    for (let i = 0; i < 50; i++) {
+        // User (i+1) messages the owner of listing (i)
+        await fetch(`${BASE_URL}/sendMessage`, {
             method: 'POST',
-            body: formData
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email: users[i + 1].email,
+                password: users[i + 1].password,
+                listing_id: listingIds[i],
+                message: `Is item ${i} still available?`
+            })
         });
-        const uploadData = await uploadRes.json();
-
-        if (uploadData.success) {
-            await fetch(`${BASE_URL}/createListing`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    email: mainUser.email,
-                    password: mainUser.password,
-                    name: "Test Item",
-                    description: "Seeded listing",
-                    pay: 100,
-                    location: "New York",
-                    age: 1
-                })
-            });
-        }
     }
 
-    // 4. Create Messages
-    console.log("Sending direct messages...");
-    await fetch(`${BASE_URL}/sendfriendmessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            email: mainUser.email,
-            password: mainUser.password,
-            friend_id: 2,
-            message: "Hey! How are you?"
-        })
-    });
-
     console.log("--- SEEDING COMPLETE ---");
-    console.log("\n--- STARTING VULNERABILITY AUDIT ---");
+    await runSecurityAudit(users[0]);
+}
 
-    /**
-     * VULNERABILITY 1: OPEN REDIRECT / PATH TRAVERSAL
-     * Endpoint: /switchFile
-     * Danger: The app blindly appends user input to a redirect.
-     */
-    console.log("\n[TEST 1] Testing /switchFile for Open Redirect...");
-    const redirectTest = await fetch(`${BASE_URL}/switchFile`, {
+async function runSecurityAudit(adminUser) {
+    console.log("\n" + "=".repeat(50));
+    console.log(" CRITICAL SECURITY VULNERABILITY AUDIT ");
+    console.log("=".repeat(50));
+
+    // ATTACK 1: Path Traversal / File Overwrite
+    // Your code uses data.filename directly. I can try to overwrite your server files.
+    console.log("\n[TEST 1] Attempting Path Traversal via File Upload...");
+    const exploitForm = new FormData();
+    const exploitBlob = new Blob(["// Server Hacked"], { type: 'text/javascript' });
+    exploitForm.append('file', exploitBlob, '../HACK_CONFIRMED.txt'); 
+
+    const exploitRes = await fetch(`${BASE_URL}/upload-listing`, {
+        method: 'POST',
+        body: exploitForm
+    });
+    const exploitData = await exploitRes.json();
+    console.log(`- Result: Server allowed file save to: ${exploitData.path}`);
+    if (exploitData.path.includes('..')) {
+        console.log("  [!] CRITICAL VULNERABILITY: Path Traversal confirmed. I can overwrite index.js or any file on your system.");
+    }
+
+    // ATTACK 2: Open Redirect
+    console.log("\n[TEST 2] Testing /switchFile for Open Redirect...");
+    const redirectRes = await fetch(`${BASE_URL}/switchFile`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            email: mainUser.email,
-            password: mainUser.password,
+            email: adminUser.email,
+            password: adminUser.password,
             file: "https://google.com" 
         }),
         redirect: 'manual'
     });
-    console.log(`- Result: Redirects to: ${redirectTest.headers.get('location')}`);
-
-    /**
-     * VULNERABILITY 2: UNRESTRICTED FILE UPLOAD / PATH TRAVERSAL
-     * Endpoint: /upload-listing
-     * Danger: The backend uses 'data.filename' directly in a path join.
-     * This allows an attacker to overwrite your backend code (e.g., index.js).
-     */
-    console.log("\n[TEST 2] Testing /upload-listing for Path Traversal (RCE Potential)...");
-    const maliciousForm = new FormData();
-    const maliciousBlob = new Blob(["console.log('HACKED')"], { type: 'text/javascript' });
-    // Attempting to go up directories and overwrite a file
-    maliciousForm.append('file', maliciousBlob, '../../hacked.js'); 
-
-    const maliciousRes = await fetch(`${BASE_URL}/upload-listing`, {
-        method: 'POST',
-        body: maliciousForm
-    });
-    const maliciousData = await maliciousRes.json();
-    console.log(`- Result: Server saved file to: ${maliciousData.path}`);
-    if (maliciousData.path.includes('..')) {
-        console.log("  CRITICAL: Server is vulnerable to Directory Traversal via File Upload!");
+    const location = redirectRes.headers.get('location');
+    console.log(`- Result: Redirected to: ${location}`);
+    if (location && location.includes('google.com')) {
+        console.log("  [!] VULNERABILITY: Open Redirect found. Attackers can use your site to phish users.");
     }
 
-    /**
-     * VULNERABILITY 3: SENSITIVE INFORMATION DISCLOSURE
-     * Danger: No session management. Passwords sent in every body.
-     */
-    console.log("\n[TEST 3] Audit: Credential Handling...");
-    console.log("- Warning: Every API call requires plaintext email/password in the JSON body.");
-    console.log("- Risk: If an attacker intercepts one request, they have the user's permanent credentials.");
-
-    /**
-     * VULNERABILITY 4: SQL INJECTION PROBE
-     * Note: You used parameterized queries (?) which is GOOD. It prevents most SQLi.
-     * However, the 'LIKE' queries can still be abused to guess data.
-     */
-    console.log("\n[TEST 4] Testing /findFriend for Data Leakage...");
-    const sqlProbe = await fetch(`${BASE_URL}/findFriend`, {
+    // ATTACK 3: SQL Data Harvesting
+    console.log("\n[TEST 3] Testing /findFriend for Data Leaks...");
+    const sqlRes = await fetch(`${BASE_URL}/findFriend`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            email: mainUser.email,
-            password: mainUser.password,
-            friendSearch: "%" // Trying to dump all users in the system
+            email: adminUser.email,
+            password: adminUser.password,
+            friendSearch: "%" // Wildcard to fetch everyone
         })
     });
-    const sqlData = await sqlProbe.json();
-    console.log(`- Result: Discovered ${sqlData.friends ? sqlData.friends.length : 0} users via wildcard.`);
+    const sqlData = await sqlRes.json();
+    console.log(`- Result: Harvested ${sqlData.friends ? sqlData.friends.length : 0} full names and IDs from the database.`);
 
-    console.log("\n--- AUDIT COMPLETE ---");
+    console.log("\n--- FINAL SECURITY REPORT ---");
+    console.log("1. FILE UPLOAD (Critical): You trust the 'filename' from the user. I can use '../' to escape the images folder and overwrite your backend source code. This allows for Remote Code Execution (RCE).");
+    console.log("2. REDIRECTS (High): The /switchFile endpoint appends user input directly to the URL. An attacker can send users to malicious websites.");
+    console.log("3. AUTHENTICATION (Medium): You transmit plaintext passwords in the body of every single request. If an attacker sniffs the network, they have total control of every account.");
+    console.log("4. DATABASE (Low): While you used '?' (good), you didn't include a 'LIMIT' on searches. A user can search for '%' and crash your server by forcing it to return 1,000,000 rows.");
 }
 
-runTest().catch(err => console.error("Test script error:", err));
+runTests().catch(err => console.error("Test failed:", err));
