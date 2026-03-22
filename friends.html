@@ -160,10 +160,8 @@
         }
         // Global variable to track current chat
 
-
         function startChatWithFriend(friendid, friendfirst, friendlast) {
-            currentChatFriendId = friendid; // Set the global ID for the sendMessage function
-
+            currentChatFriendId = friendid;
             const display = document.getElementById('messages-display');
             display.innerHTML = `<div class="chat-header">Chatting with ${friendfirst} ${friendlast}</div>`;
 
@@ -173,13 +171,47 @@
                 body: JSON.stringify({
                     email: email,
                     password: password,
-                    friendId: friendid
+                    friendId: friendid // Matches Backend body.friendId
                 })
             })
                 .then(res => res.json())
                 .then(data => {
-                    renderMessages(data);
-                });
+                    renderMessages(data); // Breakpoint here will now work
+                })
+                .catch(err => console.error("Load Error:", err));
+        }
+        function renderMessages(messages) {
+            const display = document.getElementById('messages-display');
+
+            // Save the header, clear the rest
+            const header = display.querySelector('.chat-header')?.outerHTML || '';
+            display.innerHTML = header;
+
+            for (let i = 0; i < messages.length; i++) {
+                const msg = messages[i];
+                const msgDiv = document.createElement('div');
+
+                // Use == (not ===) because IDs might be String vs Number
+                const type = (msg.sender_id == currentChatFriendId) ? 'incoming' : 'outgoing';
+                msgDiv.className = 'message ' + type;
+
+                const p = document.createElement('p');
+                p.textContent = msg.message_text;
+
+                const span = document.createElement('span');
+                span.className = 'time-right';
+
+                // Use 'created_at' to match your SQL query
+                if (msg.created_at) {
+                    const date = new Date(msg.created_at);
+                    span.textContent = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                }
+
+                msgDiv.appendChild(p);
+                msgDiv.appendChild(span);
+                display.appendChild(msgDiv);
+            }
+            display.scrollTop = display.scrollHeight;
         }
         function sendMessage(event, message) {
             event.preventDefault();
@@ -265,34 +297,21 @@
                     console.error("Error fetching friends:", error);
                 });
         }
-        function renderMessages(messages) {
-            const display = document.getElementById('messages-display');
+        async function getFriends(body) {
+            let conn;
+            try {
+                conn = await pool.getConnection();
+                // ... auth logic ...
+                const friends = await conn.query(query, [userId, userId]);
 
-            for (let i = 0; i < messages.length; i++) {
-                const msg = messages[i];
-
-                // 1. Create the main div
-                const msgDiv = document.createElement('div');
-                const type = (msg.sender_id === currentChatFriendId) ? 'incoming' : 'outgoing';
-                msgDiv.className = 'message ' + type;
-
-                // 2. Create the text (textContent makes it SECURE from hackers)
-                const p = document.createElement('p');
-                p.textContent = msg.message_text;
-
-                // 3. Create the time
-                const span = document.createElement('span');
-                span.className = 'time-right';
-                span.textContent = msg.timestamp;
-
-                // 4. Put it all together and add to screen
-                msgDiv.appendChild(p);
-                msgDiv.appendChild(span);
-                display.appendChild(msgDiv);
+                // CHANGE THIS: Match the frontend key 'friends'
+                return { success: true, friends: friends, userExist: true };
+            } catch (err) {
+                console.error(err);
+                return { success: false, userExist: false };
+            } finally {
+                if (conn) conn.release();
             }
-
-            // Auto-scroll to latest message
-            display.scrollTop = display.scrollHeight;
         }
 
         function getServerBase() {

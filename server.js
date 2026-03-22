@@ -257,15 +257,15 @@ async function getfriendmessages(body) {
 
         const userId = userRows[0].id; // This is the ID of the person logged in
 
-        // 2. Get the messages (Added 'id' and 'created_at')
-        const query = `
+           const query = `
             SELECT message_text, sender_id, created_at 
             FROM DirectMessages 
             WHERE (sender_id = ? AND receiver_id = ?) 
                OR (sender_id = ? AND receiver_id = ?) 
             ORDER BY created_at ASC`;
 
-        const res = await conn.query(query, [userId, body.friend_id, body.friend_id, userId]);
+        // USE body.friendId (Matches frontend)
+        const res = await conn.query(query, [userId, body.friendId, body.friendId, userId]);
 
         // Return the messages AND the userId so the frontend knows "who am I?"
         return {
@@ -319,33 +319,31 @@ async function sendfriendmessage(body) {
     try {
         conn = await pool.getConnection();
 
-        // 1. Check if user exists and get salt
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
         if (saltResult.length === 0) {
-            return { success: false, message: "User not found", userExist: false };
+            return { success: false, userExist: false };
         }
 
-        // 2. Verify Password
         const hashedPassword = hashPassword(body.password + saltResult[0].salt);
-        const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
-        const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
+        const userRows = await conn.query("SELECT id FROM Users WHERE email = ? AND password = ?;", [body.email, hashedPassword]);
 
         if (userRows.length === 0) {
-            return { success: false, message: "Invalid password", userExist: false };
+            return { success: false, userExist: false };
         }
 
         const SenderId = userRows[0].id;
 
-        // 3. Insert Message 
-        // FIX: Changed body.friend_id to body.friendId to match your frontend
         const insertQuery = "INSERT INTO DirectMessages (sender_id, receiver_id, message_text) VALUES (?,?,?)";
-        const res = await conn.query(insertQuery, [SenderId, body.friendId, body.message]);
+        // Note: Using 'dbResult' to avoid confusion with Express 'res'
+        const dbResult = await conn.query(insertQuery, [SenderId, body.friendId, body.message]);
 
-        return { success: true, userExist: true };
+        // Return a consistent structure
+        return { success: true, userExist: true, data: dbResult };
 
     } catch (err) {
         console.error("Database Error:", err);
-        return { success: false, error: err.message };
+        // Crucial: return userExist: true here if the crash happened AFTER the login check
+        return { success: false, userExist: true, error: err.message };
     } finally {
         if (conn) conn.release();
     }
@@ -595,14 +593,22 @@ app.post('/getNavbar', async (req, res) => {
 app.post('/getfriendmessages', async (req, res) => {
     try {
         const result = await getfriendmessages(req.body);
-        if (result && !result.userExist) {
-            return res.send({ message: "failed" });
+
+        if (!result.userExist) {
+            return res.status(401).json({ error: "Authentication failed" });
         }
-        if (result && result.success) {
-            res.send(result.messages);
+
+        if (result.success) {
+            // Always send an array, even if empty, to the frontend
+            return res.json(result.messages || []);
         }
+
+        // Fallback for logic errors
+        return res.status(500).json({ error: "Internal logic error" });
+
     } catch (err) {
-        res.status(400).send(err.message);
+        console.error(err);
+        res.status(500).json({ error: err.message });
     }
 });
 
@@ -620,14 +626,25 @@ app.post('/findFriend', async (req, res) => {
 app.post('/sendfriendmessage', async (req, res) => {
     try {
         const result = await sendfriendmessage(req.body);
-        if (result && !result.userExist) {
-            return res.send({ message: "failed" });
+
+        // 1. Handle user not existing/wrong password
+        if (!result.userExist) {
+            return res.status(401).json({ success: false, message: "Authentication failed" });
         }
-        if (result && result.success) {
-            res.send(result.listing);
+
+        // 2. Handle success
+        if (result.success) {
+            // Send back a valid JSON object
+            return res.json({ success: true, data: result.data });
         }
+
+        // 3. Fallback for unexpected logic states
+        return res.status(500).json({ success: false, message: "Unknown error" });
+
     } catch (err) {
-        res.status(400).send(err.message);
+        console.error(err);
+        // Always send JSON, even on errors, so res.json() doesn't crash
+        res.status(400).json({ success: false, error: err.message });
     }
 });
 
