@@ -45,8 +45,8 @@
 }
 
 .listing-card-square:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  
+    box-shadow: 0 8px 20px rgba(0,0,0,0.02);
     border-color: #ccc;
 }
 
@@ -104,16 +104,16 @@
 
 .card-menu-button {
     position: absolute;
-    bottom: 12px;
-    right: 12px;
-    width: 36px;
-    height: 36px;
+    bottom: 2vh;
+    right: 2vw;
+    width: 1vw;
+    height: 1vh;
     display: flex;
     align-items: center;
     justify-content: center;
     background-color: rgba(255, 255, 255, 0.95);
-    border: 1px solid #e0e0e0;
-    border-radius: 6px;
+    opacity:0.6;
+    transform: scale(0.60);
     cursor: pointer;
     z-index: 10;
     transition: all 0.2s ease;
@@ -128,12 +128,13 @@
 .card-menu-button i {
     color: #666;
     font-size: 16px;
+    
 }
 
 .card-menu-dropdown {
     position: absolute;
-    bottom: 50px;
-    right: 12px;
+    bottom: 3vh;
+    right: 2vw;
     background-color: white;
     border: 1px solid #e0e0e0;
     border-radius: 8px;
@@ -142,6 +143,7 @@
     z-index: 100;
     opacity: 0;
     visibility: hidden;
+    
     transform: translateY(8px);
     transition: all 0.2s ease;
 }
@@ -150,6 +152,7 @@
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
+    transform: scale(0.95);
 }
 
 .menu-item {

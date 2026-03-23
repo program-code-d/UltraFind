@@ -13,7 +13,7 @@
 <script>
     let email
     let password
-
+    let my_listings
     function main()
     {
         email = localStorage.getItem('email')
@@ -80,14 +80,41 @@
             .then(response => response.json())
             .then((data) =>
             {
-                drawMyListings(data)
+                my_listings = data
+                drawMyListings(my_listings)
             })
     }
 
 
     function goToInfoListing(listing)
     {
-        goToDifferentScreen("info_listing.html?id="+listing)
+        goToDifferentScreen("info_listing.html?id=" + listing)
+    }
+    function getActiveText(listing)
+    {
+        if (listing.is_active == true)
+        {
+            return "ACTIVE"
+        }
+        else
+        {
+            return "INACTIVE"
+        }
+    }
+    function getStatusAndDisplay(listing)
+    {
+          if (listing.is_active == true)
+        {
+            return ` <div class="menu-item" onclick="deactivateListing(${listing.id})">
+                      <span><svg class="icon"><use href="icons.svg#ban"></use></svg></span> Deactivate
+                    </div>`
+        }
+        else
+        {
+            return ` <div class="menu-item" onclick="activateListing(${listing.id})">
+                      <span><svg class="icon"><use href="icons.svg#unban"></use></svg></span> Activate
+                    </div>`
+        }
     }
     function drawMyListings(myListings)
     {
@@ -113,7 +140,7 @@
                         <div class="card-price">$${item.price}/hr</div>
                         <p class="card-desc">${item.description}</p>
                         <span style="font-size: 0.75rem; color: #9c27b0; font-weight: bold;">
-                                ACTIVE
+                                ${getActiveText(item)}
                             </span>
                         <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
                             <span style="font-size: 0.75rem; color: #999; font-weight: 600; text-transform: uppercase;">
@@ -131,9 +158,7 @@
                     <div class="menu-item" onclick="editListing(${item.id})">
                         <span><svg class="icon"><use href="icons.svg#pencil"></use></svg></span>Edit
                     </div>
-                    <div class="menu-item" onclick="deactivateListing(${item.id})">
-                      <span><svg class="icon"><use href="icons.svg#ban"></use></svg></span> Deactivate
-                    </div>
+                   ${getStatusAndDisplay(item)}
                     <div class="menu-item delete" onclick="deleteListing(${item.id})">
                         <span><svg class="icon"><use href="icons.svg#trash"></use></svg></span> Delete
                     </div>
@@ -144,23 +169,70 @@
         document.getElementById("manage-listings-container").innerHTML = htmlContent;
         attachMenuEventListeners();
     }
+    function deactivateListing(listing)
+    {
+        fetch(getServerBase() + "/deactivateListing", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email: email, password: password, listing_id: listing })
+        })
+            .then(response => response.text())
+            .then((data) =>
+            {
+                if (data == `{"message":"failed"}`)
+                {
+                    window.location.href = "login.html"
+                }
+                const item = my_listings.find(item => item.id === listing)
+                if (item) item.is_active = JSON.parse(data)
+                drawMyListings(my_listings)
+            })
 
+    }
+     function activateListing(listing)
+    {
+        fetch(getServerBase() + "/activateListing", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email: email, password: password, listing_id: listing })
+        })
+            .then(response => response.text())
+            .then((data) =>
+            {
+                if (data == `{"message":"failed"}`)
+                {
+                    window.location.href = "login.html"
+                }
+                const item = my_listings.find(item => item.id === listing)
+                if (item) item.is_active = JSON.parse(data)
+                drawMyListings(my_listings)
+            })
+
+    }
     function toggleCardMenu(event, listingId)
     {
         const menu = document.getElementById(`menu-${listingId}`);
         const isOpen = menu.classList.contains('active');
-        
+
         // Close all other menus
-        document.querySelectorAll('.card-menu-dropdown.active').forEach(m => {
-            if (m.id !== `menu-${listingId}`) {
+        document.querySelectorAll('.card-menu-dropdown.active').forEach(m =>
+        {
+            if (m.id !== `menu-${listingId}`)
+            {
                 m.classList.remove('active');
             }
         });
-        
+
         // Toggle current menu
-        if (isOpen) {
+        if (isOpen)
+        {
             menu.classList.remove('active');
-        } else {
+        } else
+        {
             menu.classList.add('active');
         }
     }
@@ -168,9 +240,12 @@
     function attachMenuEventListeners()
     {
         // Close menu when clicking outside
-        document.addEventListener('click', function(event) {
-            if (!event.target.closest('.card-menu-button') && !event.target.closest('.card-menu-dropdown')) {
-                document.querySelectorAll('.card-menu-dropdown.active').forEach(menu => {
+        document.addEventListener('click', function (event)
+        {
+            if (!event.target.closest('.card-menu-button') && !event.target.closest('.card-menu-dropdown'))
+            {
+                document.querySelectorAll('.card-menu-dropdown.active').forEach(menu =>
+                {
                     menu.classList.remove('active');
                 });
             }
@@ -182,11 +257,6 @@
         goToDifferentScreen(`info_listing.html?id=${listingId}`);
     }
 
-    function deactivateListing(listingId)
-    {
-        console.log(`Deactivate listing: ${listingId}`);
-        // Add your deactivation logic here
-    }
 
     function deleteListing(listingId)
     {
