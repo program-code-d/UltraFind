@@ -44,6 +44,15 @@ CREATE TABLE
         CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES Users (id) ON DELETE CASCADE
     );
 
+CREATE TABLE
+    ListingMedia (
+        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        listing_id INT UNSIGNED NOT NULL,
+        file_path VARCHAR(255) NOT NULL,
+        media_type ENUM ('image', 'video') DEFAULT 'image',
+        CONSTRAINT fk_media_listing FOREIGN KEY (listing_id) REFERENCES Listings (id) ON DELETE CASCADE
+    );
+
 -- 1. This table ONLY handles the "Add Friend" connection
 CREATE TABLE
     Friendships (
