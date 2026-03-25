@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,8 +16,13 @@
             --easing: cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
         body {
             background-color: #050505;
             height: 100vh;
@@ -32,7 +38,7 @@
         .bg-gradient {
             position: fixed;
             inset: 0;
-            background: 
+            background:
                 radial-gradient(circle at 20% 30%, var(--deep-purple) 0%, transparent 50%),
                 radial-gradient(circle at 80% 70%, #0c142b 0%, transparent 50%);
             z-index: -2;
@@ -81,6 +87,7 @@
             transition: 0.3s;
             backdrop-filter: blur(10px);
         }
+
         .skip-btn:hover {
             background: var(--brand-orange);
             border-color: var(--brand-orange);
@@ -111,7 +118,8 @@
             inset: 0;
             border: 1px solid var(--border-white);
             border-radius: 50%;
-            animation: rotateFrame 15s linear infinite; /* SLOWER */
+            animation: rotateFrame 15s linear infinite;
+            /* SLOWER */
         }
 
         .eye-glow-ring {
@@ -122,7 +130,8 @@
             border-bottom: 2px solid var(--brand-orange);
             border-radius: 50%;
             opacity: 0.3;
-            animation: rotateFrame 6s linear infinite reverse; /* SLOWER */
+            animation: rotateFrame 6s linear infinite reverse;
+            /* SLOWER */
         }
 
         .rect-deco {
@@ -131,17 +140,31 @@
             height: 4px;
             background: linear-gradient(90deg, var(--brand-orange), var(--accent-blue));
             opacity: 0;
-            animation: rectPulse 2s var(--easing) infinite; /* SLOWER */
+            animation: rectPulse 2s var(--easing) infinite;
+            /* SLOWER */
         }
-        .rect-1 { top: -30px; left: 50%; transform: translateX(-50%); animation-delay: 0.2s; }
-        .rect-2 { bottom: -30px; left: 50%; transform: translateX(-50%); animation-delay: 0.5s; }
+
+        .rect-1 {
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            animation-delay: 0.2s;
+        }
+
+        .rect-2 {
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            animation-delay: 0.5s;
+        }
 
         .logo-inner {
             width: 80px;
             height: 80px;
             opacity: 0;
             transform: scale(0.5);
-            animation: logoReveal 1.5s var(--easing) forwards 0.8s; /* SLOWER REVEAL */
+            animation: logoReveal 1.5s var(--easing) forwards 0.8s;
+            /* SLOWER REVEAL */
         }
 
         .brand-title {
@@ -154,7 +177,8 @@
             -webkit-text-fill-color: transparent;
             opacity: 0;
             transform: translateY(30px);
-            animation: titleRise 1.5s var(--easing) forwards 1.8s; /* LATER REVEAL */
+            animation: titleRise 1.5s var(--easing) forwards 1.8s;
+            /* LATER REVEAL */
         }
 
         .visual-blocks {
@@ -176,13 +200,25 @@
             height: 100%;
             width: 0;
             background: linear-gradient(90deg, var(--brand-orange), var(--accent-blue));
-            animation: fillBlock 1.8s cubic-bezier(0.65, 0, 0.35, 1) forwards; /* SLOWER FILL */
+            animation: fillBlock 1.8s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+            /* SLOWER FILL */
         }
 
-        .block:nth-child(1) .block-fill { animation-delay: 2.8s; }
-        .block:nth-child(2) .block-fill { animation-delay: 3.2s; }
-        .block:nth-child(3) .block-fill { animation-delay: 3.6s; }
-        .block:nth-child(4) .block-fill { animation-delay: 4.0s; }
+        .block:nth-child(1) .block-fill {
+            animation-delay: 2.8s;
+        }
+
+        .block:nth-child(2) .block-fill {
+            animation-delay: 3.2s;
+        }
+
+        .block:nth-child(3) .block-fill {
+            animation-delay: 3.6s;
+        }
+
+        .block:nth-child(4) .block-fill {
+            animation-delay: 4.0s;
+        }
 
         /* --- FINAL LANDING --- */
         .landing-stage {
@@ -226,33 +262,60 @@
         }
 
         /* --- KEYFRAMES --- */
-        @keyframes rotateFrame { to { transform: rotate(360deg); } }
-        
+        @keyframes rotateFrame {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
         @keyframes rectPulse {
-            0%, 100% { opacity: 0.1; transform: translateX(-50%) scaleX(1); }
-            50% { opacity: 1; transform: translateX(-50%) scaleX(2.5); }
+
+            0%,
+            100% {
+                opacity: 0.1;
+                transform: translateX(-50%) scaleX(1);
+            }
+
+            50% {
+                opacity: 1;
+                transform: translateX(-50%) scaleX(2.5);
+            }
         }
 
         @keyframes logoReveal {
-            to { opacity: 1; transform: scale(1); }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
         }
 
         @keyframes titleRise {
-            to { opacity: 1; transform: translateY(0); }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        @keyframes fillBlock { to { width: 100%; } }
+        @keyframes fillBlock {
+            to {
+                width: 100%;
+            }
+        }
 
-        @keyframes fadeIn { to { opacity: 1; } }
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
 
         .fade-out {
             opacity: 0 !important;
             transform: scale(1.1) !important;
             pointer-events: none;
         }
-
     </style>
 </head>
+
 <body>
 
     <div class="bg-gradient"></div>
@@ -268,22 +331,30 @@
             <div class="eye-glow-ring"></div>
             <div class="rect-deco rect-1"></div>
             <div class="rect-deco rect-2"></div>
-            
+
             <svg class="logo-inner" viewBox="0 0 100 100" fill="none">
-                <circle cx="45" cy="45" r="25" stroke="white" stroke-width="6"/>
-                <path d="M68 68L85 85" stroke="white" stroke-width="6" stroke-linecap="round"/>
-                <path d="M45 25V65" stroke="var(--brand-orange)" stroke-width="8"/>
-                <path d="M25 45H65" stroke="var(--brand-orange)" stroke-width="8"/>
+                <circle cx="45" cy="45" r="25" stroke="white" stroke-width="6" />
+                <path d="M68 68L85 85" stroke="white" stroke-width="6" stroke-linecap="round" />
+                <path d="M45 25V65" stroke="var(--brand-orange)" stroke-width="8" />
+                <path d="M25 45H65" stroke="var(--brand-orange)" stroke-width="8" />
             </svg>
         </div>
 
         <h1 class="brand-title">UltraFind</h1>
 
         <div class="visual-blocks">
-            <div class="block"><div class="block-fill"></div></div>
-            <div class="block"><div class="block-fill"></div></div>
-            <div class="block"><div class="block-fill"></div></div>
-            <div class="block"><div class="block-fill"></div></div>
+            <div class="block">
+                <div class="block-fill"></div>
+            </div>
+            <div class="block">
+                <div class="block-fill"></div>
+            </div>
+            <div class="block">
+                <div class="block-fill"></div>
+            </div>
+            <div class="block">
+                <div class="block-fill"></div>
+            </div>
         </div>
     </div>
 
@@ -294,9 +365,17 @@
     </div>
 
     <script>
+        function getServerBase()
+        {
+            const protocol = window.location.protocol; // 'http:' or 'https:'
+            const hostname = window.location.hostname;
+            const port = window.location.port ? ':' + window.location.port : '';
+            return `${protocol}//${hostname}${port}`;
+        }
         // Check local storage
-        if (localStorage.getItem('ultrafind_intro_watched') === 'true') {
-            window.location.href=`${getServerBase()}/login`
+        if (localStorage.getItem('ultrafind_intro_watched') === 'true')
+        {
+            window.location.href = `${getServerBase()}/login`
         }
 
         // --- SNOW ANIMATION ---
@@ -304,18 +383,22 @@
         const ctx = canvas.getContext('2d');
         let particles = [];
 
-        function resize() {
+        function resize()
+        {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
         }
         window.onresize = resize;
         resize();
 
-        class Particle {
-            constructor() {
+        class Particle
+        {
+            constructor()
+            {
                 this.reset();
             }
-            reset() {
+            reset()
+            {
                 this.x = Math.random() * canvas.width;
                 this.y = Math.random() * canvas.height;
                 this.size = Math.random() * 2 + 0.5;
@@ -323,15 +406,18 @@
                 this.speedY = Math.random() * 0.4 + 0.1;
                 this.opacity = Math.random() * 0.5 + 0.2;
             }
-            update() {
+            update()
+            {
                 this.y += this.speedY;
                 this.x += this.speedX;
-                if (this.y > canvas.height) {
+                if (this.y > canvas.height)
+                {
                     this.y = -10;
                     this.x = Math.random() * canvas.width;
                 }
             }
-            draw() {
+            draw()
+            {
                 ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
@@ -339,13 +425,16 @@
             }
         }
 
-        for (let i = 0; i < 100; i++) {
+        for (let i = 0; i < 100; i++)
+        {
             particles.push(new Particle());
         }
 
-        function animate() {
+        function animate()
+        {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            particles.forEach(p => {
+            particles.forEach(p =>
+            {
                 p.update();
                 p.draw();
             });
@@ -358,22 +447,26 @@
         const landing = document.getElementById('landing-container');
         const skip = document.getElementById('skipTrigger');
 
-        function showLanding() {
+        function showLanding()
+        {
             intro.classList.add('fade-out');
             skip.style.display = 'none';
-            setTimeout(() => {
+            setTimeout(() =>
+            {
                 intro.style.display = 'none';
                 landing.classList.add('active');
             }, 1000);
         }
 
-        function completeIntro() {
+        function completeIntro()
+        {
             localStorage.setItem('ultrafind_intro_watched', 'true');
-            window.location.href=`${getServerBase()}/login`
+            window.location.href = `${getServerBase()}/login`
         }
 
         setTimeout(showLanding, 7500);
 
     </script>
 </body>
+
 </html>

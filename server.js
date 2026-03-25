@@ -201,7 +201,9 @@ async function getListings(body)
         const hashedPassword = hashPassword(body.password + saltResult[0].salt);
         const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
-        const insertQuery = "SELECT * FROM Listings WHERE title LIKE ?;";
+        const insertQuery = "SELECT * FROM Listings WHERE title LIKE ? AND is_Active = true;";
+
+
         const res = await conn.query(insertQuery, [`%${body.search}%`]);
         return { success: true, listings: res, userExist: true };
     } catch (err)
@@ -676,7 +678,7 @@ app.post('/loginauth', async (req, res) =>
 });
 
 
-app.post('/createListing', async (req, res) =>
+app.post('/createListingupload', async (req, res) =>
 {
     try
     {

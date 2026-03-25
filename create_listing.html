@@ -21,15 +21,15 @@
             </div>
 
             <div class="form-group">
-                <label>Image:</label>
+                <label>Images:</label>
                 <div class="upload-container">
-                    <input type="file" id="fileInput" style="display: none;" accept="image/*"
-                        onchange="previewImage(this)">
+                    <input type="file" id="fileInput" style="display: none;" accept="image/*" multiple>
                     <div class="image-placeholder" id="imagePreview"
                         onclick="document.getElementById('fileInput').click()">
-                        <span>Click to upload image</span>
+                        <span>Click to upload images</span>
                     </div>
-                    <button type="button" class="assign-btn" onclick="uploadImage()">Upload to Server</button>
+                    
+                    <div class="image-gallery" id="imageGallery"></div>
                 </div>
             </div>
 
@@ -67,6 +67,12 @@
             <div class="listing-container">
                 <div class="main-content">
                     <div class="image-preview-box" id="preview-image-box">
+                        <div class="carousel-wrapper">
+                            <button class="carousel-arrow left" id="prevBtn" onclick="previousImage()" style="display: none;">❮</button>
+                            <div class="carousel-image-display" id="carouselImageDisplay"></div>
+                            <button class="carousel-arrow right" id="nextBtn" onclick="nextImage()" style="display: none;">❯</button>
+                        </div>
+                        <div class="image-counter" id="imageCounter"></div>
                     </div>
                     <div class="Age-pay-location">
                         <h1 id="preview-name">Listing Name</h1>
@@ -83,40 +89,157 @@
         </div>
     </div>
 
-    
-
     <script>
-        var email
-        var password
+        var email;
+        var password;
+        var selectedImages = []; // Store file objects
+        var currentImageIndex = 0;
+
         function getServerBase()
         {
-            const protocol = window.location.protocol; // 'http:' or 'https:'
+            const protocol = window.location.protocol;
             const hostname = window.location.hostname;
             const port = window.location.port ? ':' + window.location.port : '';
             return `${protocol}//${hostname}${port}`;
         }
 
-        function createListing()
+        // Handle file selection
+        document.getElementById('fileInput').addEventListener('change', function()
+        {
+            const files = Array.from(this.files);
+            
+            // Add new files to selectedImages
+            files.forEach(file => {
+                const isDuplicate = selectedImages.some(img => img.name === file.name && img.size === file.size);
+                if (!isDuplicate) {
+                    selectedImages.push(file);
+                }
+            });
+
+            // Update gallery display
+            displayImageGallery();
+            updatePreview();
+
+            // Clear the input so the same file can be selected again
+            this.value = '';
+        });
+
+        function displayImageGallery()
+        {
+            const gallery = document.getElementById('imageGallery');
+            gallery.innerHTML = '';
+
+            selectedImages.forEach((file, index) => {
+                const thumbnail = document.createElement('div');
+                thumbnail.className = 'image-thumbnail';
+                thumbnail.style.backgroundImage = `url(${URL.createObjectURL(file)})`;
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-thumbnail';
+                deleteBtn.innerHTML = '✕';
+                deleteBtn.onclick = () => removeImage(index);
+                
+                thumbnail.appendChild(deleteBtn);
+                gallery.appendChild(thumbnail);
+            });
+
+            if (selectedImages.length > 0) {
+                currentImageIndex = 0;
+                updateCarousel();
+            } else {
+                document.getElementById('carouselImageDisplay').innerHTML = '';
+                document.getElementById('imageCounter').innerHTML = '';
+            }
+        }
+
+        function removeImage(index)
+        {
+            selectedImages.splice(index, 1);
+            displayImageGallery();
+            updatePreview();
+        }
+
+        function updateCarousel()
+        {
+            if (selectedImages.length === 0) {
+                document.getElementById('carouselImageDisplay').innerHTML = '';
+                document.getElementById('imageCounter').innerHTML = '';
+                document.getElementById('prevBtn').style.display = 'none';
+                document.getElementById('nextBtn').style.display = 'none';
+                return;
+            }
+
+            const currentFile = selectedImages[currentImageIndex];
+            document.getElementById('carouselImageDisplay').style.backgroundImage = `url(${URL.createObjectURL(currentFile)})`;
+            document.getElementById('imageCounter').innerHTML = `${currentImageIndex + 1} / ${selectedImages.length}`;
+
+            // Show/hide arrows
+            document.getElementById('prevBtn').style.display = selectedImages.length > 1 ? 'block' : 'none';
+            document.getElementById('nextBtn').style.display = selectedImages.length > 1 ? 'block' : 'none';
+        }
+
+        function previousImage()
+        {
+            if (selectedImages.length > 0) {
+                currentImageIndex = (currentImageIndex - 1 + selectedImages.length) % selectedImages.length;
+                updateCarousel();
+            }
+        }
+
+        function nextImage()
+        {
+            if (selectedImages.length > 0) {
+                currentImageIndex = (currentImageIndex + 1) % selectedImages.length;
+                updateCarousel();
+            }
+        }
+
+        async function createListing()
         {
             let listingName = document.getElementById('listing-name');
             let listingPrice = document.getElementById('listing-price');
             let listingDescription = document.getElementById('listing-description');
             let listingLocation = document.getElementById('listing-location');
-            let age = document.getElementById('age')
+            let age = document.getElementById('age');
 
             const price = parseFloat(listingPrice.value || 0);
 
-            email = localStorage.getItem('email')
-            password = localStorage.getItem('password')
+            email = localStorage.getItem('email');
+            password = localStorage.getItem('password');
 
             if (listingName.value && price > 0 && listingDescription.value && listingLocation.value)
             {
-                fetch(getServerBase() + "/createListing", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
+                try {
+                    let imagePaths = [];
+
+                    // Upload all images
+                    if (selectedImages.length > 0)
+                    {
+                        for (let i = 0; i < selectedImages.length; i++) {
+                            const formData = new FormData();
+                            formData.append('listingImage', selectedImages[i]);
+
+                            const uploadResponse = await fetch(getServerBase() + '/upload-listing', {
+                                method: 'POST',
+                                body: formData
+                            });
+
+                            if (uploadResponse.ok)
+                            {
+                                const uploadData = await uploadResponse.json();
+                                imagePaths.push(uploadData.path);
+                                console.log(`Image ${i + 1} uploaded successfully:`, uploadData.path);
+                            }
+                            else
+                            {
+                                alert(`Failed to upload image ${i + 1}. Please try again.`);
+                                return;
+                            }
+                        }
+                    }
+
+                    // Create listing with image paths
+                    const listingData = {
                         email: email,
                         password: password,
                         name: listingName.value,
@@ -124,83 +247,43 @@
                         description: listingDescription.value,
                         location: listingLocation.value,
                         age: age.value
-                    })
-                })
-                    .then(response => response.json())
-                    .then((data) =>
+                    };
+
+                    if (imagePaths.length > 0) {
+                        listingData.imagePaths = imagePaths;
+                    }
+
+                    const response = await fetch(getServerBase() + "/createListingupload", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(listingData)
+                    });
+
+                    const data = await response.json();
+                    if (data.success && data.redirect)
                     {
-                        if (data.success && data.redirect)
-                        {
-                            localStorage.setItem('email', email);
-                            localStorage.setItem('password', password);
-                            window.location.href = getServerBase() + data.redirect;
-                        }
-                        else if (data.message === "failed")
-                        {
-                            window.location.href = getServerBase() + "/login";
-                        }
-                    })
-                    .catch(err => {
-                        console.error("Create listing error:", err);
+                        localStorage.setItem('email', email);
+                        localStorage.setItem('password', password);
+                        window.location.href = getServerBase() + data.redirect;
+                    }
+                    else if (data.message === "failed")
+                    {
                         window.location.href = getServerBase() + "/login";
-                    })
+                    }
+                }
+                catch (err) {
+                    console.error("Create listing error:", err);
+                    alert("Error creating listing. Please try again.");
+                }
             }
             else
             {
                 alert("You didn't complete the listing. Please fill out all fields.");
             }
         }
-        async function uploadImage()
-        {
-            const fileInput = document.getElementById('fileInput');
-            const file = fileInput.files[0];
 
-            if (!file)
-            {
-                alert("Please select a file first!");
-                return;
-            }
-
-            // FormData is necessary for sending files via AJAX/Fetch
-            const formData = new FormData();
-            formData.append('listingImage', file);
-
-            try
-            {
-                const response = await fetch(getServerBase() + '/upload-listing', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (response.ok)
-                {
-                    const data = await response.json();
-                    console.log("Success! Image URL:", data.path);
-                    alert("Uploaded successfully!");
-
-                    // Now you can save 'data.path' into your MariaDB database
-                    // for this specific listing.
-                } else
-                {
-                    console.error("Upload failed.");
-                }
-            } catch (error)
-            {
-                console.error("Error:", error);
-            }
-        }
-
-        // Bonus: Show a preview when they pick a file
-        document.getElementById('fileInput').onchange = function ()
-        {
-            const [file] = this.files;
-            if (file)
-            {
-                document.getElementById('imagePreview').style.backgroundImage = `url(${URL.createObjectURL(file)})`;
-                document.getElementById('imagePreview').style.backgroundSize = 'cover';
-                document.getElementById('imagePreview').innerHTML = ''; // Clear the text
-            }
-        };
         function updatePreview()
         {
             // Get values from form
