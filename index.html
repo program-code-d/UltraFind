@@ -33,6 +33,9 @@
             {
                 if (data == `{"message":"failed"}`)
                 {
+                    localStorage.removeItem('email');
+                    localStorage.removeItem('password');
+
                     window.location.href = `${getServerBase()}/login`
                 }
                 listings = data

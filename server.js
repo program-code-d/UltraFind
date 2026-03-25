@@ -486,6 +486,22 @@ app.get('/friends', (req, res) => {
 app.get('/createListing', (req, res) => {
     res.sendFile('create_listing.html');
 });
+
+app.post('/createListing', async (req, res) => {
+    try {
+        const result = await createListing(req.body);
+        if (result && !result.userExist) {
+            return res.send({ message: "failed" });
+        }
+        if (result && result.success) {
+            return res.send({ success: true, redirect: "/home" });
+        }
+    } catch (err) {
+        console.error("Create listing error:", err);
+        res.status(400).send({ message: "Error creating listing" });
+    }
+});
+
 app.get('/home', (req, res) => {
     res.sendFile('index.html');
 });
@@ -588,19 +604,7 @@ app.post('/loginauth', async (req, res) => {
 });
 
 
-app.post('/createListingupload', async (req, res) => {
-    try {
-        const result = await createListing(req.body);
-        if (result && !result.userExist) {
-            return res.send({ message: "failed" });
-        }
-        if (result && result.success) {
-            return res.send({ success: true, redirect: "/home" });
-        }
-    } catch (err) {
-        res.status(400).send(err.message);
-    }
-});
+
 
 
 app.post('/getListings', async (req, res) => {
@@ -747,8 +751,17 @@ app.post('/upload-listing', async (req, res) => {
             }
         }
 
+        try {
         const result = await createListing(body, mediaFiles);
-        res.send(result);
+        if (result && ((result.userExist != undefined)&&(!result.userExist))) {
+            return res.send({ message: "failed" });
+        }
+        if (result && result.success) {
+            return res.send({ success: true, redirect: "/home" });
+        }
+    } catch (err) {
+        res.status(400).send(err.message);
+    }
 
     } catch (err) {
         console.error("UPLOAD ERROR:", err);
