@@ -13,6 +13,8 @@ DROP TABLE IF EXISTS Users;
 
 DROP TABLE IF EXISTS Friends;
 
+DROP TABLE IF EXISTS ListingMedia;
+
 -- Adding your old table name just in case it's still there
 SET
     FOREIGN_KEY_CHECKS = 1;
