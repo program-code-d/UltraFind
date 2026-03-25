@@ -695,34 +695,40 @@ app.post('/upload-listing', async (req, res) => {
                 const timestamp = Date.now();
                 const isVideo = part.mimetype.startsWith('video/');
                 const isImage = part.mimetype.startsWith('image/');
-
-                // Set extension: WebP for images, MP4 for videos
-                const extension = isVideo ? '.mp4' : (isImage ? '.webp' : path.extname(part.filename));
+                
+                // AVIF for images (Better than WebP), MP4 for videos
+                const extension = isVideo ? '.mp4' : (isImage ? '.avif' : path.extname(part.filename));
                 const uniqueName = `${timestamp}-${Math.random().toString(36).substring(7)}${extension}`;
                 const savePath = path.join(__dirname, 'images', uniqueName);
 
                 if (isImage) {
-                    // IMAGE COMPRESSION: WebP Quality 85 is visually lossless but tiny
+                    // ULTRA IMAGE COMPRESSION: AVIF
+                    // quality 65 in AVIF looks better than quality 85 in JPEG
                     const transformer = sharp()
-                        .webp({ quality: 85, effort: 6 })
-                        .rotate(); // Fixes photos taken sideways on phones
-
+                        .avif({ 
+                            quality: 65, 
+                            effort: 9, // Highest compression level (Slowest but smallest)
+                            chromaSubsampling: '4:2:0' 
+                        }) 
+                        .rotate(); 
+                    
                     await pipeline(part.file, transformer, fs.createWriteStream(savePath));
                     mediaFiles.push({ name: uniqueName, type: 'image' });
 
                 } else if (isVideo) {
-                    // VIDEO COMPRESSION: Convert to H.265 (HEVC)
-                    // CRF 22 is high quality; preset medium is good for Oracle CPUs
+                    // ULTRA VIDEO COMPRESSION: H.265 (HEVC)
                     const tempPath = path.join(__dirname, 'images', 'temp-' + uniqueName);
                     await pipeline(part.file, fs.createWriteStream(tempPath));
 
                     await new Promise((resolve, reject) => {
                         ffmpeg(tempPath)
                             .vcodec('libx265')
-                            .addOptions(['-crf 22', '-preset medium'])
+                            // CRF 24 is the "Sweet Spot" for H.265. 
+                            // 'slow' preset gives ~15% better compression than 'medium'
+                            .addOptions(['-crf 24', '-preset slow', '-pix_fmt yuv420p'])
                             .save(savePath)
                             .on('end', () => {
-                                if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+                                if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath); 
                                 resolve();
                             })
                             .on('error', (err) => {
@@ -733,7 +739,6 @@ app.post('/upload-listing', async (req, res) => {
                     mediaFiles.push({ name: uniqueName, type: 'video' });
 
                 } else {
-                    // Non-media files just get saved normally
                     await pipeline(part.file, fs.createWriteStream(savePath));
                     mediaFiles.push({ name: uniqueName, type: 'other' });
                 }
@@ -747,7 +752,7 @@ app.post('/upload-listing', async (req, res) => {
 
     } catch (err) {
         console.error("UPLOAD ERROR:", err);
-        res.status(500).send({ success: false, message: "Compression failed" });
+        res.status(500).send({ success: false, message: "Ultra-compression failed" });
     }
 });
 
