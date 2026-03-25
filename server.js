@@ -19,8 +19,7 @@ const pool = mariadb.createPool({
 });
 
 
-async function setup()
-{
+async function setup() {
     await app.register(require('@fastify/middie'));
     app.register(require('@fastify/formbody'));
     app.register(require('@fastify/static'), {
@@ -32,24 +31,20 @@ async function setup()
 }
 
 
-function hashPassword(passw_string)
-{
+function hashPassword(passw_string) {
     return crypto.createHash("sha256").update(String(passw_string)).digest("hex");
 }
 
 
-function isEmail(email)
-{
+function isEmail(email) {
     const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     return emailPattern.test(email);
 }
 
 
-async function findFriend(body)
-{
+async function findFriend(body) {
     let conn;
-    try
-    {
+    try {
         conn = await pool.getConnection();
         const saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
         const salt = saltResult[0].salt;
@@ -60,22 +55,18 @@ async function findFriend(body)
         const findQuery = "SELECT id, first_name, last_name FROM Users WHERE id != ? AND CONCAT(first_name, ' ', last_name) LIKE ?;";
         const friends = await conn.query(findQuery, [user_id, `%${body.friendSearch}%`]);
         return { success: true, friends: friends, userExist: true };
-    } catch (err)
-    {
+    } catch (err) {
         console.error(err);
         return { success: false, error: "Internal Server Error" };
-    } finally
-    {
+    } finally {
         if (conn) conn.release();
     }
 }
 
 
-async function addfriend(body)
-{
+async function addfriend(body) {
     let conn;
-    try
-    {
+    try {
         conn = await pool.getConnection();
         const saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
         const salt = saltResult[0].salt;
@@ -89,28 +80,22 @@ async function addfriend(body)
         const query = `SELECT first_name,last_name,id FROM Users WHERE id= ?`;
         const friends = await conn.query(query, [friend_id]);
         return { success: true, friends: friends, userExist: true };
-    } catch (err)
-    {
+    } catch (err) {
         console.error(err);
         return { success: false, error: "Internal Server Error" };
-    } finally
-    {
+    } finally {
         if (conn) conn.release();
     }
 }
 
 
-async function registerUser(user)
-{
+async function registerUser(user) {
     let conn;
-    try
-    {
-        if (user.age < 13)
-        {
+    try {
+        if (user.age < 13) {
             return { notunderage: false };
         }
-        if (!isEmail(user.email))
-        {
+        if (!isEmail(user.email)) {
             return { EmailFormat: false };
         }
         let salt = Math.trunc((Math.random() * (10099999 - 0) + 0) * 78 - 12.2);
@@ -121,27 +106,21 @@ async function registerUser(user)
         const query = "INSERT INTO Users (first_name,last_name,email,password,age,location,salt) VALUES (?, ?, ?, ?, ?, ?, ?)";
         const res = await conn.query(query, [firstName, lastName, user.email, hashedPassword, user.age, "", salt]);
         return { success: true, emailExist: false };
-    } catch (err)
-    {
-        if (err.errno == 1062)
-        {
+    } catch (err) {
+        if (err.errno == 1062) {
             return { emailExist: true };
         }
         throw err;
-    } finally
-    {
+    } finally {
         if (conn) conn.release();
     }
 }
 
 
-async function login(user)
-{
+async function login(user) {
     let conn;
-    try
-    {
-        if (!isEmail(user.email))
-        {
+    try {
+        if (!isEmail(user.email)) {
             return { success: "false", notEmailFormat: true };
         }
         conn = await pool.getConnection();
@@ -151,51 +130,70 @@ async function login(user)
         query = "SELECT email, password FROM Users WHERE email = ? AND password = ?;";
         const res = await conn.query(query, [user.email, hashedPassword]);
         return { success: true, userExist: res.length > 0 };
-    } catch (err)
-    {
+    } catch (err) {
         return { success: false, userExist: false };
-    } finally
-    {
+    } finally {
         if (conn) conn.release();
     }
 }
 
-
-async function createListing(body)
-{
+async function createListing(body, imageFiles) {
     let conn;
-    try
-    {
+    try {
         conn = await pool.getConnection();
+
+        // 1. Verify User Login
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
-        const hashedPassword = hashPassword(body.password + saltResult[0].salt);
-        const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
-        const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
-        if (userRows.length > 0)
-        {
-            const userId = userRows[0].id;
-            const insertQuery = "INSERT INTO Listings (user_id, title, description, price, location, age , is_active) VALUES (?, ?, ?, ?, ?, ?, ?);";
-            const res = await conn.query(insertQuery, [userId, body.name, body.description, body.pay, body.location, body.age, true]);
-            return { success: true, userExist: true, listingId: res.insertId };
-        } else
-        {
-            return { success: false, message: "Invalid login" };
+        if (!saltResult || saltResult.length === 0) {
+            return { success: false, message: "User not found" };
         }
-    } catch (err)
-    {
-        return { success: false, userExist: false };
-    } finally
-    {
-        if (conn) conn.release();
+
+        // Convert salt to String to avoid BigInt calculation errors
+        const salt = String(saltResult[0].salt);
+        const hashedPassword = hashPassword(body.password + salt);
+
+        const userRows = await conn.query("SELECT id FROM Users WHERE email = ? AND password = ?", [body.email, hashedPassword]);
+
+        if (userRows.length > 0) {
+            const userId = userRows[0].id;
+
+            // 2. Insert the main Listing
+            // We convert body values to Numbers to match your DECIMAL/TINYINT columns
+            const price = Number(body.pay) || 0;
+            const age = Number(body.age) || 0;
+
+            const insertQuery = "INSERT INTO Listings (user_id, title, description, price, location, age, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            const res = await conn.query(insertQuery, [userId, body.name, body.description, price, body.location, age, true]);
+
+            // res.insertId is the ID MariaDB just generated for this listing
+            const newListingId = res.insertId;
+
+            // 3. Insert Images one by one into ListingMedia
+            if (imageFiles && imageFiles.length > 0) {
+                for (const filename of imageFiles) {
+                    await conn.query(
+                        "INSERT INTO ListingMedia (listing_id, file_path, media_type) VALUES (?, ?, ?)",
+                        [newListingId, filename, 'image']
+                    );
+                }
+            }
+
+            // Return success and the redirect path
+            return { success: true, redirect: "/home", listingId: newListingId };
+        } else {
+            return { success: false, message: "failed" };
+        }
+    } catch (err) {
+        console.error("DATABASE ERROR:", err);
+        return { success: false, error: err.message };
+    } finally {
+        if (conn) conn.release(); // Always release the connection back to the pool
     }
 }
 
-
-async function getListings(body)
-{
+async function getListings(body) {
     let conn;
-    try
-    {
+    try {
         conn = await pool.getConnection();
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
         const hashedPassword = hashPassword(body.password + saltResult[0].salt);
@@ -206,21 +204,17 @@ async function getListings(body)
 
         const res = await conn.query(insertQuery, [`%${body.search}%`]);
         return { success: true, listings: res, userExist: true };
-    } catch (err)
-    {
+    } catch (err) {
         return { success: false, userExist: false };
-    } finally
-    {
+    } finally {
         if (conn) conn.release();
     }
 }
 
 
-async function getMyListings(body)
-{
+async function getMyListings(body) {
     let conn;
-    try
-    {
+    try {
         conn = await pool.getConnection();
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
         const hashedPassword = hashPassword(body.password + saltResult[0].salt);
@@ -229,20 +223,16 @@ async function getMyListings(body)
         const insertQuery = "SELECT * FROM Listings WHERE user_id = ?;";
         const res = await conn.query(insertQuery, [userRows[0].id]);
         return { success: true, listings: res, userExist: true };
-    } catch (err)
-    {
+    } catch (err) {
         return { success: false, userExist: false };
-    } finally
-    {
+    } finally {
         if (conn) conn.release();
     }
 }
 
-async function deactivateListing(body)
-{
+async function deactivateListing(body) {
     let conn;
-    try
-    {
+    try {
         conn = await pool.getConnection();
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
         const hashedPassword = hashPassword(body.password + saltResult[0].salt);
@@ -251,21 +241,17 @@ async function deactivateListing(body)
 
         const insertQuery = "UPDATE Listings SET is_active = FALSE WHERE id = ?;";
         await conn.query(insertQuery, [body.listing_id]);
-        return { success: true, is_active:false, userExist: true };
-    } catch (err)
-    {
+        return { success: true, is_active: false, userExist: true };
+    } catch (err) {
         return { success: false, userExist: false };
-    } finally
-    {
+    } finally {
         if (conn) conn.release();
     }
 }
 
-async function activateListing(body)
-{
+async function activateListing(body) {
     let conn;
-    try
-    {
+    try {
         conn = await pool.getConnection();
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
         const hashedPassword = hashPassword(body.password + saltResult[0].salt);
@@ -274,21 +260,17 @@ async function activateListing(body)
 
         const insertQuery = "UPDATE Listings SET is_active = TRUE WHERE id = ?;";
         await conn.query(insertQuery, [body.listing_id]);
-        return { success: true, is_active:true, userExist: true };
-    } catch (err)
-    {
+        return { success: true, is_active: true, userExist: true };
+    } catch (err) {
         return { success: false, userExist: false };
-    } finally
-    {
+    } finally {
         if (conn) conn.release();
     }
 }
 
-async function getNavbar(body)
-{
+async function getNavbar(body) {
     let conn;
-    try
-    {
+    try {
         conn = await pool.getConnection();
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
         const hashedPassword = hashPassword(body.password + saltResult[0].salt);
@@ -296,21 +278,17 @@ async function getNavbar(body)
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
         const navbar = `<nav class="top-navbar"><div class="navbar-container"><div class="navbar-logo" onclick="goToDifferentScreen('home')"><span>UltraFind</span></div><div class="navbar-links"><div class="nav-item" onclick="goToDifferentScreen('home')"><span><svg class="icon"><use href="icons.svg#house"></use></svg></span></div><div class="nav-item" onclick="goToDifferentScreen('friends')"><span><svg class="icon"><use href="icons.svg#user-friends"></use></svg></span></div><div class="nav-item" onclick="goToDifferentScreen('manageListings')"><span><svg class="icon"><use href="icons.svg#folder"></use></svg></span></div></div></div></nav>`;
         return { success: true, navbar: navbar, userExist: true };
-    } catch (err)
-    {
+    } catch (err) {
         return { success: false, userExist: false };
-    } finally
-    {
+    } finally {
         if (conn) conn.release();
     }
 }
 
 
-async function sendMessage(body)
-{
+async function sendMessage(body) {
     let conn;
-    try
-    {
+    try {
         conn = await pool.getConnection();
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
         const hashedPassword = hashPassword(body.password + saltResult[0].salt);
@@ -322,21 +300,17 @@ async function sendMessage(body)
         const insertQuery = "INSERT INTO listingMessages (sender_id,receiver_id,listing_id,message_text) VALUES (?,?,?,?)";
         await conn.query(insertQuery, [userRows[0].id, recieverId, body.listing_id, body.message]);
         return { success: true, messages: res };
-    } catch (err)
-    {
+    } catch (err) {
         return { success: false, userExist: false };
-    } finally
-    {
+    } finally {
         if (conn) conn.release();
     }
 }
 
 
-async function getfriendmessages(body)
-{
+async function getfriendmessages(body) {
     let conn;
-    try
-    {
+    try {
         conn = await pool.getConnection();
 
         // 1. Authenticate the user
@@ -368,22 +342,18 @@ async function getfriendmessages(body)
             currentUserId: userId,
             userExist: true
         };
-    } catch (err)
-    {
+    } catch (err) {
         console.error(err);
         return { success: false, userExist: false };
-    } finally
-    {
+    } finally {
         if (conn) conn.release();
     }
 }
 
 
-async function getFriends(body)
-{
+async function getFriends(body) {
     let conn;
-    try
-    {
+    try {
         conn = await pool.getConnection();
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
         const hashedPassword = hashPassword(body.password + saltResult[0].salt);
@@ -403,35 +373,29 @@ async function getFriends(body)
 
         // FIX: Changed 'res' to 'friends'
         return { success: true, friendslist: friends, userExist: true };
-    } catch (err)
-    {
+    } catch (err) {
         console.error(err);
         return { success: false, userExist: false };
-    } finally
-    {
+    } finally {
         if (conn) conn.release();
     }
 }
 
 
-async function sendfriendmessage(body)
-{
+async function sendfriendmessage(body) {
     let conn;
-    try
-    {
+    try {
         conn = await pool.getConnection();
 
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
-        if (saltResult.length === 0)
-        {
+        if (saltResult.length === 0) {
             return { success: false, userExist: false };
         }
 
         const hashedPassword = hashPassword(body.password + saltResult[0].salt);
         const userRows = await conn.query("SELECT id FROM Users WHERE email = ? AND password = ?;", [body.email, hashedPassword]);
 
-        if (userRows.length === 0)
-        {
+        if (userRows.length === 0) {
             return { success: false, userExist: false };
         }
 
@@ -444,315 +408,252 @@ async function sendfriendmessage(body)
         // Return a consistent structure
         return { success: true, userExist: true, data: dbResult };
 
-    } catch (err)
-    {
+    } catch (err) {
         console.error("Database Error:", err);
         // Crucial: return userExist: true here if the crash happened AFTER the login check
         return { success: false, userExist: true, error: err.message };
-    } finally
-    {
+    } finally {
         if (conn) conn.release();
     }
 }
 
-async function switchFile(body)
-{
+async function switchFile(body) {
     let conn;
-    try
-    {
+    try {
         conn = await pool.getConnection();
 
         // 1. Get the salt
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
-        if (!saltResult || saltResult.length === 0)
-        {
+        if (!saltResult || saltResult.length === 0) {
             return { success: false, userExist: false };
         }
-        
+
         const hashedPassword = hashPassword(body.password + saltResult[0].salt);
         const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
 
         // Check if authentication was successful
-        if (!userRows || userRows.length === 0)
-        {
+        if (!userRows || userRows.length === 0) {
             return { success: false, userExist: false };
         }
 
         return { success: true, userExist: true };
 
-    } catch (err)
-    {
+    } catch (err) {
         console.error("switchFile error:", err)
         return { success: false, userExist: false }
-    } finally
-    {
+    } finally {
         if (conn) conn.release();
     }
 }
 
 
-async function getinfolistings(body)
-{
+async function getinfolistings(body) {
     let conn;
-    try
-    {
+    try {
         conn = await pool.getConnection();
+        
+        // 1. Authenticate user
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
-        const hashedPassword = hashPassword(body.password + saltResult[0].salt);
-        const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
-        const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
-        const insertQuery = "SELECT * FROM Listings WHERE id = ?;";
-        const res = await conn.query(insertQuery, [body.id]);
-        if (userRows[0].id == res[0].user_id)
-        {
-            res[0].my_listing = 1
-        }
-        else
-        {
-            res[0].my_listing = 0
-        }
-        return { success: true, listing: res, userExist: true };
-    } catch (err)
-    {
+        if (!saltResult.length) return { success: false, userExist: false };
+        const hashedPassword = hashPassword(body.password + String(saltResult[0].salt));
+        const userRows = await conn.query("SELECT id FROM Users WHERE email = ? AND password = ?", [body.email, hashedPassword]);
+        if (!userRows.length) return { success: false, userExist: false };
+
+        // 2. Get Listing details
+        const listingRes = await conn.query("SELECT * FROM Listings WHERE id = ?", [body.id]);
+        if (!listingRes.length) return { success: false, message: "Listing not found" };
+
+        let listing = listingRes[0];
+
+        // 3. Get all Media (Images/Videos) for this listing
+        const mediaRes = await conn.query("SELECT file_path, media_type FROM ListingMedia WHERE listing_id = ?", [body.id]);
+        listing.media = mediaRes; // Attach the array of images to the listing object
+
+        // 4. Check if current user is the owner
+        listing.my_listing = (userRows[0].id == listing.user_id) ? 1 : 0;
+
+        return { success: true, listing: listing, userExist: true };
+    } catch (err) {
+        console.error(err);
         return { success: false, userExist: false };
-    } finally
-    {
+    } finally {
         if (conn) conn.release();
     }
 }
 
-
-app.get('/', (req, res) =>
-{
+app.get('/', (req, res) => {
     res.sendFile('intro.html');
 });
-app.get('/manageListings', (req, res) =>
-{
+app.get('/manageListings', (req, res) => {
     res.sendFile('manage_listings.html');
 });
-app.get('/info', (req, res) =>
-{
+app.get('/info', (req, res) => {
     res.sendFile('info_listing.html');
 });
-app.get('/friends', (req, res) =>
-{
+app.get('/friends', (req, res) => {
     res.sendFile('friends.html');
 });
-app.get('/createListing', (req, res) =>
-{
+app.get('/createListing', (req, res) => {
     res.sendFile('create_listing.html');
 });
-app.get('/home', (req, res) =>
-{
+app.get('/home', (req, res) => {
     res.sendFile('index.html');
 });
-app.get('/login', (req, res) =>
-{
+app.get('/login', (req, res) => {
     res.sendFile('login.html');
 });
-app.get('/signup', (req, res) =>
-{
+app.get('/signup', (req, res) => {
     res.sendFile('login.html');
 });
 
-app.post('/signupauth', async (req, res) =>
-{
-    try
-    {
+app.post('/signupauth', async (req, res) => {
+    try {
         const result = await registerUser(req.body);
-        if ((result && ((result.emailExist != undefined) && (result.emailExist))) || (result.notunderage != undefined) || (result.EmailFormat != undefined))
-        {
+        if ((result && ((result.emailExist != undefined) && (result.emailExist))) || (result.notunderage != undefined) || (result.EmailFormat != undefined)) {
             return res.send({ message: "failed" });
         }
-        if (result && result.success)
-        {
+        if (result && result.success) {
             return res.send({ success: true, redirect: "/home" });
         }
-    } catch (err)
-    {
+    } catch (err) {
         res.status(400).send(err.message);
     }
 });
 
 
-app.post('/sendMessage', async (req, res) =>
-{
-    try
-    {
+app.post('/sendMessage', async (req, res) => {
+    try {
         const result = await sendMessage(req.body);
-        if (result && result.success)
-        {
+        if (result && result.success) {
             res.send({ success: true });
         }
-    } catch (err)
-    {
+    } catch (err) {
         res.status(400).send(err.message);
     }
 });
 
 
-app.post('/getfriends', async (req, res) =>
-{
-    try
-    {
+app.post('/getfriends', async (req, res) => {
+    try {
         const result = await getFriends(req.body);
-        if (result && !result.userExist)
-        {
+        if (result && !result.userExist) {
             return res.send({ success: false, message: "failed" });
         }
-        if (result && result.success)
-        {
+        if (result && result.success) {
             return res.send({ success: true, friends: result.friendslist });
         }
         res.send({ success: false });
-    } catch (err)
-    {
+    } catch (err) {
         res.status(400).send(err.message);
     }
 });
 
 
-app.post('/addfriend', async (req, res) =>
-{
-    try
-    {
+app.post('/addfriend', async (req, res) => {
+    try {
         const result = await addfriend(req.body);
-        if (result && !result.userExist)
-        {
+        if (result && !result.userExist) {
             return res.send({ success: false, message: "failed" });
         }
-        if (result && result.success)
-        {
+        if (result && result.success) {
             return res.send({ success: true, friends: result.friends });
         }
         res.send({ success: false });
-    } catch (err)
-    {
+    } catch (err) {
         res.status(400).send(err.message);
     }
 });
 
 
-app.post('/getInfoListing', async (req, res) =>
-{
-    try
-    {
+app.post('/getInfoListing', async (req, res) => {
+    try {
         const result = await getinfolistings(req.body);
-        if (result && !result.userExist)
-        {
+        if (result && !result.userExist) {
             return res.send({ message: "failed" });
         }
-        if (result && result.success)
-        {
+        if (result && result.success) {
             res.send(result.listing);
         }
-    } catch (err)
-    {
+    } catch (err) {
         res.status(400).send(err.message);
     }
 });
 
 
-app.post('/loginauth', async (req, res) =>
-{
-    try
-    {
+app.post('/loginauth', async (req, res) => {
+    try {
         const result = await login(req.body);
-        if (result && result.notEmailFormat)
-        {
+        if (result && result.notEmailFormat) {
             return res.send({ message: "NotEmailFormat" });
         }
-        if (result && !result.userExist)
-        {
+        if (result && !result.userExist) {
             return res.send({ message: "failed" });
         }
-        if (result && result.success)
-        {
+        if (result && result.success) {
             return res.send({ success: true, redirect: "/home" });
         }
-    } catch (err)
-    {
+    } catch (err) {
         res.status(400).send(err.message);
     }
 });
 
 
-app.post('/createListingupload', async (req, res) =>
-{
-    try
-    {
+app.post('/createListingupload', async (req, res) => {
+    try {
         const result = await createListing(req.body);
-        if (result && !result.userExist)
-        {
+        if (result && !result.userExist) {
             return res.send({ message: "failed" });
         }
-        if (result && result.success)
-        {
+        if (result && result.success) {
             return res.send({ success: true, redirect: "/home" });
         }
-    } catch (err)
-    {
+    } catch (err) {
         res.status(400).send(err.message);
     }
 });
 
 
-app.post('/getListings', async (req, res) =>
-{
-    try
-    {
+app.post('/getListings', async (req, res) => {
+    try {
         const result = await getListings(req.body);
-        if (result && !result.userExist)
-        {
+        if (result && !result.userExist) {
             return res.send({ message: "failed" });
         }
-        if (result && result.success)
-        {
+        if (result && result.success) {
             res.send(result.listings);
         }
-    } catch (err)
-    {
+    } catch (err) {
         res.status(400).send(err.message);
     }
 });
 
 
-app.post('/getMyListings', async (req, res) =>
-{
-    try
-    {
+app.post('/getMyListings', async (req, res) => {
+    try {
         const result = await getMyListings(req.body);
-        if (result && !result.userExist)
-        {
+        if (result && !result.userExist) {
             return res.send({ message: "failed" });
         }
-        if (result && result.success)
-        {
+        if (result && result.success) {
             res.send(result.listings);
         }
-    } catch (err)
-    {
+    } catch (err) {
         res.status(400).send(err.message);
     }
 });
 
 
-app.post('/deactivateListing', async (req, res) =>
-{
-    try
-    {
+app.post('/deactivateListing', async (req, res) => {
+    try {
         const result = await deactivateListing(req.body);
-        if (result && !result.userExist)
-        {
+        if (result && !result.userExist) {
             return res.send({ message: "failed" });
         }
-        if (result && result.success)
-        {
+        if (result && result.success) {
             res.send(result.is_active);
         }
-    } catch (err)
-    {
+    } catch (err) {
         res.status(400).send(err.message);
     }
 });
@@ -760,103 +661,95 @@ app.post('/deactivateListing', async (req, res) =>
 
 
 
-app.post('/activateListing', async (req, res) =>
-{
-    try
-    {
+app.post('/activateListing', async (req, res) => {
+    try {
         const result = await activateListing(req.body);
-        if (result && !result.userExist)
-        {
+        if (result && !result.userExist) {
             return res.send({ message: "failed" });
         }
-        if (result && result.success)
-        {
+        if (result && result.success) {
             res.send(result.is_active);
         }
-    } catch (err)
-    {
+    } catch (err) {
         res.status(400).send(err.message);
     }
 });
 
 
-app.post('/switchFile', async (req, res) =>
-{
-    try
-    {
+app.post('/switchFile', async (req, res) => {
+    try {
         const result = await switchFile(req.body);
-        if (result && !result.userExist)
-        {
+        if (result && !result.userExist) {
             return res.status(401).json({ message: "failed" })
         }
-        if (result && result.success)
-        {
+        if (result && result.success) {
             let file = req.body.file;
             return res.send({ success: true, redirect: "/" + file });
         }
         return res.status(400).json({ message: "unknown error" })
 
-    } catch (err)
-    {
+    } catch (err) {
         console.error("switchFile endpoint error:", err);
         res.status(500).json({ error: err.message });
     }
 
 });
 
+app.post('/upload-listing', async (req, res) => {
+    const parts = req.parts();
+    const imageNames = [];
+    const body = {};
 
-app.post('/upload-listing', async (req, res) =>
-{
-    try
-    {
-        const data = await req.file();
-        if (!data)
-        {
-            return res.status(400).send('No file uploaded.');
+    try {
+        for await (const part of parts) {
+            if (part.file) {
+                // Generate unique filename using timestamp
+                const uniqueName = Date.now() + '-' + part.filename;
+                const savePath = path.join(__dirname, 'images', uniqueName);
+
+                // Pipe the file stream to your images folder
+                await pipeline(part.file, fs.createWriteStream(savePath));
+                imageNames.push(uniqueName);
+            } else {
+                // Store text fields (name, pay, description, etc.) in the body object
+                body[part.fieldname] = part.value;
+            }
         }
-        const uniqueName = Date.now() + '-' + data.filename;
-        await pipeline(data.file, fs.createWriteStream(path.join(__dirname, 'images', uniqueName)));
-        res.send({ success: true, path: `/images/${uniqueName}` });
-    } catch (err)
-    {
-        res.status(400).send(err.message);
+
+        // After all files and fields are processed, run the DB logic
+        const result = await createListing(body, imageNames);
+        res.send(result);
+
+    } catch (err) {
+        console.error("UPLOAD ERROR:", err);
+        res.status(500).send({ success: false, message: err.message });
     }
 });
 
-
-app.post('/getNavbar', async (req, res) =>
-{
-    try
-    {
+app.post('/getNavbar', async (req, res) => {
+    try {
         const result = await getNavbar(req.body);
-        if (result && !result.userExist)
-        {
+        if (result && !result.userExist) {
             return res.send({ message: "failed" });
         }
-        if (result && result.success)
-        {
+        if (result && result.success) {
             res.send(result.navbar);
         }
-    } catch (err)
-    {
+    } catch (err) {
         res.status(400).send(err.message);
     }
 });
 
 
-app.post('/getfriendmessages', async (req, res) =>
-{
-    try
-    {
+app.post('/getfriendmessages', async (req, res) => {
+    try {
         const result = await getfriendmessages(req.body);
 
-        if (!result.userExist)
-        {
+        if (!result.userExist) {
             return res.status(401).json({ error: "Authentication failed" });
         }
 
-        if (result.success)
-        {
+        if (result.success) {
             // Always send an array, even if empty, to the frontend
             return res.json(result.messages || []);
         }
@@ -864,42 +757,34 @@ app.post('/getfriendmessages', async (req, res) =>
         // Fallback for logic errors
         return res.status(500).json({ error: "Internal logic error" });
 
-    } catch (err)
-    {
+    } catch (err) {
         console.error(err);
         res.status(500).json({ error: err.message });
     }
 });
 
 
-app.post('/findFriend', async (req, res) =>
-{
+app.post('/findFriend', async (req, res) => {
     const result = await findFriend(req.body);
-    if (result.success)
-    {
+    if (result.success) {
         res.status(200).send(result);
-    } else
-    {
+    } else {
         res.status(401).send(result);
     }
 });
 
 
-app.post('/sendfriendmessage', async (req, res) =>
-{
-    try
-    {
+app.post('/sendfriendmessage', async (req, res) => {
+    try {
         const result = await sendfriendmessage(req.body);
 
         // 1. Handle user not existing/wrong password
-        if (!result.userExist)
-        {
+        if (!result.userExist) {
             return res.status(401).json({ success: false, message: "Authentication failed" });
         }
 
         // 2. Handle success
-        if (result.success)
-        {
+        if (result.success) {
             // Send back a valid JSON object
             return res.json({ success: true, data: result.data });
         }
@@ -907,8 +792,7 @@ app.post('/sendfriendmessage', async (req, res) =>
         // 3. Fallback for unexpected logic states
         return res.status(500).json({ success: false, message: "Unknown error" });
 
-    } catch (err)
-    {
+    } catch (err) {
         console.error(err);
         // Always send JSON, even on errors, so res.json() doesn't crash
         res.status(400).json({ success: false, error: err.message });
@@ -916,15 +800,12 @@ app.post('/sendfriendmessage', async (req, res) =>
 });
 
 
-const start = async () =>
-{
+const start = async () => {
     await setup();
-    try
-    {
+    try {
         await app.listen({ port: PORT, host: '0.0.0.0' });
         console.log(`[Find Server] Running on http://localhost:${PORT}`);
-    } catch (err)
-    {
+    } catch (err) {
         console.error(err);
         process.exit(1);
     }

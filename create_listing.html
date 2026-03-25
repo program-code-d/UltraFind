@@ -28,7 +28,7 @@
                         onclick="document.getElementById('fileInput').click()">
                         <span>Click to upload images</span>
                     </div>
-                    
+
                     <div class="image-gallery" id="imageGallery"></div>
                 </div>
             </div>
@@ -68,9 +68,11 @@
                 <div class="main-content">
                     <div class="image-preview-box" id="preview-image-box">
                         <div class="carousel-wrapper">
-                            <button class="carousel-arrow left" id="prevBtn" onclick="previousImage()" style="display: none;">❮</button>
+                            <button class="carousel-arrow left" id="prevBtn" onclick="previousImage()"
+                                style="display: none;">❮</button>
                             <div class="carousel-image-display" id="carouselImageDisplay"></div>
-                            <button class="carousel-arrow right" id="nextBtn" onclick="nextImage()" style="display: none;">❯</button>
+                            <button class="carousel-arrow right" id="nextBtn" onclick="nextImage()"
+                                style="display: none;">❯</button>
                         </div>
                         <div class="image-counter" id="imageCounter"></div>
                     </div>
@@ -95,8 +97,7 @@
         var selectedImages = []; // Store file objects
         var currentImageIndex = 0;
 
-        function getServerBase()
-        {
+        function getServerBase() {
             const protocol = window.location.protocol;
             const hostname = window.location.hostname;
             const port = window.location.port ? ':' + window.location.port : '';
@@ -104,10 +105,9 @@
         }
 
         // Handle file selection
-        document.getElementById('fileInput').addEventListener('change', function()
-        {
+        document.getElementById('fileInput').addEventListener('change', function () {
             const files = Array.from(this.files);
-            
+
             // Add new files to selectedImages
             files.forEach(file => {
                 const isDuplicate = selectedImages.some(img => img.name === file.name && img.size === file.size);
@@ -124,8 +124,7 @@
             this.value = '';
         });
 
-        function displayImageGallery()
-        {
+        function displayImageGallery() {
             const gallery = document.getElementById('imageGallery');
             gallery.innerHTML = '';
 
@@ -133,12 +132,12 @@
                 const thumbnail = document.createElement('div');
                 thumbnail.className = 'image-thumbnail';
                 thumbnail.style.backgroundImage = `url(${URL.createObjectURL(file)})`;
-                
+
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'delete-thumbnail';
                 deleteBtn.innerHTML = '✕';
                 deleteBtn.onclick = () => removeImage(index);
-                
+
                 thumbnail.appendChild(deleteBtn);
                 gallery.appendChild(thumbnail);
             });
@@ -152,15 +151,13 @@
             }
         }
 
-        function removeImage(index)
-        {
+        function removeImage(index) {
             selectedImages.splice(index, 1);
             displayImageGallery();
             updatePreview();
         }
 
-        function updateCarousel()
-        {
+        function updateCarousel() {
             if (selectedImages.length === 0) {
                 document.getElementById('carouselImageDisplay').innerHTML = '';
                 document.getElementById('imageCounter').innerHTML = '';
@@ -178,114 +175,98 @@
             document.getElementById('nextBtn').style.display = selectedImages.length > 1 ? 'block' : 'none';
         }
 
-        function previousImage()
-        {
+        function previousImage() {
             if (selectedImages.length > 0) {
                 currentImageIndex = (currentImageIndex - 1 + selectedImages.length) % selectedImages.length;
                 updateCarousel();
             }
         }
 
-        function nextImage()
-        {
+        function nextImage() {
             if (selectedImages.length > 0) {
                 currentImageIndex = (currentImageIndex + 1) % selectedImages.length;
                 updateCarousel();
             }
         }
 
-        async function createListing()
-        {
-            let listingName = document.getElementById('listing-name');
-            let listingPrice = document.getElementById('listing-price');
-            let listingDescription = document.getElementById('listing-description');
-            let listingLocation = document.getElementById('listing-location');
-            let age = document.getElementById('age');
+        async function createListing() {
+            // 1. Get references to the input elements
+            const listingName = document.getElementById('listing-name');
+            const listingPrice = document.getElementById('listing-price');
+            const listingDescription = document.getElementById('listing-description');
+            const listingLocation = document.getElementById('listing-location');
+            const ageInput = document.getElementById('age');
 
-            const price = parseFloat(listingPrice.value || 0);
+            // 2. Get credentials from localStorage
+            const email = localStorage.getItem('email');
+            const password = localStorage.getItem('password');
 
-            email = localStorage.getItem('email');
-            password = localStorage.getItem('password');
-
-            if (listingName.value && price > 0 && listingDescription.value && listingLocation.value)
-            {
-                try {
-                    let imagePaths = [];
-
-                    // Upload all images
-                    if (selectedImages.length > 0)
-                    {
-                        for (let i = 0; i < selectedImages.length; i++) {
-                            const formData = new FormData();
-                            formData.append('listingImage', selectedImages[i]);
-
-                            const uploadResponse = await fetch(getServerBase() + '/upload-listing', {
-                                method: 'POST',
-                                body: formData
-                            });
-
-                            if (uploadResponse.ok)
-                            {
-                                const uploadData = await uploadResponse.json();
-                                imagePaths.push(uploadData.path);
-                                console.log(`Image ${i + 1} uploaded successfully:`, uploadData.path);
-                            }
-                            else
-                            {
-                                alert(`Failed to upload image ${i + 1}. Please try again.`);
-                                return;
-                            }
-                        }
-                    }
-
-                    // Create listing with image paths
-                    const listingData = {
-                        email: email,
-                        password: password,
-                        name: listingName.value,
-                        pay: price,
-                        description: listingDescription.value,
-                        location: listingLocation.value,
-                        age: age.value
-                    };
-
-                    if (imagePaths.length > 0) {
-                        listingData.imagePaths = imagePaths;
-                    }
-
-                    const response = await fetch(getServerBase() + "/createListingupload", {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(listingData)
-                    });
-
-                    const data = await response.json();
-                    if (data.success && data.redirect)
-                    {
-                        localStorage.setItem('email', email);
-                        localStorage.setItem('password', password);
-                        window.location.href = getServerBase() + data.redirect;
-                    }
-                    else if (data.message === "failed")
-                    {
-                        window.location.href = getServerBase() + "/login";
-                    }
-                }
-                catch (err) {
-                    console.error("Create listing error:", err);
-                    alert("Error creating listing. Please try again.");
-                }
-            }
-            else
-            {
+            // 3. Basic Validation: Ensure required fields aren't empty
+            if (!listingName.value || !listingPrice.value || !listingDescription.value || !listingLocation.value) {
                 alert("You didn't complete the listing. Please fill out all fields.");
+                return;
+            }
+
+            // 4. Create the FormData object (Standard for file uploads)
+            const formData = new FormData();
+
+            // Add text fields
+            formData.append('email', email);
+            formData.append('password', password);
+            formData.append('name', listingName.value);
+            formData.append('pay', listingPrice.value);
+            formData.append('description', listingDescription.value);
+            formData.append('location', listingLocation.value);
+            formData.append('age', ageInput.value);
+
+            // 5. Add all selected images from your 'selectedImages' array
+            if (selectedImages.length === 0) {
+                // Optional: Alert if you want to require at least one image
+                // alert("Please upload at least one image.");
+                // return;
+            }
+
+            selectedImages.forEach((file, index) => {
+                // We use the key 'listingImages'. The backend will see this as an array of files.
+                formData.append('listingImages', file);
+            });
+
+            try {
+                // 6. Send the single POST request to the backend
+                // Note: Do NOT set Content-Type header; fetch will set it automatically for FormData
+                const response = await fetch(getServerBase() + "/upload-listing", {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                // 7. Handle the server response
+                if (data.success) {
+                    console.log("Listing created successfully with ID:", data.listingId);
+
+                    // Redirect based on the server response
+                    if (data.redirect) {
+                        window.location.href = getServerBase() + data.redirect;
+                    } else {
+                        alert("Listing created successfully!");
+                    }
+                }
+                else if (data.message === "failed" || data.message === "Invalid login") {
+                    alert("Your login session has expired. Please log in again.");
+                    window.location.href = getServerBase() + "/login";
+                }
+                else {
+                    alert("Server Error: " + (data.error || "Failed to create listing."));
+                }
+
+            } catch (err) {
+                console.error("Network/System Error:", err);
+                alert("Could not connect to the server. Please check your connection.");
             }
         }
 
-        function updatePreview()
-        {
+        function updatePreview() {
             // Get values from form
             let name = document.getElementById('listing-name').value;
             let price = document.getElementById('listing-price').value;

@@ -13,181 +13,133 @@
 <link rel="stylesheet" href="CSS files/info_listing.css">
 <script src="navbar.js"></script>
 <script>
+let email;
+    let password;
+    let id;
+    let listing_info = {};
+    let currentImageIndex = 0; // Track carousel position
 
-    let email
-    let password
-    let id
-    let listing_info = {}
-    function main()
-    {
+    function main() {
+        email = localStorage.getItem('email');
+        password = localStorage.getItem('password');
 
-
-
-        email = localStorage.getItem('email')
-        password = localStorage.getItem('password')
-
-        // Get ID from URL query parameter
-        const urlParams = new URLSearchParams(window.location.search)
-        id = urlParams.get('id')
+        const urlParams = new URLSearchParams(window.location.search);
+        id = urlParams.get('id');
 
         fetch(getServerBase() + "/getInfoListing", {
-            // Defines the HTTP verb as POST, which is used for sending data to a server.
             method: 'POST',
-            headers: {
-                // Informs the server that the data being sent is formatted as a JSON string.
-                'Content-Type': 'application/json'
-            },
-            // Converts the JavaScript object into a standardized JSON string for transmission.
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email: email, password: password, id: id })
         })
-            .then(response => response.json())
-            .then((data) =>
-            {
-                listing_info = data[0]
-                draw_listings()
-            })
-
-
-    }
-    function getServerBase()
-    {
-        const protocol = window.location.protocol; // 'http:' or 'https:'
-        const hostname = window.location.hostname;
-        const port = window.location.port ? ':' + window.location.port : '';
-        return `${protocol}//${hostname}${port}`;
-    }
-    const textarea = document.querySelector('.fb-textarea');
-
-    textarea.addEventListener('input', function ()
-    {
-        this.style.height = 'auto'; // Reset height
-        this.style.height = (this.scrollHeight) + 'px'; // Set to match content
-    });
-
-    function draw_listings()
-    {
-        let messageOrViewMessage = `<div class="message">
-                    <div class="fb-message-box">
-                        <textarea 
-                            id="fb-input"
-                            class="fb-textarea" 
-                            placeholder="Send seller a message"
-                            rows="1"
-                        >Hi, is this available?</textarea>
-                    </div>
-
-                    <button onclick="startChat()" class="send-btn">
-                        <div class="svg-wrapper">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
-                                <path fill="none" d="M0 0h24v24H0z"></path>
-                                <path fill="currentColor" d="M1.946 9.315c-.522-.174-.527-.455.01-.634l19.087-6.362c.529-.176.832.12.684.638l-5.454 19.086c-.15.529-.455.547-.679.045L12 14l6-8-8 6-8.054-2.685z"></path>
-                            </svg>
-                        </div>
-                        <span>Send</span>
-                    </button>
-                </div>`
-            if (listing_info.my_listing==1)
-            {
-                messageOrViewMessage=
-                `
-                 <button onclick="viewChats()" class="send-btn">
-                        <span>View Messages</span>
-                    </button>`
-            }
-        let listing_drawing = `
-    <div class="listing-container">
-        <div class="top-info">
-            <button class="close-btn" onclick="window.history.back()">&times;</button>
-            <div class="title-section">
-                <h1><div class="title">${listing_info.title}</div></h1>
-                <h3><span class="location">${listing_info.location}</span> • <span class="date">Jan 30, 2026</span></h3>
-            </div>
-        </div>
-
-        <div class="main-content">
-            <div class="image">
-                <img src="path_to_image.jpg" style="width:100%; border-radius:12px;">
-            </div>
-
-            <div class="Age-pay-location">
-                <div class="price">$${listing_info.price}/hr</div>
-                <div class="age">${listing_info.age}+ Age Requirement</div>
-                <div class="location-map">
-                    <strong>Visual Location</strong>
-                    <div style="height:200px; background:#e5e7eb; margin-top:10px;">Map goes here</div>
-                </div>
-                
-                <div class="seller-info">
-                    <strong>Seller Info</strong>
-                    <p>Alex ⭐ 0.0</p>
-                </div>
-
-                ${messageOrViewMessage}
-            </div>
-        </div>
-
-        <div class="Description-repeats">
-            <div class="description">
-                <strong>DESCRIPTION</strong><br>
-                ${listing_info.description}
-            </div>
-            <div class="repeats">Repeats: Weekly</div>
-        </div>
-    </div>
-    `;
-
-        document.getElementById("listing").innerHTML = listing_drawing;
-
-
-        const textarea = document.getElementById('fb-input');
-        textarea.addEventListener('input', function ()
-        {
-            this.style.height = 'auto';
-            this.style.height = (this.scrollHeight) + 'px';
+        .then(response => response.json())
+        .then((data) => {
+            // Data is now the single listing object returned from server
+            listing_info = data; 
+            draw_listings();
         });
     }
-    function getServerBase()
-    {
-        const protocol = window.location.protocol; // 'http:' or 'https:'
+
+    function getServerBase() {
+        const protocol = window.location.protocol;
         const hostname = window.location.hostname;
         const port = window.location.port ? ':' + window.location.port : '';
         return `${protocol}//${hostname}${port}`;
     }
 
-    function startChat()
-    {
-        let message = document.getElementById("fb-input")
-        if (message.value != "")
-        {
+    function draw_listings() {
+        // Handle the "Message" or "View Messages" button
+        let messageOrViewMessage = `
+            <div class="message">
+                <div class="fb-message-box">
+                    <textarea id="fb-input" class="fb-textarea" placeholder="Send seller a message" rows="1">Hi, is this available?</textarea>
+                </div>
+                <button onclick="startChat()" class="send-btn">
+                    <span>Send</span>
+                </button>
+            </div>`;
+
+        if (listing_info.my_listing == 1) {
+            messageOrViewMessage = `<button onclick="viewChats()" class="send-btn"><span>View Messages</span></button>`;
+        }
+
+        // Generate the Image Carousel HTML
+        let imageHtml = `<img src="placeholder.jpg" style="width:100%; border-radius:12px;">`; // Default
+        
+        if (listing_info.media && listing_info.media.length > 0) {
+            const firstImage = listing_info.media[0].file_path;
+            imageHtml = `
+                <div class="carousel-container" style="position:relative;">
+                    <img id="main-display-img" src="/images/${firstImage}" style="width:100%; border-radius:12px; aspect-ratio: 16/9; object-fit: cover;">
+                    ${listing_info.media.length > 1 ? `
+                        <button class="carousel-btn prev" onclick="changeImage(-1)" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); background:rgba(0,0,0,0.5); color:white; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer;">❮</button>
+                        <button class="carousel-btn next" onclick="changeImage(1)" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:rgba(0,0,0,0.5); color:white; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer;">❯</button>
+                        <div id="img-counter" style="position:absolute; bottom:10px; right:10px; background:rgba(0,0,0,0.6); color:white; padding:2px 8px; border-radius:10px; font-size:12px;">1 / ${listing_info.media.length}</div>
+                    ` : ''}
+                </div>`;
+        }
+
+        let listing_drawing = `
+        <div class="listing-container">
+            <div class="top-info">
+                <button class="close-btn" onclick="window.history.back()">&times;</button>
+                <div class="title-section">
+                    <h1><div class="title">${listing_info.title}</div></h1>
+                    <h3><span class="location">${listing_info.location}</span> • <span class="date">Posted recently</span></h3>
+                </div>
+            </div>
+
+            <div class="main-content">
+                <div class="image-section">
+                    ${imageHtml}
+                </div>
+
+                <div class="Age-pay-location">
+                    <div class="price">$${listing_info.price}</div>
+                    <div class="age">${listing_info.age}+ Age Requirement</div>
+                    <div class="location-map">
+                        <strong>Visual Location</strong>
+                        <div style="height:150px; background:#e5e7eb; margin-top:10px; display:flex; align-items:center; justify-content:center; border-radius:8px;">${listing_info.location}</div>
+                    </div>
+                    ${messageOrViewMessage}
+                </div>
+            </div>
+
+            <div class="Description-repeats">
+                <div class="description">
+                    <strong>DESCRIPTION</strong><br>
+                    ${listing_info.description}
+                </div>
+            </div>
+        </div>`;
+
+        document.getElementById("listing").innerHTML = listing_drawing;
+    }
+
+    // Function to cycle through images
+    function changeImage(step) {
+        const media = listing_info.media;
+        currentImageIndex += step;
+
+        if (currentImageIndex >= media.length) currentImageIndex = 0;
+        if (currentImageIndex < 0) currentImageIndex = media.length - 1;
+
+        document.getElementById('main-display-img').src = `/images/${media[currentImageIndex].file_path}`;
+        document.getElementById('img-counter').innerText = `${currentImageIndex + 1} / ${media.length}`;
+    }
+
+    function startChat() {
+        let message = document.getElementById("fb-input");
+        if (message.value != "") {
             fetch(getServerBase() + "/sendMessage", {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     email: email,
                     password: password,
                     message: message.value,
                     listing_id: id
                 })
-            })
-                .then(response =>
-                {
-                    if (response.redirected)
-                    {
-                        window.location.href = response.url;
-                        return;
-                    }
-                    return response.json();
-                })
-                .then((data) =>
-                {
-
-                })
-        }
-        else
-        {
-            alert("You didn't complete the listing. Please fill out all fields.");
+            }).then(() => alert("Message sent!"));
         }
     }
 
