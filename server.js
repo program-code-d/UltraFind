@@ -1,12 +1,14 @@
 const app = require('fastify')({
     logger: false,
-    bodyLimit: 10485760
+    bodyLimit: 524288000 // Increased to 500MB to allow for video uploads
 });
 const crypto = require("crypto");
 const mariadb = require('mariadb');
 const path = require('path');
 const fs = require('fs');
 const { pipeline } = require('stream/promises');
+const sharp = require('sharp'); // Added for Image Compression
+const ffmpeg = require('fluent-ffmpeg'); // Added for Video Compression
 
 
 const PORT = 8080;
@@ -137,48 +139,35 @@ async function login(user) {
     }
 }
 
-async function createListing(body, imageFiles) {
+async function createListing(body, mediaFiles) {
     let conn;
     try {
         conn = await pool.getConnection();
-
-        // 1. Verify User Login
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
-        if (!saltResult || saltResult.length === 0) {
-            return { success: false, message: "User not found" };
-        }
+        if (!saltResult || saltResult.length === 0) return { success: false, message: "User not found" };
 
-        // Convert salt to String to avoid BigInt calculation errors
         const salt = String(saltResult[0].salt);
         const hashedPassword = hashPassword(body.password + salt);
-
         const userRows = await conn.query("SELECT id FROM Users WHERE email = ? AND password = ?", [body.email, hashedPassword]);
 
         if (userRows.length > 0) {
             const userId = userRows[0].id;
-
-            // 2. Insert the main Listing
-            // We convert body values to Numbers to match your DECIMAL/TINYINT columns
             const price = Number(body.pay) || 0;
             const age = Number(body.age) || 0;
 
             const insertQuery = "INSERT INTO Listings (user_id, title, description, price, location, age, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)";
             const res = await conn.query(insertQuery, [userId, body.name, body.description, price, body.location, age, true]);
-
-            // res.insertId is the ID MariaDB just generated for this listing
             const newListingId = res.insertId;
 
-            // 3. Insert Images one by one into ListingMedia
-            if (imageFiles && imageFiles.length > 0) {
-                for (const filename of imageFiles) {
+            // Handle the media files (images or videos)
+            if (mediaFiles && mediaFiles.length > 0) {
+                for (const file of mediaFiles) {
                     await conn.query(
                         "INSERT INTO ListingMedia (listing_id, file_path, media_type) VALUES (?, ?, ?)",
-                        [newListingId, filename, 'image']
+                        [newListingId, file.name, file.type]
                     );
                 }
             }
-
-            // Return success and the redirect path
             return { success: true, redirect: "/home", listingId: newListingId };
         } else {
             return { success: false, message: "failed" };
@@ -187,7 +176,7 @@ async function createListing(body, imageFiles) {
         console.error("DATABASE ERROR:", err);
         return { success: false, error: err.message };
     } finally {
-        if (conn) conn.release(); // Always release the connection back to the pool
+        if (conn) conn.release();
     }
 }
 
@@ -452,7 +441,7 @@ async function getinfolistings(body) {
     let conn;
     try {
         conn = await pool.getConnection();
-        
+
         // 1. Authenticate user
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
         if (!saltResult.length) return { success: false, userExist: false };
@@ -697,32 +686,68 @@ app.post('/switchFile', async (req, res) => {
 
 app.post('/upload-listing', async (req, res) => {
     const parts = req.parts();
-    const imageNames = [];
+    const mediaFiles = [];
     const body = {};
 
     try {
         for await (const part of parts) {
             if (part.file) {
-                // Generate unique filename using timestamp
-                const uniqueName = Date.now() + '-' + part.filename;
+                const timestamp = Date.now();
+                const isVideo = part.mimetype.startsWith('video/');
+                const isImage = part.mimetype.startsWith('image/');
+
+                // Set extension: WebP for images, MP4 for videos
+                const extension = isVideo ? '.mp4' : (isImage ? '.webp' : path.extname(part.filename));
+                const uniqueName = `${timestamp}-${Math.random().toString(36).substring(7)}${extension}`;
                 const savePath = path.join(__dirname, 'images', uniqueName);
 
-                // Pipe the file stream to your images folder
-                await pipeline(part.file, fs.createWriteStream(savePath));
-                imageNames.push(uniqueName);
+                if (isImage) {
+                    // IMAGE COMPRESSION: WebP Quality 85 is visually lossless but tiny
+                    const transformer = sharp()
+                        .webp({ quality: 85, effort: 6 })
+                        .rotate(); // Fixes photos taken sideways on phones
+
+                    await pipeline(part.file, transformer, fs.createWriteStream(savePath));
+                    mediaFiles.push({ name: uniqueName, type: 'image' });
+
+                } else if (isVideo) {
+                    // VIDEO COMPRESSION: Convert to H.265 (HEVC)
+                    // CRF 22 is high quality; preset medium is good for Oracle CPUs
+                    const tempPath = path.join(__dirname, 'images', 'temp-' + uniqueName);
+                    await pipeline(part.file, fs.createWriteStream(tempPath));
+
+                    await new Promise((resolve, reject) => {
+                        ffmpeg(tempPath)
+                            .vcodec('libx265')
+                            .addOptions(['-crf 22', '-preset medium'])
+                            .save(savePath)
+                            .on('end', () => {
+                                if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+                                resolve();
+                            })
+                            .on('error', (err) => {
+                                if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+                                reject(err);
+                            });
+                    });
+                    mediaFiles.push({ name: uniqueName, type: 'video' });
+
+                } else {
+                    // Non-media files just get saved normally
+                    await pipeline(part.file, fs.createWriteStream(savePath));
+                    mediaFiles.push({ name: uniqueName, type: 'other' });
+                }
             } else {
-                // Store text fields (name, pay, description, etc.) in the body object
                 body[part.fieldname] = part.value;
             }
         }
 
-        // After all files and fields are processed, run the DB logic
-        const result = await createListing(body, imageNames);
+        const result = await createListing(body, mediaFiles);
         res.send(result);
 
     } catch (err) {
         console.error("UPLOAD ERROR:", err);
-        res.status(500).send({ success: false, message: err.message });
+        res.status(500).send({ success: false, message: "Compression failed" });
     }
 });
 
