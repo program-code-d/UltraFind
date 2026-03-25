@@ -31,17 +31,24 @@
             },
             body: JSON.stringify({ email: email, password: password, file: file })
         })
-            .then(response =>
+            .then(response => response.json())
+            .then((data) =>
             {
-                if (response.redirected)
+                if (data.success && data.redirect)
                 {
                     localStorage.setItem('email', email);
                     localStorage.setItem('password', password);
-                    window.location.href = response.url;
-                    return;
+                    window.location.href = getServerBase() + data.redirect;
                 }
-                return response.json();
+                else if (data.message === "failed")
+                {
+                    window.location.href = getServerBase() + "/login";
+                }
             })
+            .catch(error => {
+                console.error("Navigation error:", error);
+                window.location.href = getServerBase() + "/login";
+            });
     }
 
     function getServerBase()
@@ -88,7 +95,7 @@
 
     function goToInfoListing(listing)
     {
-        goToDifferentScreen("info_listing.html?id=" + listing)
+        goToDifferentScreen("info?id=" + listing)
     }
     function getActiveText(listing)
     {
@@ -183,7 +190,7 @@
             {
                 if (data == `{"message":"failed"}`)
                 {
-                    window.location.href = "login.html"
+                    window.location.href=`${getServerBase()}/login`
                 }
                 const item = my_listings.find(item => item.id === listing)
                 if (item) item.is_active = JSON.parse(data)
@@ -205,7 +212,7 @@
             {
                 if (data == `{"message":"failed"}`)
                 {
-                    window.location.href = "login.html"
+                   window.location.href=`${getServerBase()}/login`
                 }
                 const item = my_listings.find(item => item.id === listing)
                 if (item) item.is_active = JSON.parse(data)
@@ -254,7 +261,7 @@
 
     function editListing(listingId)
     {
-        goToDifferentScreen(`info_listing.html?id=${listingId}`);
+        goToDifferentScreen(`info?id=${listingId}`);
     }
 
 

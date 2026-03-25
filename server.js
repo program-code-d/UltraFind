@@ -292,7 +292,7 @@ async function getNavbar(body)
         const hashedPassword = hashPassword(body.password + saltResult[0].salt);
         const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
-        const navbar = `<nav class="top-navbar"><div class="navbar-container"><div class="navbar-logo" onclick="goToDifferentScreen('index.html')"><span>UltraFind</span></div><div class="navbar-links"><div class="nav-item" onclick="goToDifferentScreen('index.html')"><span><svg class="icon"><use href="icons.svg#house"></use></svg></span></div><div class="nav-item" onclick="goToDifferentScreen('friends.html')"><span><svg class="icon"><use href="icons.svg#user-friends"></use></svg></span></div><div class="nav-item" onclick="goToDifferentScreen('manage_listings.html')"><span><svg class="icon"><use href="icons.svg#folder"></use></svg></span></div></div></div></nav>`;
+        const navbar = `<nav class="top-navbar"><div class="navbar-container"><div class="navbar-logo" onclick="goToDifferentScreen('home')"><span>UltraFind</span></div><div class="navbar-links"><div class="nav-item" onclick="goToDifferentScreen('home')"><span><svg class="icon"><use href="icons.svg#house"></use></svg></span></div><div class="nav-item" onclick="goToDifferentScreen('friends')"><span><svg class="icon"><use href="icons.svg#user-friends"></use></svg></span></div><div class="nav-item" onclick="goToDifferentScreen('manageListings')"><span><svg class="icon"><use href="icons.svg#folder"></use></svg></span></div></div></div></nav>`;
         return { success: true, navbar: navbar, userExist: true };
     } catch (err)
     {
@@ -460,21 +460,28 @@ async function switchFile(body)
     {
         conn = await pool.getConnection();
 
-        // 1. Get the salt (assuming 'query' for salt was defined above)
+        // 1. Get the salt
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
+        if (!saltResult || saltResult.length === 0)
+        {
+            return { success: false, userExist: false };
+        }
+        
         const hashedPassword = hashPassword(body.password + saltResult[0].salt);
-
-
         const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
 
-
+        // Check if authentication was successful
+        if (!userRows || userRows.length === 0)
+        {
+            return { success: false, userExist: false };
+        }
 
         return { success: true, userExist: true };
 
     } catch (err)
     {
-        console.error(err)
+        console.error("switchFile error:", err)
         return { success: false, userExist: false }
     } finally
     {
@@ -518,9 +525,36 @@ app.get('/', (req, res) =>
 {
     res.sendFile('intro.html');
 });
+app.get('/manageListings', (req, res) =>
+{
+    res.sendFile('manage_listings.html');
+});
+app.get('/info', (req, res) =>
+{
+    res.sendFile('info_listing.html');
+});
+app.get('/friends', (req, res) =>
+{
+    res.sendFile('friends.html');
+});
+app.get('/createListing', (req, res) =>
+{
+    res.sendFile('create_listing.html');
+});
+app.get('/home', (req, res) =>
+{
+    res.sendFile('index.html');
+});
+app.get('/login', (req, res) =>
+{
+    res.sendFile('login.html');
+});
+app.get('/signup', (req, res) =>
+{
+    res.sendFile('login.html');
+});
 
-
-app.post('/signup', async (req, res) =>
+app.post('/signupauth', async (req, res) =>
 {
     try
     {
@@ -531,7 +565,7 @@ app.post('/signup', async (req, res) =>
         }
         if (result && result.success)
         {
-            res.redirect("/index.html");
+            return res.send({ success: true, redirect: "/home" });
         }
     } catch (err)
     {
@@ -618,7 +652,7 @@ app.post('/getInfoListing', async (req, res) =>
 });
 
 
-app.post('/login', async (req, res) =>
+app.post('/loginauth', async (req, res) =>
 {
     try
     {
@@ -633,7 +667,7 @@ app.post('/login', async (req, res) =>
         }
         if (result && result.success)
         {
-            res.redirect("/index.html");
+            return res.send({ success: true, redirect: "/home" });
         }
     } catch (err)
     {
@@ -653,7 +687,7 @@ app.post('/createListing', async (req, res) =>
         }
         if (result && result.success)
         {
-            res.redirect("/index.html");
+            return res.send({ success: true, redirect: "/home" });
         }
     } catch (err)
     {
@@ -746,23 +780,24 @@ app.post('/activateListing', async (req, res) =>
 
 app.post('/switchFile', async (req, res) =>
 {
-    // console.log("Create Listing request:", req.body);
     try
     {
         const result = await switchFile(req.body);
         if (result && !result.userExist)
         {
-            return res.json({ message: "failed" })
+            return res.status(401).json({ message: "failed" })
         }
         if (result && result.success)
         {
-            res.redirect("/" + req.body.file)
-            //res.json(result.listings)
+            let file = req.body.file;
+            return res.send({ success: true, redirect: "/" + file });
         }
+        return res.status(400).json({ message: "unknown error" })
 
     } catch (err)
     {
-        res.status(400).send(err.message);
+        console.error("switchFile endpoint error:", err);
+        res.status(500).json({ error: err.message });
     }
 
 });

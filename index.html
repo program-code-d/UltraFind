@@ -33,7 +33,7 @@
             {
                 if (data == `{"message":"failed"}`)
                 {
-                    window.location.href = "login.html"
+                    window.location.href = `${getServerBase()}/login`
                 }
                 listings = data
                 draw_listings()
@@ -48,20 +48,7 @@
         return `${protocol}//${hostname}${port}`;
     }
 
-    function goToHome()
-    {
-        window.location.href = 'index.html'
-    }
-
-    function goToFriends()
-    {
-        window.location.href = 'friends.html'
-    }
-
-    function goToManageListings()
-    {
-        window.location.href = 'manage_listings.html'
-    }
+   
     function draw_listings()
     {
         let listings_div = ``
@@ -86,7 +73,7 @@
 
     function goToInfoListing(id)
     {
-        window.location.href = `${getServerBase()}/info_listing.html?id=${id}`
+        window.location.href = `${getServerBase()}/info?id=${id}`
     }
 
     function injectNavbar()
@@ -103,7 +90,7 @@
             {
                 if (data == `{"message":"failed"}`)
                 {
-                    window.location.href = "login.html"
+                    window.location.href = `${getServerBase()}/login`
                 }
                 document.getElementById("navbar-container").innerHTML = data
             })
@@ -126,7 +113,7 @@
         </main>
 
         <div class="action-area">
-            <button onclick="goToDifferentScreen('create_listing.html')" class="clean-btn">+</button>
+            <button onclick="goToDifferentScreen('create_listing')" class="clean-btn">+</button>
 
         </div>
     </div>

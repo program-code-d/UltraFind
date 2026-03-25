@@ -296,7 +296,7 @@
     <script>
         // Check local storage
         if (localStorage.getItem('ultrafind_intro_watched') === 'true') {
-            window.location.replace('login.html');
+            window.location.href=`${getServerBase()}/login`
         }
 
         // --- SNOW ANIMATION ---
@@ -369,7 +369,7 @@
 
         function completeIntro() {
             localStorage.setItem('ultrafind_intro_watched', 'true');
-            window.location.href = 'login.html';
+            window.location.href=`${getServerBase()}/login`
         }
 
         setTimeout(showLanding, 7500);

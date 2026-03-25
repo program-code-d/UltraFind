@@ -126,18 +126,23 @@
                         age: age.value
                     })
                 })
-                    .then(response =>
-                    {
-                        if (response.redirected)
-                        {
-                            window.location.href = response.url;
-                            return;
-                        }
-                        return response.json();
-                    })
+                    .then(response => response.json())
                     .then((data) =>
                     {
-                        // Handle post-creation logic, e.g., error messages
+                        if (data.success && data.redirect)
+                        {
+                            localStorage.setItem('email', email);
+                            localStorage.setItem('password', password);
+                            window.location.href = getServerBase() + data.redirect;
+                        }
+                        else if (data.message === "failed")
+                        {
+                            window.location.href = getServerBase() + "/login";
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Create listing error:", err);
+                        window.location.href = getServerBase() + "/login";
                     })
             }
             else

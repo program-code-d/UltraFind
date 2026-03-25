@@ -11,41 +11,47 @@
 
         function main()
         {
+
             email = localStorage.getItem("email")
             password = localStorage.getItem("password")
+
             if ((email != null) && (password != null))
             {
-                fetch(getServerBase() + "/login", {
-                    // Defines the HTTP verb as POST, which is used for sending data to a server.
+
+                fetch(getServerBase() + "/loginauth", {
                     method: 'POST',
                     headers: {
-                        // Informs the server that the data being sent is formatted as a JSON string.
                         'Content-Type': 'application/json'
                     },
-                    // Converts the JavaScript object into a standardized JSON string for transmission.
                     body: JSON.stringify({ email: email, password: password })
                 })
-                    .then(response =>
+                    .then(response => response.json())
+                    .then((data) =>
                     {
-                        if (response.redirected)
+                        if (data.success && data.redirect)
                         {
-                            window.location.href = response.url;
-                            return;
+                            localStorage.setItem('email', email);
+                            localStorage.setItem('password', password);
+                            window.location.href = getServerBase() + data.redirect;
                         }
                         else
                         {
                             document.getElementById("login").style.display = "block"
                         }
-                        return response.json();
                     })
-                    .then((data) =>
+                    .catch(err =>
                     {
-
+                        console.error("Auto-login error:", err);
+                        document.getElementById("login").style.display = "block";
                     })
             }
             else
             {
                 document.getElementById("login").style.display = "block";
+            }
+            if (window.location.pathname === '/signup')
+            {
+                switchToSignUp(true)
             }
         }
         function signUp()
@@ -60,35 +66,28 @@
                 {
                     email = document.getElementById("emailSignUP").value
                     password = document.getElementById("passwordSignUp").value
-                    fetch(getServerBase() + "/signup", {
-                        // Defines the HTTP verb as POST, which is used for sending data to a server.
+                    fetch(getServerBase() + "/signupauth", {
                         method: 'POST',
                         headers: {
-                            // Informs the server that the data being sent is formatted as a JSON string.
                             'Content-Type': 'application/json'
                         },
-
                         body: JSON.stringify({ email: email, age: document.getElementById("age").value, firstName: document.getElementById("first-name").value, lastName: document.getElementById("last-name").value, password: password })
                     })
-                        .then(response =>
+                        .then(response => response.json())
+                        .then((data) =>
                         {
-                            if (response.redirected)
+                            if (data.success && data.redirect)
                             {
                                 localStorage.setItem('email', email);
                                 localStorage.setItem('password', password);
-                                window.location.href = response.url;
-                                return;
+                                window.location.href = getServerBase() + data.redirect;
                             }
-                            return response.json();
-                        })
-                        .then((data) =>
-                        {
-                            if (data.message == "Email In Use")
+                            else if (data.message == "Email In Use")
                             {
                                 document.getElementById("error").innerHTML = `<div style="color:red;"><h3>This Email Is Already In Use, Try Logging In</h3></div>`
                             }
-
                         })
+                        .catch(err => console.error("Signup error:", err))
                 }
                 else
                 {
@@ -111,51 +110,47 @@
             }
             else
             {
-
-                fetch(getServerBase() + "/login", {
-                    // Defines the HTTP verb as POST, which is used for sending data to a server.
+                fetch(getServerBase() + "/loginauth", {
                     method: 'POST',
                     headers: {
-                        // Informs the server that the data being sent is formatted as a JSON string.
                         'Content-Type': 'application/json'
                     },
-                    // Converts the JavaScript object into a standardized JSON string for transmission.
                     body: JSON.stringify({ email: document.getElementById("email").value, password: document.getElementById("password").value })
                 })
-                    .then(response =>
+                    .then(response => response.json())
+                    .then((data) =>
                     {
-                        if (response.redirected)
+                        if (data.success && data.redirect)
                         {
                             email = document.getElementById("email").value;
                             password = document.getElementById("password").value;
                             localStorage.setItem('email', email);
                             localStorage.setItem('password', password);
-                            window.location.href = response.url;
-                            return;
+                            window.location.href = getServerBase() + data.redirect;
                         }
-                        return response.json();
-                    })
-                    .then((data) =>
-                    {
-                        if (data.message == "failed")
+                        else if (data.message == "failed")
                         {
                             document.getElementById("error-login").innerHTML = `<div style="color:red;"><h3>Sign In Failed. Try Again</h3></div>`
                             document.getElementById("password").value = ""
                         }
-                        if (data.message == "NotEmailFormat")
+                        else if (data.message == "NotEmailFormat")
                         {
                             document.getElementById("error-login").innerHTML = `<div style="color:red;"><h3>This is not an email</h3></div>`
                         }
-
                     })
-
+                    .catch(err => console.error("Login error:", err))
             }
         }
 
-        function switchToSignUp()
+        function switchToSignUp(fromMain)
         {
+            if (!fromMain)
+            {
+                 window.location.href = `${getServerBase()}/signup`
+            }
             document.getElementById("login").style.display = "none"
             document.getElementById("signUp").style.display = "block"
+
             checkAgeTimer()
         }
         function checkAgeTimer()
@@ -164,6 +159,7 @@
         }
         function switchToSignIn()
         {
+            window.location.href = `${getServerBase()}/login`
             document.getElementById("login").style.display = "block"
             document.getElementById("signUp").style.display = "none"
         }
@@ -197,8 +193,8 @@
 <body onload="main()">
     <div id="login" style="display: none;">
         <div id="login-card">
-            <div onclick="switchToSignUp()">Dont Have An account? Sign Up</div>
-                     
+            <div onclick="switchToSignUp(false)">Dont Have An account? Sign Up</div>
+
 
 
             <table class="center-table">
