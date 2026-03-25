@@ -54,9 +54,18 @@ async function findFriend(body) {
         const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
         const user_id = userRows[0].id;
+
         const findQuery = "SELECT id, first_name, last_name FROM Users WHERE id != ? AND CONCAT(first_name, ' ', last_name) LIKE ?;";
         const friends = await conn.query(findQuery, [user_id, `%${body.friendSearch}%`]);
-        return { success: true, friends: friends, userExist: true };
+
+        // FIX: Convert BigInt IDs to regular Numbers for JSON
+        const cleanFriends = friends.map(f => ({
+            id: Number(f.id),
+            first_name: f.first_name,
+            last_name: f.last_name
+        }));
+
+        return { success: true, friends: cleanFriends, userExist: true };
     } catch (err) {
         console.error(err);
         return { success: false, error: "Internal Server Error" };
@@ -64,6 +73,7 @@ async function findFriend(body) {
         if (conn) conn.release();
     }
 }
+
 
 
 async function addfriend(body) {
@@ -302,18 +312,19 @@ async function getfriendmessages(body) {
     try {
         conn = await pool.getConnection();
 
-        // 1. Authenticate the user
+        // 1. Authenticate (Same as you had)
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
-        if (saltResult.length === 0) return { success: false, message: "User not found" };
+        if (saltResult.length === 0) return { success: false, userExist: false };
 
         const hashedPassword = hashPassword(body.password + saltResult[0].salt);
         const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
 
-        if (userRows.length === 0) return { success: false, message: "Invalid credentials" };
+        if (userRows.length === 0) return { success: false, userExist: false };
 
-        const userId = userRows[0].id; // This is the ID of the person logged in
+        const userId = userRows[0].id;
 
+        // 2. Fetch Messages
         const query = `
             SELECT message_text, sender_id, created_at 
             FROM DirectMessages 
@@ -321,19 +332,23 @@ async function getfriendmessages(body) {
                OR (sender_id = ? AND receiver_id = ?) 
             ORDER BY created_at ASC`;
 
-        // USE body.friendId (Matches frontend)
-        const res = await conn.query(query, [userId, body.friendId, body.friendId, userId]);
+        const dbRows = await conn.query(query, [userId, body.friendId, body.friendId, userId]);
 
-        // Return the messages AND the userId so the frontend knows "who am I?"
+        // FIX: Convert BigInts and Dates to standard formats to prevent 500 errors
+        const cleanMessages = dbRows.map(row => ({
+            message_text: row.message_text,
+            sender_id: Number(row.sender_id), // Convert BigInt to Number
+            created_at: row.created_at
+        }));
+
         return {
             success: true,
-            messages: res,
-            currentUserId: userId,
+            messages: cleanMessages,
             userExist: true
         };
     } catch (err) {
-        console.error(err);
-        return { success: false, userExist: false };
+        console.error("DATABASE ERROR:", err);
+        return { success: false, userExist: true }; // Trigger fallthrough or error
     } finally {
         if (conn) conn.release();
     }
@@ -349,19 +364,25 @@ async function getFriends(body) {
         const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
         const userId = userRows[0].id;
-        // This query finds the ID and Name of the person who is NOT you
+
         const query = `
         SELECT id, first_name, last_name 
         FROM Users 
         WHERE id IN (
-        SELECT friend_id FROM Friendships WHERE user_id = ?
-        UNION
-        SELECT user_id FROM Friendships WHERE friend_id = ?
-    )`;
+            SELECT friend_id FROM Friendships WHERE user_id = ?
+            UNION
+            SELECT user_id FROM Friendships WHERE friend_id = ?
+        )`;
         const friends = await conn.query(query, [userId, userId]);
 
-        // FIX: Changed 'res' to 'friends'
-        return { success: true, friendslist: friends, userExist: true };
+        // FIX: Convert BigInt IDs to regular Numbers here as well
+        const cleanFriends = friends.map(f => ({
+            id: Number(f.id),
+            first_name: f.first_name,
+            last_name: f.last_name
+        }));
+
+        return { success: true, friendslist: cleanFriends, userExist: true };
     } catch (err) {
         console.error(err);
         return { success: false, userExist: false };
@@ -669,17 +690,17 @@ app.post('/switchFile', async (req, res) => {
     try {
         const result = await switchFile(req.body);
         if (result && !result.userExist) {
-            return res.status(401).json({ message: "failed" })
+            return res.status(401).send({ message: "failed" })
         }
         if (result && result.success) {
             let file = req.body.file;
             return res.send({ success: true, redirect: "/" + file });
         }
-        return res.status(400).json({ message: "unknown error" })
+        return res.status(400).send({ message: "unknown error" })
 
     } catch (err) {
         console.error("switchFile endpoint error:", err);
-        res.status(500).json({ error: err.message });
+        res.status(500).send({ error: err.message });
     }
 
 });
@@ -695,7 +716,7 @@ app.post('/upload-listing', async (req, res) => {
                 const timestamp = Date.now();
                 const isVideo = part.mimetype.startsWith('video/');
                 const isImage = part.mimetype.startsWith('image/');
-                
+
                 // AVIF for images (Better than WebP), MP4 for videos
                 const extension = isVideo ? '.mp4' : (isImage ? '.avif' : path.extname(part.filename));
                 const uniqueName = `${timestamp}-${Math.random().toString(36).substring(7)}${extension}`;
@@ -705,13 +726,13 @@ app.post('/upload-listing', async (req, res) => {
                     // ULTRA IMAGE COMPRESSION: AVIF
                     // quality 65 in AVIF looks better than quality 85 in JPEG
                     const transformer = sharp()
-                        .avif({ 
-                            quality: 65, 
+                        .avif({
+                            quality: 65,
                             effort: 9, // Highest compression level (Slowest but smallest)
-                            chromaSubsampling: '4:2:0' 
-                        }) 
-                        .rotate(); 
-                    
+                            chromaSubsampling: '4:2:0'
+                        })
+                        .rotate();
+
                     await pipeline(part.file, transformer, fs.createWriteStream(savePath));
                     mediaFiles.push({ name: uniqueName, type: 'image' });
 
@@ -728,7 +749,7 @@ app.post('/upload-listing', async (req, res) => {
                             .addOptions(['-crf 24', '-preset slow', '-pix_fmt yuv420p'])
                             .save(savePath)
                             .on('end', () => {
-                                if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath); 
+                                if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
                                 resolve();
                             })
                             .on('error', (err) => {
@@ -776,20 +797,20 @@ app.post('/getfriendmessages', async (req, res) => {
         const result = await getfriendmessages(req.body);
 
         if (!result.userExist) {
-            return res.status(401).json({ error: "Authentication failed" });
+            return res.status(401).send({ error: "Authentication failed" });
         }
 
         if (result.success) {
             // Always send an array, even if empty, to the frontend
-            return res.json(result.messages || []);
+            return res.send(result.messages || []);
         }
 
         // Fallback for logic errors
-        return res.status(500).json({ error: "Internal logic error" });
+        return res.status(500).send({ error: "Internal logic error" });
 
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: err.message });
+        res.status(500).send({ error: err.message });
     }
 });
 
@@ -810,22 +831,22 @@ app.post('/sendfriendmessage', async (req, res) => {
 
         // 1. Handle user not existing/wrong password
         if (!result.userExist) {
-            return res.status(401).json({ success: false, message: "Authentication failed" });
+            return res.status(401).send({ success: false, message: "Authentication failed" });
         }
 
         // 2. Handle success
         if (result.success) {
             // Send back a valid JSON object
-            return res.json({ success: true, data: result.data });
+            return res.send({ success: true, data: result.data });
         }
 
         // 3. Fallback for unexpected logic states
-        return res.status(500).json({ success: false, message: "Unknown error" });
+        return res.status(500).send({ success: false, message: "Unknown error" });
 
     } catch (err) {
         console.error(err);
-        // Always send JSON, even on errors, so res.json() doesn't crash
-        res.status(400).json({ success: false, error: err.message });
+        // Always send JSON, even on errors, so res.send() doesn't crash
+        res.status(400).send({ success: false, error: err.message });
     }
 });
 
