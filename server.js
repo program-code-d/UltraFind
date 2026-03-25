@@ -306,6 +306,64 @@ async function sendMessage(body) {
     }
 }
 
+async function deleteListing(body) {
+    let conn;
+    try {
+        conn = await pool.getConnection();
+
+        // 1. SAFE CHECK: Get Salt
+        let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
+        // If email doesn't exist, stop here instead of crashing
+        if (!saltResult || saltResult.length === 0) {
+            return { success: false, userExist: false };
+        }
+
+        const salt = String(saltResult[0].salt);
+        const hashedPassword = hashPassword(body.password + salt);
+
+        // 2. SAFE CHECK: Get User
+        const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
+        const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
+        // If password is wrong, stop here instead of crashing
+        if (!userRows || userRows.length === 0) {
+            return { success: false, userExist: false };
+        }
+
+        const userId = userRows[0].id;
+
+        // 3. Get Media paths BEFORE deleting the listing
+        // (Because ON DELETE CASCADE will remove the database rows instantly)
+        const mediaRows = await conn.query("SELECT file_path FROM ListingMedia WHERE listing_id = ?", [body.listing_id]);
+
+        // 4. Delete from Database (with ownership check)
+        const deleteRes = await conn.query("DELETE FROM Listings WHERE id = ? AND user_id = ?", [body.listing_id, userId]);
+
+        // 5. If DB delete was successful, clean up the files
+        if (deleteRes.affectedRows > 0) {
+            for (const row of mediaRows) {
+                const filePath = path.join(__dirname, 'images', row.file_path);
+                try {
+                    // Check if file exists before trying to delete it
+                    if (fs.existsSync(filePath)) {
+                        await fs.promises.unlink(filePath);
+                        console.log(`Physically deleted: ${row.file_path}`);
+                    }
+                } catch (fileErr) {
+                    console.error(`File system error for ${row.file_path}:`, fileErr);
+                }
+            }
+            return { success: true, userExist: true };
+        } else {
+            return { success: false, userExist: true, error: "Listing not found or you don't own it" };
+        }
+
+    } catch (err) {
+        console.error("Delete Listing Error:", err);
+        return { success: false, userExist: true, error: err.message };
+    } finally {
+        if (conn) conn.release();
+    }
+}
 
 async function getfriendmessages(body) {
     let conn;
@@ -711,8 +769,8 @@ app.post('/switchFile', async (req, res) => {
 
 app.post('/upload-listing', async (req, res) => {
     const parts = req.parts();
-    const mediaFiles = [];
     const body = {};
+    const processingTasks = []; // We will store promises here to process in parallel
 
     try {
         for await (const part of parts) {
@@ -721,72 +779,80 @@ app.post('/upload-listing', async (req, res) => {
                 const isVideo = part.mimetype.startsWith('video/');
                 const isImage = part.mimetype.startsWith('image/');
 
-                // AVIF for images (Better than WebP), MP4 for videos
-                const extension = isVideo ? '.mp4' : (isImage ? '.avif' : path.extname(part.filename));
+                // We use .webp for images because AVIF effort 9 is too slow for production
+                // We use .mp4 (H.264) for videos because H.265 is too CPU intensive
+                const extension = isVideo ? '.mp4' : (isImage ? '.webp' : path.extname(part.filename));
                 const uniqueName = `${timestamp}-${Math.random().toString(36).substring(7)}${extension}`;
                 const savePath = path.join(__dirname, 'images', uniqueName);
 
                 if (isImage) {
-                    // ULTRA IMAGE COMPRESSION: AVIF
-                    // quality 65 in AVIF looks better than quality 85 in JPEG
-                    const transformer = sharp()
-                        .avif({
-                            quality: 65,
-                            effort: 9, // Highest compression level (Slowest but smallest)
-                            chromaSubsampling: '4:2:0'
-                        })
-                        .rotate();
+                    // FAST IMAGE COMPRESSION: WebP (Better support & 10x faster than AVIF effort 9)
+                    const processImage = async () => {
+                        const transformer = sharp()
+                            .webp({ quality: 75, effort: 2 }) // Effort 2 is the "Sweet Spot" for speed/size
+                            .rotate(); // Auto-rotate based on EXIF data
 
-                    await pipeline(part.file, transformer, fs.createWriteStream(savePath));
-                    mediaFiles.push({ name: uniqueName, type: 'image' });
+                        await pipeline(part.file, transformer, fs.createWriteStream(savePath));
+                        return { name: uniqueName, type: 'image' };
+                    };
+                    processingTasks.push(processImage());
 
                 } else if (isVideo) {
-                    // ULTRA VIDEO COMPRESSION: H.265 (HEVC)
+                    // FAST VIDEO COMPRESSION: H.264 (Universally supported & much faster)
                     const tempPath = path.join(__dirname, 'images', 'temp-' + uniqueName);
+
+                    // 1. Stream file to disk first (fast)
                     await pipeline(part.file, fs.createWriteStream(tempPath));
 
-                    await new Promise((resolve, reject) => {
-                        ffmpeg(tempPath)
-                            .vcodec('libx265')
-                            // CRF 24 is the "Sweet Spot" for H.265. 
-                            // 'slow' preset gives ~15% better compression than 'medium'
-                            .addOptions(['-crf 24', '-preset slow', '-pix_fmt yuv420p'])
-                            .save(savePath)
-                            .on('end', () => {
-                                if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
-                                resolve();
-                            })
-                            .on('error', (err) => {
-                                if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
-                                reject(err);
-                            });
-                    });
-                    mediaFiles.push({ name: uniqueName, type: 'video' });
+                    // 2. Queue the FFmpeg task
+                    const processVideo = async () => {
+                        return new Promise((resolve, reject) => {
+                            ffmpeg(tempPath)
+                                .vcodec('libx264') // H.264 is way faster than H.265 (libx265)
+                                .addOptions([
+                                    '-crf 28',            // Constant Rate Factor (23-28 is great for web)
+                                    '-preset superfast',  // Use 'superfast' or 'veryfast' for web uploads
+                                    '-movflags +faststart', // Allows video to play before fully downloaded
+                                    '-pix_fmt yuv420p'    // Ensures compatibility with all browsers
+                                ])
+                                .on('error', (err) => {
+                                    if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+                                    reject(err);
+                                })
+                                .on('end', () => {
+                                    if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+                                    resolve({ name: uniqueName, type: 'video' });
+                                })
+                                .save(savePath);
+                        });
+                    };
+                    processingTasks.push(processVideo());
 
                 } else {
+                    // Non-media files
                     await pipeline(part.file, fs.createWriteStream(savePath));
-                    mediaFiles.push({ name: uniqueName, type: 'other' });
+                    processingTasks.push(Promise.resolve({ name: uniqueName, type: 'other' }));
                 }
             } else {
                 body[part.fieldname] = part.value;
             }
         }
 
-        try {
+        // Wait for ALL images and videos to finish compressing simultaneously
+        const mediaFiles = await Promise.all(processingTasks);
+
+        // Database logic
         const result = await createListing(body, mediaFiles);
-        if (result && ((result.userExist != undefined)&&(!result.userExist))) {
+        if (result && result.userExist === false) {
             return res.send({ message: "failed" });
         }
         if (result && result.success) {
             return res.send({ success: true, redirect: "/home" });
         }
-    } catch (err) {
-        res.status(400).send(err.message);
-    }
 
     } catch (err) {
         console.error("UPLOAD ERROR:", err);
-        res.status(500).send({ success: false, message: "Ultra-compression failed" });
+        res.status(500).send({ success: false, message: "Compression failed: " + err.message });
     }
 });
 
@@ -841,6 +907,31 @@ app.post('/findFriend', async (req, res) => {
 app.post('/sendfriendmessage', async (req, res) => {
     try {
         const result = await sendfriendmessage(req.body);
+
+        // 1. Handle user not existing/wrong password
+        if (!result.userExist) {
+            return res.status(401).send({ success: false, message: "Authentication failed" });
+        }
+
+        // 2. Handle success
+        if (result.success) {
+            // Send back a valid JSON object
+            return res.send({ success: true, data: result.data });
+        }
+
+        // 3. Fallback for unexpected logic states
+        return res.status(500).send({ success: false, message: "Unknown error" });
+
+    } catch (err) {
+        console.error(err);
+        // Always send JSON, even on errors, so res.send() doesn't crash
+        res.status(400).send({ success: false, error: err.message });
+    }
+});
+
+app.post('/deleteListing', async (req, res) => {
+    try {
+        const result = await deleteListing(req.body);
 
         // 1. Handle user not existing/wrong password
         if (!result.userExist) {

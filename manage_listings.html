@@ -14,16 +14,14 @@
     let email
     let password
     let my_listings
-    function main()
-    {
+    function main() {
         email = localStorage.getItem('email')
         password = localStorage.getItem('password')
         injectNavbar()
         getMyListings()
     }
 
-    function goToDifferentScreen(file)
-    {
+    function goToDifferentScreen(file) {
         fetch(getServerBase() + "/switchFile", {
             method: 'POST',
             headers: {
@@ -32,16 +30,13 @@
             body: JSON.stringify({ email: email, password: password, file: file })
         })
             .then(response => response.json())
-            .then((data) =>
-            {
-                if (data.success && data.redirect)
-                {
+            .then((data) => {
+                if (data.success && data.redirect) {
                     localStorage.setItem('email', email);
                     localStorage.setItem('password', password);
                     window.location.href = getServerBase() + data.redirect;
                 }
-                else if (data.message === "failed")
-                {
+                else if (data.message === "failed") {
                     window.location.href = getServerBase() + "/login";
                 }
             })
@@ -51,16 +46,14 @@
             });
     }
 
-    function getServerBase()
-    {
+    function getServerBase() {
         const protocol = window.location.protocol;
         const hostname = window.location.hostname;
         const port = window.location.port ? ':' + window.location.port : '';
         return `${protocol}//${hostname}${port}`;
     }
 
-    function injectNavbar()
-    {
+    function injectNavbar() {
         fetch(getServerBase() + "/getNavbar", {
             method: 'POST',
             headers: {
@@ -69,13 +62,11 @@
             body: JSON.stringify({ email: email, password: password })
         })
             .then(response => response.text())
-            .then((data) =>
-            {
+            .then((data) => {
                 document.getElementById("navbar-container").innerHTML = data
             })
     }
-    function getMyListings()
-    {
+    function getMyListings() {
 
         fetch(getServerBase() + "/getMyListings", {
             method: 'POST',
@@ -85,50 +76,40 @@
             body: JSON.stringify({ email: email, password: password })
         })
             .then(response => response.json())
-            .then((data) =>
-            {
+            .then((data) => {
                 my_listings = data
                 drawMyListings(my_listings)
             })
     }
 
 
-    function goToInfoListing(listing)
-    {
+    function goToInfoListing(listing) {
         goToDifferentScreen("info?id=" + listing)
     }
-    function getActiveText(listing)
-    {
-        if (listing.is_active == true)
-        {
+    function getActiveText(listing) {
+        if (listing.is_active == true) {
             return "ACTIVE"
         }
-        else
-        {
+        else {
             return "INACTIVE"
         }
     }
-    function getStatusAndDisplay(listing)
-    {
-          if (listing.is_active == true)
-        {
+    function getStatusAndDisplay(listing) {
+        if (listing.is_active == true) {
             return ` <div class="menu-item" onclick="deactivateListing(${listing.id})">
                       <span><svg class="icon"><use href="icons.svg#ban"></use></svg></span> Deactivate
                     </div>`
         }
-        else
-        {
+        else {
             return ` <div class="menu-item" onclick="activateListing(${listing.id})">
                       <span><svg class="icon"><use href="icons.svg#unban"></use></svg></span> Activate
                     </div>`
         }
     }
-    function drawMyListings(myListings)
-    {
+    function drawMyListings(myListings) {
         let htmlContent = "";
 
-        for (let i = 0; i < myListings.length; i++)
-        {
+        for (let i = 0; i < myListings.length; i++) {
             let item = myListings[i];
 
             htmlContent += `
@@ -176,8 +157,7 @@
         document.getElementById("manage-listings-container").innerHTML = htmlContent;
         attachMenuEventListeners();
     }
-    function deactivateListing(listing)
-    {
+    function deactivateListing(listing) {
         fetch(getServerBase() + "/deactivateListing", {
             method: 'POST',
             headers: {
@@ -186,11 +166,9 @@
             body: JSON.stringify({ email: email, password: password, listing_id: listing })
         })
             .then(response => response.text())
-            .then((data) =>
-            {
-                if (data == `{"message":"failed"}`)
-                {
-                    window.location.href=`${getServerBase()}/login`
+            .then((data) => {
+                if (data == `{"message":"failed"}`) {
+                    window.location.href = `${getServerBase()}/login`
                 }
                 const item = my_listings.find(item => item.id === listing)
                 if (item) item.is_active = JSON.parse(data)
@@ -198,8 +176,7 @@
             })
 
     }
-     function activateListing(listing)
-    {
+    function activateListing(listing) {
         fetch(getServerBase() + "/activateListing", {
             method: 'POST',
             headers: {
@@ -208,11 +185,9 @@
             body: JSON.stringify({ email: email, password: password, listing_id: listing })
         })
             .then(response => response.text())
-            .then((data) =>
-            {
-                if (data == `{"message":"failed"}`)
-                {
-                   window.location.href=`${getServerBase()}/login`
+            .then((data) => {
+                if (data == `{"message":"failed"}`) {
+                    window.location.href = `${getServerBase()}/login`
                 }
                 const item = my_listings.find(item => item.id === listing)
                 if (item) item.is_active = JSON.parse(data)
@@ -220,55 +195,57 @@
             })
 
     }
-    function toggleCardMenu(event, listingId)
-    {
+    function toggleCardMenu(event, listingId) {
         const menu = document.getElementById(`menu-${listingId}`);
         const isOpen = menu.classList.contains('active');
 
         // Close all other menus
-        document.querySelectorAll('.card-menu-dropdown.active').forEach(m =>
-        {
-            if (m.id !== `menu-${listingId}`)
-            {
+        document.querySelectorAll('.card-menu-dropdown.active').forEach(m => {
+            if (m.id !== `menu-${listingId}`) {
                 m.classList.remove('active');
             }
         });
 
         // Toggle current menu
-        if (isOpen)
-        {
+        if (isOpen) {
             menu.classList.remove('active');
-        } else
-        {
+        } else {
             menu.classList.add('active');
         }
     }
 
-    function attachMenuEventListeners()
-    {
+    function attachMenuEventListeners() {
         // Close menu when clicking outside
-        document.addEventListener('click', function (event)
-        {
-            if (!event.target.closest('.card-menu-button') && !event.target.closest('.card-menu-dropdown'))
-            {
-                document.querySelectorAll('.card-menu-dropdown.active').forEach(menu =>
-                {
+        document.addEventListener('click', function (event) {
+            if (!event.target.closest('.card-menu-button') && !event.target.closest('.card-menu-dropdown')) {
+                document.querySelectorAll('.card-menu-dropdown.active').forEach(menu => {
                     menu.classList.remove('active');
                 });
             }
         });
     }
 
-    function editListing(listingId)
-    {
+    function editListing(listingId) {
         goToDifferentScreen(`info?id=${listingId}`);
     }
 
 
-    function deleteListing(listingId)
-    {
-        console.log(`Delete listing: ${listingId}`);
-        // Add your deletion logic here
+    function deleteListing(listingId) {
+        //console.log(`Delete listing: ${listingId}`);
+
+        fetch(getServerBase() + "/deleteListing", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({email: email, password: password, listing_id: listingId})
+        })
+            .then(response => response.text())
+            .then((data) => {
+               
+               
+            })
+
     }
 
 </script>

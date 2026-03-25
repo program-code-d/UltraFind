@@ -14,8 +14,7 @@
     let email
     let password
 
-    function main()
-    {
+    function main() {
         email = localStorage.getItem('email')
         password = localStorage.getItem('password')
 
@@ -29,10 +28,8 @@
             body: JSON.stringify({ search: "", email: email, password: password })
         })
             .then(response => response.json())
-            .then((data) =>
-            {
-                if (data == `{"message":"failed"}`)
-                {
+            .then((data) => {
+                if (data == `{"message":"failed"}`) {
                     localStorage.removeItem('email');
                     localStorage.removeItem('password');
 
@@ -43,22 +40,19 @@
             })
     }
 
-    function getServerBase()
-    {
+    function getServerBase() {
         const protocol = window.location.protocol; // 'http:' or 'https:'
         const hostname = window.location.hostname;
         const port = window.location.port ? ':' + window.location.port : '';
         return `${protocol}//${hostname}${port}`;
     }
 
-   
-    function draw_listings()
-    {
+
+    function draw_listings() {
         let listings_div = ``
         let l = 0
 
-        while (l < listings.length)
-        {
+        while (l < listings.length) {
             listings_div += `
                <div onclick="goToInfoListing(${listings[l].id})" id="${l}" class="listing-card">
                   <div style="text-align: center;"><h1>${listings[l].title}</h1></div>
@@ -74,13 +68,24 @@
         document.getElementById("listings").innerHTML = listings_div
     }
 
-    function goToInfoListing(id)
-    {
+    function goToInfoListing(id) {
         window.location.href = `${getServerBase()}/info?id=${id}`
     }
+    function searchListings(search) {
+        fetch(getServerBase() + "/searchListings", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ search: search })
+        })
+            .then(response => response.json())
+            .then((data) => {
+                draw_listings()
+            })
+    }
 
-    function injectNavbar()
-    {
+    function injectNavbar() {
         fetch(getServerBase() + "/getNavbar", {
             method: 'POST',
             headers: {
@@ -89,10 +94,8 @@
             body: JSON.stringify({ email: email, password: password })
         })
             .then(response => response.text())
-            .then((data) =>
-            {
-                if (data == `{"message":"failed"}`)
-                {
+            .then((data) => {
+                if (data == `{"message":"failed"}`) {
                     window.location.href = `${getServerBase()}/login`
                 }
                 document.getElementById("navbar-container").innerHTML = data
@@ -120,6 +123,23 @@
 
         </div>
     </div>
+
+    <form class="form">
+        <button>
+            <svg width="17" height="16" fill="none" xmlns="http://www.w3.org/2000/svg" role="img"
+                aria-labelledby="search">
+                <path d="M7.667 12.667A5.333 5.333 0 107.667 2a5.333 5.333 0 000 10.667zM14.334 14l-2.9-2.9"
+                    stroke="currentColor" stroke-width="1.333" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+        </button>
+        <input class="input" placeholder="Type your text" required="" type="text">
+        <button class="reset" onclick="searchListings(document.getElementsByClassName('input'))">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    </form>
 
 </body>
 
