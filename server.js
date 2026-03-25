@@ -559,7 +559,7 @@ app.post('/signupauth', async (req, res) =>
     try
     {
         const result = await registerUser(req.body);
-        if ((result && result.emailExist) || (result.notunderage != undefined) || (result.EmailFormat != undefined))
+        if ((result && ((result.emailExist != undefined) && (result.emailExist))) || (result.notunderage != undefined) || (result.EmailFormat != undefined))
         {
             return res.send({ message: "failed" });
         }
