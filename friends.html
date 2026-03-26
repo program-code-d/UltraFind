@@ -12,7 +12,25 @@
     <body onload="main()">
         <!-- 1. The Sidebar -->
         <div class="friends-nav" id="friends-list-nav">
-            <div id="Home"><strong>Friends</strong></div>
+            <div class="chats-header"><strong>Chats</strong></div>
+
+            <div class="chat-section">
+
+                <div id="Work-Messages" onclick="showWorkMessages()">
+                    <div class="work-icon-circle">
+                        <svg class="work-icon">
+                            <use href="icons.svg#work-icon"></use>
+                        </svg>
+                    </div>
+                    <strong>Work</strong>
+                </div>
+            </div>
+
+            <div class="chat-section">
+
+
+            </div>
+
             <!-- Friends list renders here -->
             <div class="people">
                 <button onclick="startaddingfriend(event)">+ Add Friend</button>
@@ -77,17 +95,30 @@
                 document.querySelector('.dropdown').style.display = 'none';
                 document.querySelector('.chat-bar').style.display = 'none';
 
-                function startaddingfriend(event) {
+                function startaddingfriend(event)
+                {
                     event.preventDefault();
                     document.getElementById('add-friend-modal').style.display = 'block';
                 }
-
-                async function main() {
-                    try {
+                function showWorkMessages()
+                {
+                    document.getElementById("friends-list-nav").innerHTML =
+                        `
+                    <div class="chats-header"><strong><- Work</strong></div>   
+                    </div>
+            
+            
+                    `
+                }
+                async function main()
+                {
+                    try
+                    {
                         console.log("Attempting fetch...");
 
                         // Use the variables from localStorage defined at the top of your script
-                        if (!email || !password) {
+                        if (!email || !password)
+                        {
                             console.log("User not logged in.");
                             return;
                         }
@@ -102,28 +133,44 @@
                             })
                         });
 
-                        if (!response.ok) {
+                        if (!response.ok)
+                        {
                             throw new Error(`HTTP error! status: ${response.status}`);
                         }
 
                         const data = await response.json();
                         console.log("Data received:", data);
 
-                        if (data.success) {
+                        if (data.success)
+                        {
                             renderFriends(data.friends); // Backend sends 'friends' in the route handler
                         }
 
-                    } catch (error) {
+                    } catch (error)
+                    {
                         console.error("The fetch failed:", error);
                     }
                 }
 
                 // Add this function to handle the display logic
-                function renderFriends(friendsList) {
+                function renderFriends(friendsList)
+                {
                     const nav = document.getElementById('friends-list-nav');
-                    nav.innerHTML = '<div id="Home"><strong>Friends</strong></div>';
+                    // Find the Friends section (the second chat-section)
+                    const chatSections = nav.querySelectorAll('.chat-section');
+                    const friendsSection = chatSections.length > 1 ? chatSections[1] : null;
 
-                    for (let i = 0; i < friendsList.length; i++) {
+                    if (!friendsSection) return;
+
+                    // Get the Home div and keep it, remove only friend items
+                    const homeDiv = friendsSection.querySelector('#Home');
+
+                    // Remove all friend items from this section
+                    friendsSection.querySelectorAll('.friend-item').forEach(item => item.remove());
+
+                    // Append friend items back to the Friends section
+                    for (let i = 0; i < friendsList.length; i++)
+                    {
                         const friend = friendsList[i];
                         const friendDiv = document.createElement('div');
                         friendDiv.className = 'friend-item';
@@ -131,24 +178,21 @@
                         friendDiv.setAttribute('data-id', friend.id);
                         friendDiv.innerHTML = `<strong>${friend.first_name} ${friend.last_name}</strong>`;
 
-                        friendDiv.onclick = function () {
+                        friendDiv.onclick = function ()
+                        {
                             // Remove active from all, add to this one
                             document.querySelectorAll('.friend-item').forEach(el => el.classList.remove('active'));
                             friendDiv.classList.add('active');
 
                             startChatWithFriend(friend.id, friend.first_name, friend.last_name);
                         };
-                        nav.appendChild(friendDiv);
+                        friendsSection.appendChild(friendDiv);
                     }
-                    // Re-add the button at the bottom
-                    const btnDiv = document.createElement('div');
-                    btnDiv.className = 'people';
-                    btnDiv.innerHTML = `<button onclick="startaddingfriend(event)">+ Add Friend</button>`;
-                    nav.appendChild(btnDiv);
                 }
                 // Global variable to track current chat
 
-                function startChatWithFriend(friendid, friendfirst, friendlast) {
+                function startChatWithFriend(friendid, friendfirst, friendlast)
+                {
                     currentChatFriendId = friendid;
                     const display = document.getElementById('messages-display');
                     display.innerHTML = `<div class="chat-header">Chatting with ${friendfirst} ${friendlast}</div>`;
@@ -163,12 +207,14 @@
                         })
                     })
                         .then(res => res.json())
-                        .then(data => {
+                        .then(data =>
+                        {
                             renderMessages(data); // Breakpoint here will now work
                         })
                         .catch(err => console.error("Load Error:", err));
                 }
-                function renderMessages(messages) {
+                function renderMessages(messages)
+                {
                     const display = document.getElementById('messages-display');
                     const headerHTML = display.querySelector('.chat-header')?.outerHTML || '';
 
@@ -177,7 +223,8 @@
                     // Create a temporary container to prevent flickering during the loop
                     let newContent = headerHTML;
 
-                    for (let i = 0; i < msgArray.length; i++) {
+                    for (let i = 0; i < msgArray.length; i++)
+                    {
                         const msg = msgArray[i];
                         // Use Number() to ensure we are comparing numbers to numbers
                         const type = (Number(msg.sender_id) === Number(currentChatFriendId)) ? 'received' : 'sent';
@@ -194,7 +241,8 @@
                     display.innerHTML = newContent;
                     display.scrollTop = display.scrollHeight;
                 }
-                function sendMessage(event, message) {
+                function sendMessage(event, message)
+                {
                     event.preventDefault();
                     if (!message.trim() || !currentChatFriendId) return;
 
@@ -209,7 +257,8 @@
                         })
                     })
                         .then(res => res.json())
-                        .then(data => {
+                        .then(data =>
+                        {
                             document.getElementById('messageInput').value = "";
                             const display = document.getElementById('messages-display');
 
@@ -231,7 +280,8 @@
                         });
                 }
 
-                function findFriend(event) {
+                function findFriend(event)
+                {
                     event.preventDefault();
 
                     fetch(getServerBase() + "/findFriend", {
@@ -246,7 +296,8 @@
                         })
                     })
                         .then(response => response.json())
-                        .then((data) => {
+                        .then((data) =>
+                        {
                             // Assign results (ensure friendsResults is declared elsewhere or use let/const)
                             const friendsList = data.friends;
                             const select = document.getElementById('friend-select');
@@ -255,8 +306,10 @@
                             select.innerHTML = '<option value="none" selected disabled>Choose a person...</option>';
 
                             // --- Traditional For Loop ---
-                            if (friendsList && friendsList.length > 0) {
-                                for (let i = 0; i < friendsList.length; i++) {
+                            if (friendsList && friendsList.length > 0)
+                            {
+                                for (let i = 0; i < friendsList.length; i++)
+                                {
                                     // Access the specific friend using the index [i]
                                     const friend = friendsList[i];
 
@@ -269,32 +322,39 @@
 
                                 // Show the dropdown if we found people
                                 document.querySelector('.dropdown').style.display = 'block';
-                            } else {
+                            } else
+                            {
                                 console.log("No friends found in the database.");
                             }
                         })
-                        .catch(error => {
+                        .catch(error =>
+                        {
                             console.error("Error fetching friends:", error);
                         });
                 }
-                async function getFriends(body) {
+                async function getFriends(body)
+                {
                     let conn;
-                    try {
+                    try
+                    {
                         conn = await pool.getConnection();
                         // ... auth logic ...
                         const friends = await conn.query(query, [userId, userId]);
 
                         // CHANGE THIS: Match the frontend key 'friends'
                         return { success: true, friends: friends, userExist: true };
-                    } catch (err) {
+                    } catch (err)
+                    {
                         console.error(err);
                         return { success: false, userExist: false };
-                    } finally {
+                    } finally
+                    {
                         if (conn) conn.release();
                     }
                 }
 
-                function getServerBase() {
+                function getServerBase()
+                {
                     const protocol = window.location.protocol; // 'http:' or 'https:'
                     const hostname = window.location.hostname;
                     const port = window.location.port ? ':' + window.location.port : '';
@@ -306,7 +366,8 @@
                 const friendSelect = document.getElementById('friend-select');
 
                 // 2. Listen for when the user picks an option
-                friendSelect.addEventListener('change', function () {
+                friendSelect.addEventListener('change', function ()
+                {
                     // This gets the 'value' (friend.id) you assigned in findFriend()
                     const selectedFriendId = this.value;
 
@@ -318,7 +379,8 @@
                     console.log("User selected Name:", selectedFriendName);
 
                     // Logic: You can now use selectedFriendId to filter messages or start a chat
-                    if (selectedFriendId !== "none") {
+                    if (selectedFriendId !== "none")
+                    {
                         alert("You are now chatting with " + selectedFriendName);
                         fetch(getServerBase() + "/addfriend", {
                             // Defines the HTTP verb as POST, which is used for sending data to a server.
@@ -335,11 +397,13 @@
                             })
                         })
                             .then(response => response.json())
-                            .then((data) => {
+                            .then((data) =>
+                            {
                                 const nav = document.getElementById('friends-list-nav');
                                 const friends = data.friends; // Your array of names
 
-                                friends.forEach(friendName => {
+                                friends.forEach(friendName =>
+                                {
                                     // 1. Create the outer wrapper div
                                     const friendDiv = document.createElement('div');
                                     friendDiv.className = 'friend-item'; // Good for CSS styling later
@@ -357,7 +421,8 @@
                                     friendDiv.appendChild(nameContainer);
 
                                     // 5. Add a click event so you can actually do something!
-                                    friendDiv.onclick = () => {
+                                    friendDiv.onclick = () =>
+                                    {
                                         console.log(`You clicked on ${friendName}`);
                                     };
 
@@ -370,8 +435,10 @@
                     }
                 });
                 // This runs every 3 seconds
-                setInterval(function () {
-                    if (currentChatFriendId) {
+                setInterval(function ()
+                {
+                    if (currentChatFriendId)
+                    {
                         // We don't want to clear the header, so we just fetch and re-render
                         fetch(getServerBase() + "/getfriendmessages", {
                             method: 'POST',
@@ -383,7 +450,8 @@
                             })
                         })
                             .then(res => res.json())
-                            .then(data => {
+                            .then(data =>
+                            {
                                 // Optional: Only re-render if the number of messages changed
                                 renderMessages(data);
                             })
