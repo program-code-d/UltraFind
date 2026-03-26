@@ -335,6 +335,7 @@
                             display.scrollTop = display.scrollHeight;
                         });
                 }
+                
 
                 function findFriend(event)
                 {
@@ -492,40 +493,47 @@
                 });
                 // This runs every 3 seconds
                 // This runs every 3 seconds to update the chat
-setInterval(function () {
-    let endpoint = "";
-    let bodyData = {
-        email: email,
-        password: password
-    };
+                setInterval(function ()
+                {
+                    let endpoint = "";
+                    let bodyData = {
+                        email: email,
+                        password: password
+                    };
 
-    // 1. Determine which chat is active and set the endpoint/body
-    if (currentChatFriendId) {
-        endpoint = "/getfriendmessages";
-        bodyData.friendId = currentChatFriendId;
-    } else if (currentListingId) {
-        endpoint = "/getListingMessages"; // Ensure this matches your server.js route
-        bodyData.listing_id = currentListingId;
-    } else {
-        return; // No chat is open, do nothing
-    }
+                    // 1. Determine which chat is active and set the endpoint/body
+                    if (currentChatFriendId)
+                    {
+                        endpoint = "/getfriendmessages";
+                        bodyData.friendId = currentChatFriendId;
+                    } else if (currentListingId)
+                    {
+                        endpoint = "/getListingMessages"; // Ensure this matches your server.js route
+                        bodyData.listing_id = currentListingId;
+                    } else
+                    {
+                        return; // No chat is open, do nothing
+                    }
 
-    // 2. Fetch and Render
-    fetch(getServerBase() + endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(bodyData)
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (currentListingId) {
-            RenderWorkMessages(data);
-        } else {
-            renderMessages(data);
-        }
-    })
-    .catch(err => console.error("Polling error:", err));
-}, 3000);
+                    // 2. Fetch and Render
+                    fetch(getServerBase() + endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(bodyData)
+                    })
+                        .then(res => res.json())
+                        .then(data =>
+                        {
+                            if (currentListingId)
+                            {
+                                RenderWorkMessages(data);
+                            } else
+                            {
+                                renderMessages(data);
+                            }
+                        })
+                        .catch(err => console.error("Polling error:", err));
+                }, 3000);
 
             </script>
     </body>
