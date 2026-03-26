@@ -63,6 +63,7 @@ body {
     display: flex;
     flex-direction: column;
     background: var(--bg-chat);
+    overflow-y: auto;
     position: relative;
 }
 
