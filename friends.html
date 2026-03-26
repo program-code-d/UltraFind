@@ -88,6 +88,7 @@
                 var password;
                 email = localStorage.getItem('email')
                 password = localStorage.getItem('password')
+                let currentListingId = null;
                 let friend_input_element = document.getElementById('user-friend-id');
                 let friendSearch = document.getElementById('chat-form');
                 let friendsResults;
@@ -102,14 +103,40 @@
                 }
                 function showWorkMessages()
                 {
-                    document.getElementById("friends-list-nav").innerHTML =
-                        `
-                    <div class="chats-header"><strong><- Work</strong></div>   
-                    </div>
-            
-            
-                    `
+                    // 1. Clear the sidebar and add a "Back" button
+                    const nav = document.getElementById("friends-list-nav");
+                    nav.innerHTML = `<div class="chats-header" onclick="location.reload()" style="cursor:pointer;"><strong> <- Back</strong></div><div id="work-list"></div>`;
+
+                    // 2. Fetch the listings
+                    fetch(getServerBase() + "/getworkpeople", {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: email, password: password })
+                    })
+                        .then(res => res.json())
+                        .then(data =>
+                        {
+                            const container = document.getElementById("work-list");
+                            if (data.success)
+                            {
+                                data.listings.forEach(item =>
+                                {
+                                    const div = document.createElement('div');
+                                    div.className = 'friend-item';
+                                    div.innerHTML = `<strong>${item.title}</strong><br><small>${item.first_name} ${item.last_name}</small>`;
+                                    div.onclick = () =>
+                                    {
+                                        currentListingId = item.id;
+                                        currentChatFriendId = null; // Stop regular friend chat
+                                        document.getElementById('messages-display').innerHTML = `<div class="chat-header">Work: ${item.title}</div>`;
+                                        loadListingMessages(item.id);
+                                    };
+                                    container.appendChild(div);
+                                });
+                            }
+                        });
                 }
+
                 async function main()
                 {
                     try
@@ -214,6 +241,35 @@
                         .catch(err => console.error("Load Error:", err));
                 }
                 function renderMessages(messages)
+                {
+                    const display = document.getElementById('messages-display');
+                    const headerHTML = display.querySelector('.chat-header')?.outerHTML || '';
+
+                    const msgArray = Array.isArray(messages) ? messages : (messages.messages || []);
+
+                    // Create a temporary container to prevent flickering during the loop
+                    let newContent = headerHTML;
+
+                    for (let i = 0; i < msgArray.length; i++)
+                    {
+                        const msg = msgArray[i];
+                        // Use Number() to ensure we are comparing numbers to numbers
+                        const type = (Number(msg.sender_id) === Number(currentChatFriendId)) ? 'received' : 'sent';
+
+                        newContent += `
+            <div class="message ${type}">
+                <p>${msg.message_text}</p>
+                <span class="time-right">${new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            </div>
+        `;
+                    }
+
+                    // Update the display once
+                    display.innerHTML = newContent;
+                    display.scrollTop = display.scrollHeight;
+                }
+
+                function RenderWorkMessages(messages)
                 {
                     const display = document.getElementById('messages-display');
                     const headerHTML = display.querySelector('.chat-header')?.outerHTML || '';
@@ -435,29 +491,41 @@
                     }
                 });
                 // This runs every 3 seconds
-                setInterval(function ()
-                {
-                    if (currentChatFriendId)
-                    {
-                        // We don't want to clear the header, so we just fetch and re-render
-                        fetch(getServerBase() + "/getfriendmessages", {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                email: email,
-                                password: password,
-                                friendId: currentChatFriendId
-                            })
-                        })
-                            .then(res => res.json())
-                            .then(data =>
-                            {
-                                // Optional: Only re-render if the number of messages changed
-                                renderMessages(data);
-                            })
-                            .catch(err => console.error("Polling error:", err));
-                    }
-                }, 3000); // 3000ms = 3 seconds
+                // This runs every 3 seconds to update the chat
+setInterval(function () {
+    let endpoint = "";
+    let bodyData = {
+        email: email,
+        password: password
+    };
+
+    // 1. Determine which chat is active and set the endpoint/body
+    if (currentChatFriendId) {
+        endpoint = "/getfriendmessages";
+        bodyData.friendId = currentChatFriendId;
+    } else if (currentListingId) {
+        endpoint = "/getListingMessages"; // Ensure this matches your server.js route
+        bodyData.listing_id = currentListingId;
+    } else {
+        return; // No chat is open, do nothing
+    }
+
+    // 2. Fetch and Render
+    fetch(getServerBase() + endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bodyData)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (currentListingId) {
+            RenderWorkMessages(data);
+        } else {
+            renderMessages(data);
+        }
+    })
+    .catch(err => console.error("Polling error:", err));
+}, 3000);
 
             </script>
     </body>

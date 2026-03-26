@@ -21,7 +21,8 @@ const pool = mariadb.createPool({
 });
 
 
-async function setup() {
+async function setup()
+{
     await app.register(require('@fastify/middie'));
     app.register(require('@fastify/formbody'));
     app.register(require('@fastify/static'), {
@@ -33,20 +34,24 @@ async function setup() {
 }
 
 
-function hashPassword(passw_string) {
+function hashPassword(passw_string)
+{
     return crypto.createHash("sha256").update(String(passw_string)).digest("hex");
 }
 
 
-function isEmail(email) {
+function isEmail(email)
+{
     const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     return emailPattern.test(email);
 }
 
 
-async function findFriend(body) {
+async function findFriend(body)
+{
     let conn;
-    try {
+    try
+    {
         conn = await pool.getConnection();
         const saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
         const salt = saltResult[0].salt;
@@ -66,19 +71,23 @@ async function findFriend(body) {
         }));
 
         return { success: true, friends: cleanFriends, userExist: true };
-    } catch (err) {
+    } catch (err)
+    {
         console.error(err);
         return { success: false, error: "Internal Server Error" };
-    } finally {
+    } finally
+    {
         if (conn) conn.release();
     }
 }
 
 
 
-async function addfriend(body) {
+async function addfriend(body)
+{
     let conn;
-    try {
+    try
+    {
         conn = await pool.getConnection();
         const saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
         const salt = saltResult[0].salt;
@@ -92,22 +101,28 @@ async function addfriend(body) {
         const query = `SELECT first_name,last_name,id FROM Users WHERE id= ?`;
         const friends = await conn.query(query, [friend_id]);
         return { success: true, friends: friends, userExist: true };
-    } catch (err) {
+    } catch (err)
+    {
         console.error(err);
         return { success: false, error: "Internal Server Error" };
-    } finally {
+    } finally
+    {
         if (conn) conn.release();
     }
 }
 
 
-async function registerUser(user) {
+async function registerUser(user)
+{
     let conn;
-    try {
-        if (user.age < 13) {
+    try
+    {
+        if (user.age < 13)
+        {
             return { notunderage: false };
         }
-        if (!isEmail(user.email)) {
+        if (!isEmail(user.email))
+        {
             return { EmailFormat: false };
         }
         let salt = Math.trunc((Math.random() * (10099999 - 0) + 0) * 78 - 12.2);
@@ -118,21 +133,27 @@ async function registerUser(user) {
         const query = "INSERT INTO Users (first_name,last_name,email,password,age,location,salt) VALUES (?, ?, ?, ?, ?, ?, ?)";
         const res = await conn.query(query, [firstName, lastName, user.email, hashedPassword, user.age, "", salt]);
         return { success: true, emailExist: false };
-    } catch (err) {
-        if (err.errno == 1062) {
+    } catch (err)
+    {
+        if (err.errno == 1062)
+        {
             return { emailExist: true };
         }
         throw err;
-    } finally {
+    } finally
+    {
         if (conn) conn.release();
     }
 }
 
 
-async function login(user) {
+async function login(user)
+{
     let conn;
-    try {
-        if (!isEmail(user.email)) {
+    try
+    {
+        if (!isEmail(user.email))
+        {
             return { success: "false", notEmailFormat: true };
         }
         conn = await pool.getConnection();
@@ -142,16 +163,20 @@ async function login(user) {
         query = "SELECT email, password FROM Users WHERE email = ? AND password = ?;";
         const res = await conn.query(query, [user.email, hashedPassword]);
         return { success: true, userExist: res.length > 0 };
-    } catch (err) {
+    } catch (err)
+    {
         return { success: false, userExist: false };
-    } finally {
+    } finally
+    {
         if (conn) conn.release();
     }
 }
 
-async function createListing(body, mediaFiles) {
+async function createListing(body, mediaFiles)
+{
     let conn;
-    try {
+    try
+    {
         conn = await pool.getConnection();
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
         if (!saltResult || saltResult.length === 0) return { success: false, message: "User not found" };
@@ -160,7 +185,8 @@ async function createListing(body, mediaFiles) {
         const hashedPassword = hashPassword(body.password + salt);
         const userRows = await conn.query("SELECT id FROM Users WHERE email = ? AND password = ?", [body.email, hashedPassword]);
 
-        if (userRows.length > 0) {
+        if (userRows.length > 0)
+        {
             const userId = userRows[0].id;
             const price = Number(body.pay) || 0;
             const age = Number(body.age) || 0;
@@ -170,8 +196,10 @@ async function createListing(body, mediaFiles) {
             const newListingId = res.insertId;
 
             // Handle the media files (images or videos)
-            if (mediaFiles && mediaFiles.length > 0) {
-                for (const file of mediaFiles) {
+            if (mediaFiles && mediaFiles.length > 0)
+            {
+                for (const file of mediaFiles)
+                {
                     await conn.query(
                         "INSERT INTO ListingMedia (listing_id, file_path, media_type) VALUES (?, ?, ?)",
                         [newListingId, file.name, file.type]
@@ -179,20 +207,25 @@ async function createListing(body, mediaFiles) {
                 }
             }
             return { success: true, redirect: "/home", listingId: newListingId };
-        } else {
+        } else
+        {
             return { success: false, message: "failed" };
         }
-    } catch (err) {
+    } catch (err)
+    {
         console.error("DATABASE ERROR:", err);
         return { success: false, error: err.message };
-    } finally {
+    } finally
+    {
         if (conn) conn.release();
     }
 }
 
-async function getListings(body) {
+async function getListings(body)
+{
     let conn;
-    try {
+    try
+    {
         conn = await pool.getConnection();
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
         const hashedPassword = hashPassword(body.password + saltResult[0].salt);
@@ -203,16 +236,20 @@ async function getListings(body) {
 
         const res = await conn.query(insertQuery, [`%${body.search}%`]);
         return { success: true, listings: res, userExist: true };
-    } catch (err) {
+    } catch (err)
+    {
         return { success: false, userExist: false };
-    } finally {
+    } finally
+    {
         if (conn) conn.release();
     }
 }
 
-async function searchListings(body) {
+async function searchListings(body)
+{
     let conn;
-    try {
+    try
+    {
         conn = await pool.getConnection();
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
         const hashedPassword = hashPassword(body.password + saltResult[0].salt);
@@ -221,17 +258,21 @@ async function searchListings(body) {
         const insertQuery = "SELECT * FROM Listings WHERE title LIKE ? AND is_Active = true;";
         const res = await conn.query(insertQuery, [`%${body.search}%`]);
         return { success: true, listings: res, userExist: true };
-    } catch (err) {
+    } catch (err)
+    {
         return { success: false, userExist: false };
-    } finally {
+    } finally
+    {
         if (conn) conn.release();
     }
 }
 
 
-async function getMyListings(body) {
+async function getMyListings(body)
+{
     let conn;
-    try {
+    try
+    {
         conn = await pool.getConnection();
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
         const hashedPassword = hashPassword(body.password + saltResult[0].salt);
@@ -240,16 +281,20 @@ async function getMyListings(body) {
         const insertQuery = "SELECT * FROM Listings WHERE user_id = ?;";
         const res = await conn.query(insertQuery, [userRows[0].id]);
         return { success: true, listings: res, userExist: true };
-    } catch (err) {
+    } catch (err)
+    {
         return { success: false, userExist: false };
-    } finally {
+    } finally
+    {
         if (conn) conn.release();
     }
 }
 
-async function deactivateListing(body) {
+async function deactivateListing(body)
+{
     let conn;
-    try {
+    try
+    {
         conn = await pool.getConnection();
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
         const hashedPassword = hashPassword(body.password + saltResult[0].salt);
@@ -259,16 +304,20 @@ async function deactivateListing(body) {
         const insertQuery = "UPDATE Listings SET is_active = FALSE WHERE id = ?;";
         await conn.query(insertQuery, [body.listing_id]);
         return { success: true, is_active: false, userExist: true };
-    } catch (err) {
+    } catch (err)
+    {
         return { success: false, userExist: false };
-    } finally {
+    } finally
+    {
         if (conn) conn.release();
     }
 }
 
-async function activateListing(body) {
+async function activateListing(body)
+{
     let conn;
-    try {
+    try
+    {
         conn = await pool.getConnection();
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
         const hashedPassword = hashPassword(body.password + saltResult[0].salt);
@@ -278,16 +327,20 @@ async function activateListing(body) {
         const insertQuery = "UPDATE Listings SET is_active = TRUE WHERE id = ?;";
         await conn.query(insertQuery, [body.listing_id]);
         return { success: true, is_active: true, userExist: true };
-    } catch (err) {
+    } catch (err)
+    {
         return { success: false, userExist: false };
-    } finally {
+    } finally
+    {
         if (conn) conn.release();
     }
 }
 
-async function getNavbar(body) {
+async function getNavbar(body)
+{
     let conn;
-    try {
+    try
+    {
         conn = await pool.getConnection();
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
         const hashedPassword = hashPassword(body.password + saltResult[0].salt);
@@ -295,17 +348,21 @@ async function getNavbar(body) {
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
         const navbar = `<nav class="top-navbar"><div class="navbar-container"><div class="navbar-logo" onclick="goToDifferentScreen('home')"><span>UltraFind</span></div><div class="navbar-links"><div class="nav-item" onclick="goToDifferentScreen('home')"><span><svg class="icon"><use href="icons.svg#house"></use></svg></span></div><div class="nav-item" onclick="goToDifferentScreen('friends')"><span><svg class="icon"><use href="icons.svg#user-friends"></use></svg></span></div><div class="nav-item" onclick="goToDifferentScreen('manageListings')"><span><svg class="icon"><use href="icons.svg#folder"></use></svg></span></div></div></div></nav>`;
         return { success: true, navbar: navbar, userExist: true };
-    } catch (err) {
+    } catch (err)
+    {
         return { success: false, userExist: false };
-    } finally {
+    } finally
+    {
         if (conn) conn.release();
     }
 }
 
 
-async function sendMessage(body) {
+async function sendMessage(body)
+{
     let conn;
-    try {
+    try
+    {
         conn = await pool.getConnection();
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
         const hashedPassword = hashPassword(body.password + saltResult[0].salt);
@@ -317,22 +374,27 @@ async function sendMessage(body) {
         const insertQuery = "INSERT INTO listingMessages (sender_id,receiver_id,listing_id,message_text) VALUES (?,?,?,?)";
         await conn.query(insertQuery, [userRows[0].id, recieverId, body.listing_id, body.message]);
         return { success: true, messages: res };
-    } catch (err) {
+    } catch (err)
+    {
         return { success: false, userExist: false };
-    } finally {
+    } finally
+    {
         if (conn) conn.release();
     }
 }
 
-async function deleteListing(body) {
+async function deleteListing(body)
+{
     let conn;
-    try {
+    try
+    {
         conn = await pool.getConnection();
 
         // 1. SAFE CHECK: Get Salt
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
         // If email doesn't exist, stop here instead of crashing
-        if (!saltResult || saltResult.length === 0) {
+        if (!saltResult || saltResult.length === 0)
+        {
             return { success: false, userExist: false };
         }
 
@@ -343,7 +405,8 @@ async function deleteListing(body) {
         const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
         // If password is wrong, stop here instead of crashing
-        if (!userRows || userRows.length === 0) {
+        if (!userRows || userRows.length === 0)
+        {
             return { success: false, userExist: false };
         }
 
@@ -357,35 +420,45 @@ async function deleteListing(body) {
         const deleteRes = await conn.query("DELETE FROM Listings WHERE id = ? AND user_id = ?", [body.listing_id, userId]);
 
         // 5. If DB delete was successful, clean up the files
-        if (deleteRes.affectedRows > 0) {
-            for (const row of mediaRows) {
+        if (deleteRes.affectedRows > 0)
+        {
+            for (const row of mediaRows)
+            {
                 const filePath = path.join(__dirname, 'images', row.file_path);
-                try {
+                try
+                {
                     // Check if file exists before trying to delete it
-                    if (fs.existsSync(filePath)) {
+                    if (fs.existsSync(filePath))
+                    {
                         await fs.promises.unlink(filePath);
                         console.log(`Physically deleted: ${row.file_path}`);
                     }
-                } catch (fileErr) {
+                } catch (fileErr)
+                {
                     console.error(`File system error for ${row.file_path}:`, fileErr);
                 }
             }
             return { success: true, userExist: true };
-        } else {
+        } else
+        {
             return { success: false, userExist: true, error: "Listing not found or you don't own it" };
         }
 
-    } catch (err) {
+    } catch (err)
+    {
         console.error("Delete Listing Error:", err);
         return { success: false, userExist: true, error: err.message };
-    } finally {
+    } finally
+    {
         if (conn) conn.release();
     }
 }
 
-async function getfriendmessages(body) {
+async function getfriendmessages(body)
+{
     let conn;
-    try {
+    try
+    {
         conn = await pool.getConnection();
 
         // 1. Authenticate (Same as you had)
@@ -422,18 +495,22 @@ async function getfriendmessages(body) {
             messages: cleanMessages,
             userExist: true
         };
-    } catch (err) {
+    } catch (err)
+    {
         console.error("DATABASE ERROR:", err);
         return { success: false, userExist: true }; // Trigger fallthrough or error
-    } finally {
+    } finally
+    {
         if (conn) conn.release();
     }
 }
 
 
-async function getFriends(body) {
+async function getFriends(body)
+{
     let conn;
-    try {
+    try
+    {
         conn = await pool.getConnection();
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
         const hashedPassword = hashPassword(body.password + saltResult[0].salt);
@@ -459,29 +536,79 @@ async function getFriends(body) {
         }));
 
         return { success: true, friendslist: cleanFriends, userExist: true };
-    } catch (err) {
+    } catch (err)
+    {
         console.error(err);
         return { success: false, userExist: false };
-    } finally {
+    } finally
+    {
+        if (conn) conn.release();
+    }
+}
+
+async function getworkpeople(body)
+{
+    let conn;
+    try
+    {
+        conn = await pool.getConnection();
+        let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
+        const hashedPassword = hashPassword(body.password + saltResult[0].salt);
+        const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
+        const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
+        const userId = userRows[0].id;
+
+        const query = `
+            SELECT DISTINCT
+                Listings.id, 
+                Listings.user_id, 
+                Users.first_name, 
+                Users.last_name, 
+                Listings.title
+            FROM Listings
+            JOIN Users ON Listings.user_id = Users.id
+            JOIN listingMessages ON Listings.id = listingMessages.listing_id
+            WHERE listingMessages.sender_id = ? OR listingMessages.receiver_id = ?
+        `;
+        const friends = await conn.query(query, [userId, userId]);
+
+        // FIX: Convert BigInt IDs to regular Numbers here as well
+        const cleanFriends = friends.map(f => ({
+            id: Number(f.id),
+            first_name: f.first_name,
+            last_name: f.last_name,
+        }));
+
+        return { success: true, friendslist: cleanFriends, userExist: true };
+    } catch (err)
+    {
+        console.error(err);
+        return { success: false, userExist: false };
+    } finally
+    {
         if (conn) conn.release();
     }
 }
 
 
-async function sendfriendmessage(body) {
+async function sendfriendmessage(body)
+{
     let conn;
-    try {
+    try
+    {
         conn = await pool.getConnection();
 
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
-        if (saltResult.length === 0) {
+        if (saltResult.length === 0)
+        {
             return { success: false, userExist: false };
         }
 
         const hashedPassword = hashPassword(body.password + saltResult[0].salt);
         const userRows = await conn.query("SELECT id FROM Users WHERE email = ? AND password = ?;", [body.email, hashedPassword]);
 
-        if (userRows.length === 0) {
+        if (userRows.length === 0)
+        {
             return { success: false, userExist: false };
         }
 
@@ -494,23 +621,28 @@ async function sendfriendmessage(body) {
         // Return a consistent structure
         return { success: true, userExist: true, data: dbResult };
 
-    } catch (err) {
+    } catch (err)
+    {
         console.error("Database Error:", err);
         // Crucial: return userExist: true here if the crash happened AFTER the login check
         return { success: false, userExist: true, error: err.message };
-    } finally {
+    } finally
+    {
         if (conn) conn.release();
     }
 }
 
-async function switchFile(body) {
+async function switchFile(body)
+{
     let conn;
-    try {
+    try
+    {
         conn = await pool.getConnection();
 
         // 1. Get the salt
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
-        if (!saltResult || saltResult.length === 0) {
+        if (!saltResult || saltResult.length === 0)
+        {
             return { success: false, userExist: false };
         }
 
@@ -519,24 +651,29 @@ async function switchFile(body) {
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
 
         // Check if authentication was successful
-        if (!userRows || userRows.length === 0) {
+        if (!userRows || userRows.length === 0)
+        {
             return { success: false, userExist: false };
         }
 
         return { success: true, userExist: true };
 
-    } catch (err) {
+    } catch (err)
+    {
         console.error("switchFile error:", err)
         return { success: false, userExist: false }
-    } finally {
+    } finally
+    {
         if (conn) conn.release();
     }
 }
 
 
-async function getinfolistings(body) {
+async function getinfolistings(body)
+{
     let conn;
-    try {
+    try
+    {
         conn = await pool.getConnection();
 
         // 1. Authenticate user
@@ -560,142 +697,207 @@ async function getinfolistings(body) {
         listing.my_listing = (userRows[0].id == listing.user_id) ? 1 : 0;
 
         return { success: true, listing: listing, userExist: true };
-    } catch (err) {
+    } catch (err)
+    {
         console.error(err);
         return { success: false, userExist: false };
-    } finally {
+    } finally
+    {
         if (conn) conn.release();
     }
 }
 
-app.get('/', (req, res) => {
+app.get('/', (req, res) =>
+{
     res.sendFile('intro.html');
 });
-app.get('/manageListings', (req, res) => {
+app.get('/manageListings', (req, res) =>
+{
     res.sendFile('manage_listings.html');
 });
-app.get('/info', (req, res) => {
+app.get('/info', (req, res) =>
+{
     res.sendFile('info_listing.html');
 });
-app.get('/friends', (req, res) => {
+app.get('/friends', (req, res) =>
+{
     res.sendFile('friends.html');
 });
-app.get('/createListing', (req, res) => {
+app.get('/createListing', (req, res) =>
+{
     res.sendFile('create_listing.html');
 });
 
-app.post('/createListing', async (req, res) => {
-    try {
+app.post('/createListing', async (req, res) =>
+{
+    try
+    {
         const result = await createListing(req.body);
-        if (result && !result.userExist) {
+        if (result && !result.userExist)
+        {
             return res.send({ message: "failed" });
         }
-        if (result && result.success) {
+        if (result && result.success)
+        {
             return res.send({ success: true, redirect: "/home" });
         }
-    } catch (err) {
+    } catch (err)
+    {
         console.error("Create listing error:", err);
         res.status(400).send({ message: "Error creating listing" });
     }
 });
 
-app.get('/home', (req, res) => {
+app.get('/home', (req, res) =>
+{
     res.sendFile('index.html');
 });
-app.get('/login', (req, res) => {
+app.get('/login', (req, res) =>
+{
     res.sendFile('login.html');
 });
-app.get('/signup', (req, res) => {
+app.get('/signup', (req, res) =>
+{
     res.sendFile('login.html');
 });
 
-app.post('/signupauth', async (req, res) => {
-    try {
+app.post('/signupauth', async (req, res) =>
+{
+    try
+    {
         const result = await registerUser(req.body);
-        if ((result && ((result.emailExist != undefined) && (result.emailExist))) || (result.notunderage != undefined) || (result.EmailFormat != undefined)) {
+        if ((result && ((result.emailExist != undefined) && (result.emailExist))) || (result.notunderage != undefined) || (result.EmailFormat != undefined))
+        {
             return res.send({ message: "failed" });
         }
-        if (result && result.success) {
+        if (result && result.success)
+        {
             return res.send({ success: true, redirect: "/home" });
         }
-    } catch (err) {
+    } catch (err)
+    {
         res.status(400).send(err.message);
     }
 });
 
 
-app.post('/sendMessage', async (req, res) => {
-    try {
+app.post('/sendMessage', async (req, res) =>
+{
+    try
+    {
         const result = await sendMessage(req.body);
-        if (result && result.success) {
+        if (result && result.success)
+        {
             res.send({ success: true });
         }
-    } catch (err) {
+    } catch (err)
+    {
         res.status(400).send(err.message);
     }
 });
 
 
-app.post('/getfriends', async (req, res) => {
-    try {
+app.post('/getfriends', async (req, res) =>
+{
+    try
+    {
         const result = await getFriends(req.body);
-        if (result && !result.userExist) {
+        if (result && !result.userExist)
+        {
             return res.send({ success: false, message: "failed" });
         }
-        if (result && result.success) {
+        if (result && result.success)
+        {
             return res.send({ success: true, friends: result.friendslist });
         }
         res.send({ success: false });
-    } catch (err) {
+    } catch (err)
+    {
         res.status(400).send(err.message);
     }
 });
 
-
-app.post('/addfriend', async (req, res) => {
-    try {
-        const result = await addfriend(req.body);
-        if (result && !result.userExist) {
+app.post('/getworkpeople', async (req, res) =>
+{
+    try
+    {
+        const result = await getworkpeople(req.body);
+        if (result && !result.userExist)
+        {
             return res.send({ success: false, message: "failed" });
         }
-        if (result && result.success) {
+        if (result && result.success)
+        {
+            // CHANGE THIS LINE: Change 'friends' to 'listings'
+            return res.send({ success: true, listings: result.friendslist });
+        }
+        res.send({ success: false });
+    } catch (err)
+    {
+        res.status(400).send(err.message);
+    }
+});
+
+app.post('/addfriend', async (req, res) =>
+{
+    try
+    {
+        const result = await addfriend(req.body);
+        if (result && !result.userExist)
+        {
+            return res.send({ success: false, message: "failed" });
+        }
+        if (result && result.success)
+        {
             return res.send({ success: true, friends: result.friends });
         }
         res.send({ success: false });
-    } catch (err) {
+    } catch (err)
+    {
         res.status(400).send(err.message);
     }
 });
 
 
-app.post('/getInfoListing', async (req, res) => {
-    try {
+app.post('/getInfoListing', async (req, res) =>
+{
+    try
+    {
         const result = await getinfolistings(req.body);
-        if (result && !result.userExist) {
+        if (result && !result.userExist)
+        {
             return res.send({ message: "failed" });
         }
-        if (result && result.success) {
+        if (result && result.success)
+        {
             res.send(result.listing);
         }
-    } catch (err) {
+    } catch (err)
+    {
         res.status(400).send(err.message);
     }
 });
 
 
-app.post('/loginauth', async (req, res) => {
-    try {
+app.post('/loginauth', async (req, res) =>
+{
+    try
+    {
         const result = await login(req.body);
-        if (result && result.notEmailFormat) {
+        if (result && result.notEmailFormat)
+        {
             return res.send({ message: "NotEmailFormat" });
         }
-        if (result && !result.userExist) {
+        if (result && !result.userExist)
+        {
             return res.send({ message: "failed" });
         }
-        if (result && result.success) {
+        if (result && result.success)
+        {
             return res.send({ success: true, redirect: "/home" });
         }
-    } catch (err) {
+    } catch (err)
+    {
         res.status(400).send(err.message);
     }
 });
@@ -704,61 +906,81 @@ app.post('/loginauth', async (req, res) => {
 
 
 
-app.post('/getListings', async (req, res) => {
-    try {
+app.post('/getListings', async (req, res) =>
+{
+    try
+    {
         const result = await getListings(req.body);
-        if (result && !result.userExist) {
+        if (result && !result.userExist)
+        {
             return res.send({ message: "failed" });
         }
-        if (result && result.success) {
+        if (result && result.success)
+        {
             res.send(result.listings);
         }
-    } catch (err) {
+    } catch (err)
+    {
         res.status(400).send(err.message);
     }
 });
 
 
-app.post('/searchListings', async (req, res) => {
-    try {
+app.post('/searchListings', async (req, res) =>
+{
+    try
+    {
         const result = await searchListings(req.body);
-        if (result && !result.userExist) {
+        if (result && !result.userExist)
+        {
             return res.send({ message: "failed" });
         }
-        if (result && result.success) {
+        if (result && result.success)
+        {
             res.send(result.listings);
         }
-    } catch (err) {
+    } catch (err)
+    {
         res.status(400).send(err.message);
     }
 });
 
 
-app.post('/getMyListings', async (req, res) => {
-    try {
+app.post('/getMyListings', async (req, res) =>
+{
+    try
+    {
         const result = await getMyListings(req.body);
-        if (result && !result.userExist) {
+        if (result && !result.userExist)
+        {
             return res.send({ message: "failed" });
         }
-        if (result && result.success) {
+        if (result && result.success)
+        {
             res.send(result.listings);
         }
-    } catch (err) {
+    } catch (err)
+    {
         res.status(400).send(err.message);
     }
 });
 
 
-app.post('/deactivateListing', async (req, res) => {
-    try {
+app.post('/deactivateListing', async (req, res) =>
+{
+    try
+    {
         const result = await deactivateListing(req.body);
-        if (result && !result.userExist) {
+        if (result && !result.userExist)
+        {
             return res.send({ message: "failed" });
         }
-        if (result && result.success) {
+        if (result && result.success)
+        {
             res.send(result.is_active);
         }
-    } catch (err) {
+    } catch (err)
+    {
         res.status(400).send(err.message);
     }
 });
@@ -766,48 +988,62 @@ app.post('/deactivateListing', async (req, res) => {
 
 
 
-app.post('/activateListing', async (req, res) => {
-    try {
+app.post('/activateListing', async (req, res) =>
+{
+    try
+    {
         const result = await activateListing(req.body);
-        if (result && !result.userExist) {
+        if (result && !result.userExist)
+        {
             return res.send({ message: "failed" });
         }
-        if (result && result.success) {
+        if (result && result.success)
+        {
             res.send(result.is_active);
         }
-    } catch (err) {
+    } catch (err)
+    {
         res.status(400).send(err.message);
     }
 });
 
 
-app.post('/switchFile', async (req, res) => {
-    try {
+app.post('/switchFile', async (req, res) =>
+{
+    try
+    {
         const result = await switchFile(req.body);
-        if (result && !result.userExist) {
+        if (result && !result.userExist)
+        {
             return res.status(401).send({ message: "failed" })
         }
-        if (result && result.success) {
+        if (result && result.success)
+        {
             let file = req.body.file;
             return res.send({ success: true, redirect: "/" + file });
         }
         return res.status(400).send({ message: "unknown error" })
 
-    } catch (err) {
+    } catch (err)
+    {
         console.error("switchFile endpoint error:", err);
         res.status(500).send({ error: err.message });
     }
 
 });
 
-app.post('/upload-listing', async (req, res) => {
+app.post('/upload-listing', async (req, res) =>
+{
     const parts = req.parts();
     const body = {};
     const processingTasks = []; // We will store promises here to process in parallel
 
-    try {
-        for await (const part of parts) {
-            if (part.file) {
+    try
+    {
+        for await (const part of parts)
+        {
+            if (part.file)
+            {
                 const timestamp = Date.now();
                 const isVideo = part.mimetype.startsWith('video/');
                 const isImage = part.mimetype.startsWith('image/');
@@ -818,9 +1054,11 @@ app.post('/upload-listing', async (req, res) => {
                 const uniqueName = `${timestamp}-${Math.random().toString(36).substring(7)}${extension}`;
                 const savePath = path.join(__dirname, 'images', uniqueName);
 
-                if (isImage) {
+                if (isImage)
+                {
                     // FAST IMAGE COMPRESSION: WebP (Better support & 10x faster than AVIF effort 9)
-                    const processImage = async () => {
+                    const processImage = async () =>
+                    {
                         const transformer = sharp()
                             .webp({ quality: 75, effort: 2 }) // Effort 2 is the "Sweet Spot" for speed/size
                             .rotate(); // Auto-rotate based on EXIF data
@@ -830,7 +1068,8 @@ app.post('/upload-listing', async (req, res) => {
                     };
                     processingTasks.push(processImage());
 
-                } else if (isVideo) {
+                } else if (isVideo)
+                {
                     // FAST VIDEO COMPRESSION: H.264 (Universally supported & much faster)
                     const tempPath = path.join(__dirname, 'images', 'temp-' + uniqueName);
 
@@ -838,8 +1077,10 @@ app.post('/upload-listing', async (req, res) => {
                     await pipeline(part.file, fs.createWriteStream(tempPath));
 
                     // 2. Queue the FFmpeg task
-                    const processVideo = async () => {
-                        return new Promise((resolve, reject) => {
+                    const processVideo = async () =>
+                    {
+                        return new Promise((resolve, reject) =>
+                        {
                             ffmpeg(tempPath)
                                 .vcodec('libx264') // H.264 is way faster than H.265 (libx265)
                                 .addOptions([
@@ -848,11 +1089,13 @@ app.post('/upload-listing', async (req, res) => {
                                     '-movflags +faststart', // Allows video to play before fully downloaded
                                     '-pix_fmt yuv420p'    // Ensures compatibility with all browsers
                                 ])
-                                .on('error', (err) => {
+                                .on('error', (err) =>
+                                {
                                     if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
                                     reject(err);
                                 })
-                                .on('end', () => {
+                                .on('end', () =>
+                                {
                                     if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
                                     resolve({ name: uniqueName, type: 'video' });
                                 })
@@ -861,12 +1104,14 @@ app.post('/upload-listing', async (req, res) => {
                     };
                     processingTasks.push(processVideo());
 
-                } else {
+                } else
+                {
                     // Non-media files
                     await pipeline(part.file, fs.createWriteStream(savePath));
                     processingTasks.push(Promise.resolve({ name: uniqueName, type: 'other' }));
                 }
-            } else {
+            } else
+            {
                 body[part.fieldname] = part.value;
             }
         }
@@ -876,43 +1121,55 @@ app.post('/upload-listing', async (req, res) => {
 
         // Database logic
         const result = await createListing(body, mediaFiles);
-        if (result && result.userExist === false) {
+        if (result && result.userExist === false)
+        {
             return res.send({ message: "failed" });
         }
-        if (result && result.success) {
+        if (result && result.success)
+        {
             return res.send({ success: true, redirect: "/home" });
         }
 
-    } catch (err) {
+    } catch (err)
+    {
         console.error("UPLOAD ERROR:", err);
         res.status(500).send({ success: false, message: "Compression failed: " + err.message });
     }
 });
 
-app.post('/getNavbar', async (req, res) => {
-    try {
+app.post('/getNavbar', async (req, res) =>
+{
+    try
+    {
         const result = await getNavbar(req.body);
-        if (result && !result.userExist) {
+        if (result && !result.userExist)
+        {
             return res.send({ message: "failed" });
         }
-        if (result && result.success) {
+        if (result && result.success)
+        {
             res.send(result.navbar);
         }
-    } catch (err) {
+    } catch (err)
+    {
         res.status(400).send(err.message);
     }
 });
 
 
-app.post('/getfriendmessages', async (req, res) => {
-    try {
+app.post('/getfriendmessages', async (req, res) =>
+{
+    try
+    {
         const result = await getfriendmessages(req.body);
 
-        if (!result.userExist) {
+        if (!result.userExist)
+        {
             return res.status(401).send({ error: "Authentication failed" });
         }
 
-        if (result.success) {
+        if (result.success)
+        {
             // Always send an array, even if empty, to the frontend
             return res.send(result.messages || []);
         }
@@ -920,34 +1177,42 @@ app.post('/getfriendmessages', async (req, res) => {
         // Fallback for logic errors
         return res.status(500).send({ error: "Internal logic error" });
 
-    } catch (err) {
+    } catch (err)
+    {
         console.error(err);
         res.status(500).send({ error: err.message });
     }
 });
 
 
-app.post('/findFriend', async (req, res) => {
+app.post('/findFriend', async (req, res) =>
+{
     const result = await findFriend(req.body);
-    if (result.success) {
+    if (result.success)
+    {
         res.status(200).send(result);
-    } else {
+    } else
+    {
         res.status(401).send(result);
     }
 });
 
 
-app.post('/sendfriendmessage', async (req, res) => {
-    try {
+app.post('/sendfriendmessage', async (req, res) =>
+{
+    try
+    {
         const result = await sendfriendmessage(req.body);
 
         // 1. Handle user not existing/wrong password
-        if (!result.userExist) {
+        if (!result.userExist)
+        {
             return res.status(401).send({ success: false, message: "Authentication failed" });
         }
 
         // 2. Handle success
-        if (result.success) {
+        if (result.success)
+        {
             // Send back a valid JSON object
             return res.send({ success: true, data: result.data });
         }
@@ -955,24 +1220,29 @@ app.post('/sendfriendmessage', async (req, res) => {
         // 3. Fallback for unexpected logic states
         return res.status(500).send({ success: false, message: "Unknown error" });
 
-    } catch (err) {
+    } catch (err)
+    {
         console.error(err);
         // Always send JSON, even on errors, so res.send() doesn't crash
         res.status(400).send({ success: false, error: err.message });
     }
 });
 
-app.post('/deleteListing', async (req, res) => {
-    try {
+app.post('/deleteListing', async (req, res) =>
+{
+    try
+    {
         const result = await deleteListing(req.body);
 
         // 1. Handle user not existing/wrong password
-        if (!result.userExist) {
+        if (!result.userExist)
+        {
             return res.status(401).send({ success: false, message: "Authentication failed" });
         }
 
         // 2. Handle success
-        if (result.success) {
+        if (result.success)
+        {
             // Send back a valid JSON object
             return res.send({ success: true, data: result.data });
         }
@@ -980,7 +1250,8 @@ app.post('/deleteListing', async (req, res) => {
         // 3. Fallback for unexpected logic states
         return res.status(500).send({ success: false, message: "Unknown error" });
 
-    } catch (err) {
+    } catch (err)
+    {
         console.error(err);
         // Always send JSON, even on errors, so res.send() doesn't crash
         res.status(400).send({ success: false, error: err.message });
@@ -988,12 +1259,15 @@ app.post('/deleteListing', async (req, res) => {
 });
 
 
-const start = async () => {
+const start = async () =>
+{
     await setup();
-    try {
+    try
+    {
         await app.listen({ port: PORT, host: '0.0.0.0' });
         console.log(`[Find Server] Running on http://localhost:${PORT}`);
-    } catch (err) {
+    } catch (err)
+    {
         console.error(err);
         process.exit(1);
     }
