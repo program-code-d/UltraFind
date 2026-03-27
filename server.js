@@ -218,11 +218,10 @@ async function getListing(body) {
         const hashedPassword = hashPassword(body.password + saltResult[0].salt);
         const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
-        const insertQuery = "SELECT * FROM Listings WHERE title LIKE ? AND is_Active = true;";
-
-
-        const res = await conn.query(insertQuery, [`%${body.search}%`]);
-        return { success: true, listings: res, userExist: true };
+        const userId = userRows[0].id;
+        const listing = "SELECT id,title,description,age,location,price WHERE id = ? AND user_id = ?;";
+        const res = await conn.query(insertQuery, [body.listingId,userId]);
+        return { success: true, listing: res, userExist: true };
     } catch (err) {
         return { success: false, userExist: false };
     } finally {
