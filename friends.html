@@ -88,6 +88,7 @@
                 var password;
                 email = localStorage.getItem('email')
                 password = localStorage.getItem('password')
+                let currentListingId = null;
                 let friend_input_element = document.getElementById('user-friend-id');
                 let friendSearch = document.getElementById('chat-form');
                 let friendsResults;
@@ -95,30 +96,18 @@
                 document.querySelector('.dropdown').style.display = 'none';
                 document.querySelector('.chat-bar').style.display = 'none';
 
-                function startaddingfriend(event)
-                {
+                function startaddingfriend(event) {
                     event.preventDefault();
                     document.getElementById('add-friend-modal').style.display = 'block';
                 }
-                function showWorkMessages()
-                {
-                    document.getElementById("friends-list-nav").innerHTML =
-                        `
-                    <div class="chats-header"><strong><- Work</strong></div>   
-                    </div>
-            
-            
-                    `
-                }
-                async function main()
-                {
-                    try
-                    {
+
+
+                async function main() {
+                    try {
                         console.log("Attempting fetch...");
 
                         // Use the variables from localStorage defined at the top of your script
-                        if (!email || !password)
-                        {
+                        if (!email || !password) {
                             console.log("User not logged in.");
                             return;
                         }
@@ -133,28 +122,24 @@
                             })
                         });
 
-                        if (!response.ok)
-                        {
+                        if (!response.ok) {
                             throw new Error(`HTTP error! status: ${response.status}`);
                         }
 
                         const data = await response.json();
                         console.log("Data received:", data);
 
-                        if (data.success)
-                        {
+                        if (data.success) {
                             renderFriends(data.friends); // Backend sends 'friends' in the route handler
                         }
 
-                    } catch (error)
-                    {
+                    } catch (error) {
                         console.error("The fetch failed:", error);
                     }
                 }
 
                 // Add this function to handle the display logic
-                function renderFriends(friendsList)
-                {
+                function renderFriends(friendsList) {
                     const nav = document.getElementById('friends-list-nav');
                     // Find the Friends section (the second chat-section)
                     const chatSections = nav.querySelectorAll('.chat-section');
@@ -169,8 +154,7 @@
                     friendsSection.querySelectorAll('.friend-item').forEach(item => item.remove());
 
                     // Append friend items back to the Friends section
-                    for (let i = 0; i < friendsList.length; i++)
-                    {
+                    for (let i = 0; i < friendsList.length; i++) {
                         const friend = friendsList[i];
                         const friendDiv = document.createElement('div');
                         friendDiv.className = 'friend-item';
@@ -178,8 +162,7 @@
                         friendDiv.setAttribute('data-id', friend.id);
                         friendDiv.innerHTML = `<strong>${friend.first_name} ${friend.last_name}</strong>`;
 
-                        friendDiv.onclick = function ()
-                        {
+                        friendDiv.onclick = function () {
                             // Remove active from all, add to this one
                             document.querySelectorAll('.friend-item').forEach(el => el.classList.remove('active'));
                             friendDiv.classList.add('active');
@@ -189,10 +172,10 @@
                         friendsSection.appendChild(friendDiv);
                     }
                 }
+
                 // Global variable to track current chat
 
-                function startChatWithFriend(friendid, friendfirst, friendlast)
-                {
+                function startChatWithFriend(friendid, friendfirst, friendlast) {
                     currentChatFriendId = friendid;
                     const display = document.getElementById('messages-display');
                     display.innerHTML = `<div class="chat-header">Chatting with ${friendfirst} ${friendlast}</div>`;
@@ -207,27 +190,25 @@
                         })
                     })
                         .then(res => res.json())
-                        .then(data =>
-                        {
+                        .then(data => {
                             renderMessages(data); // Breakpoint here will now work
                         })
                         .catch(err => console.error("Load Error:", err));
                 }
-                function renderMessages(messages)
-                {
+                function renderMessages(messages) {
                     const display = document.getElementById('messages-display');
                     const headerHTML = display.querySelector('.chat-header')?.outerHTML || '';
 
+                    // If the server returns an error object instead of an array, this defaults to []
                     const msgArray = Array.isArray(messages) ? messages : (messages.messages || []);
 
-                    // Create a temporary container to prevent flickering during the loop
                     let newContent = headerHTML;
 
-                    for (let i = 0; i < msgArray.length; i++)
-                    {
+                    for (let i = 0; i < msgArray.length; i++) {
                         const msg = msgArray[i];
-                        // Use Number() to ensure we are comparing numbers to numbers
-                        const type = (Number(msg.sender_id) === Number(currentChatFriendId)) ? 'received' : 'sent';
+
+                        // Use the is_me flag provided by the server
+                        const type = msg.is_me ? 'sent' : 'received';
 
                         newContent += `
             <div class="message ${type}">
@@ -237,12 +218,36 @@
         `;
                     }
 
-                    // Update the display once
                     display.innerHTML = newContent;
                     display.scrollTop = display.scrollHeight;
                 }
-                function sendMessage(event, message)
-                {
+                function RenderWorkMessages(messages) {
+                    const display = document.getElementById('messages-display');
+                    const headerHTML = display.querySelector('.chat-header')?.outerHTML || '';
+
+                    // Handle both array and object formats
+                    const msgArray = Array.isArray(messages) ? messages : (messages.messages || []);
+
+                    let newContent = headerHTML;
+
+                    for (let i = 0; i < msgArray.length; i++) {
+                        const msg = msgArray[i];
+
+                        // Use the is_me flag from the server to determine CSS class
+                        const type = msg.is_me ? 'sent' : 'received';
+
+                        newContent += `
+                        <div class="message ${type}">
+                            <p>${msg.message_text}</p>
+                            <span class="time-right">${new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                    `;
+                    }
+
+                    display.innerHTML = newContent;
+                    display.scrollTop = display.scrollHeight;
+                }
+                function sendMessage(event, message) {
                     event.preventDefault();
                     if (!message.trim() || !currentChatFriendId) return;
 
@@ -257,17 +262,16 @@
                         })
                     })
                         .then(res => res.json())
-                        .then(data =>
-                        {
+                        .then(data => {
                             document.getElementById('messageInput').value = "";
                             const display = document.getElementById('messages-display');
 
+                            // THIS IS WHAT DISPLAYS IT BEFORE THE POLLING RUNS:
                             const msgDiv = document.createElement('div');
-                            // CHANGED 'outgoing' to 'sent' to match your CSS
-                            msgDiv.className = 'message sent';
+                            msgDiv.className = 'message sent'; // Adds the CSS class
 
                             const p = document.createElement('p');
-                            p.textContent = message;
+                            p.textContent = message; // Sets your text
 
                             const span = document.createElement('span');
                             span.className = 'time-right';
@@ -275,13 +279,13 @@
 
                             msgDiv.appendChild(p);
                             msgDiv.appendChild(span);
-                            display.appendChild(msgDiv);
+                            display.appendChild(msgDiv); // Puts it on the screen immediately
                             display.scrollTop = display.scrollHeight;
                         });
                 }
 
-                function findFriend(event)
-                {
+
+                function findFriend(event) {
                     event.preventDefault();
 
                     fetch(getServerBase() + "/findFriend", {
@@ -296,8 +300,7 @@
                         })
                     })
                         .then(response => response.json())
-                        .then((data) =>
-                        {
+                        .then((data) => {
                             // Assign results (ensure friendsResults is declared elsewhere or use let/const)
                             const friendsList = data.friends;
                             const select = document.getElementById('friend-select');
@@ -306,10 +309,8 @@
                             select.innerHTML = '<option value="none" selected disabled>Choose a person...</option>';
 
                             // --- Traditional For Loop ---
-                            if (friendsList && friendsList.length > 0)
-                            {
-                                for (let i = 0; i < friendsList.length; i++)
-                                {
+                            if (friendsList && friendsList.length > 0) {
+                                for (let i = 0; i < friendsList.length; i++) {
                                     // Access the specific friend using the index [i]
                                     const friend = friendsList[i];
 
@@ -322,39 +323,32 @@
 
                                 // Show the dropdown if we found people
                                 document.querySelector('.dropdown').style.display = 'block';
-                            } else
-                            {
+                            } else {
                                 console.log("No friends found in the database.");
                             }
                         })
-                        .catch(error =>
-                        {
+                        .catch(error => {
                             console.error("Error fetching friends:", error);
                         });
                 }
-                async function getFriends(body)
-                {
+                async function getFriends(body) {
                     let conn;
-                    try
-                    {
+                    try {
                         conn = await pool.getConnection();
                         // ... auth logic ...
                         const friends = await conn.query(query, [userId, userId]);
 
                         // CHANGE THIS: Match the frontend key 'friends'
                         return { success: true, friends: friends, userExist: true };
-                    } catch (err)
-                    {
+                    } catch (err) {
                         console.error(err);
                         return { success: false, userExist: false };
-                    } finally
-                    {
+                    } finally {
                         if (conn) conn.release();
                     }
                 }
 
-                function getServerBase()
-                {
+                function getServerBase() {
                     const protocol = window.location.protocol; // 'http:' or 'https:'
                     const hostname = window.location.hostname;
                     const port = window.location.port ? ':' + window.location.port : '';
@@ -366,8 +360,7 @@
                 const friendSelect = document.getElementById('friend-select');
 
                 // 2. Listen for when the user picks an option
-                friendSelect.addEventListener('change', function ()
-                {
+                friendSelect.addEventListener('change', function () {
                     // This gets the 'value' (friend.id) you assigned in findFriend()
                     const selectedFriendId = this.value;
 
@@ -379,8 +372,7 @@
                     console.log("User selected Name:", selectedFriendName);
 
                     // Logic: You can now use selectedFriendId to filter messages or start a chat
-                    if (selectedFriendId !== "none")
-                    {
+                    if (selectedFriendId !== "none") {
                         alert("You are now chatting with " + selectedFriendName);
                         fetch(getServerBase() + "/addfriend", {
                             // Defines the HTTP verb as POST, which is used for sending data to a server.
@@ -397,13 +389,11 @@
                             })
                         })
                             .then(response => response.json())
-                            .then((data) =>
-                            {
+                            .then((data) => {
                                 const nav = document.getElementById('friends-list-nav');
                                 const friends = data.friends; // Your array of names
 
-                                friends.forEach(friendName =>
-                                {
+                                friends.forEach(friendName => {
                                     // 1. Create the outer wrapper div
                                     const friendDiv = document.createElement('div');
                                     friendDiv.className = 'friend-item'; // Good for CSS styling later
@@ -421,8 +411,7 @@
                                     friendDiv.appendChild(nameContainer);
 
                                     // 5. Add a click event so you can actually do something!
-                                    friendDiv.onclick = () =>
-                                    {
+                                    friendDiv.onclick = () => {
                                         console.log(`You clicked on ${friendName}`);
                                     };
 
@@ -434,30 +423,81 @@
 
                     }
                 });
-                // This runs every 3 seconds
-                setInterval(function ()
-                {
-                    if (currentChatFriendId)
-                    {
-                        // We don't want to clear the header, so we just fetch and re-render
-                        fetch(getServerBase() + "/getfriendmessages", {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                email: email,
-                                password: password,
-                                friendId: currentChatFriendId
-                            })
+                function showWorkMessages() {
+                    const nav = document.getElementById("friends-list-nav");
+                    nav.innerHTML = `<div class="chats-header" onclick="location.reload()" style="cursor:pointer;"><strong> <- Back</strong></div><div id="work-list"></div>`;
+
+                    fetch(getServerBase() + "/getworkpeople", {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: email, password: password })
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            const container = document.getElementById("work-list");
+                            if (data.success) {
+                                data.listings.forEach(item => {
+                                    const div = document.createElement('div');
+                                    div.className = 'friend-item';
+                                    div.innerHTML = `<strong>${item.title}</strong><br><small>${item.first_name} ${item.last_name}</small>`;
+                                    div.onclick = () => {
+                                        currentListingId = item.id;
+                                        currentChatFriendId = null;
+                                        document.getElementById('messages-display').innerHTML = `<div class="chat-header">Work: ${item.title}</div>`;
+                                        startWorkMessage(item.title, item.first_name, item.last_name, item.id);
+                                    };
+                                    container.appendChild(div);
+                                });
+                            }
+                        });
+                }
+
+                function startWorkMessage(title, first_name, last_name, id) {
+                    fetch(getServerBase() + "/getworkmessages", {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            email: email,
+                            password: password,
+                            listing_id: id
                         })
-                            .then(res => res.json())
-                            .then(data =>
-                            {
-                                // Optional: Only re-render if the number of messages changed
-                                renderMessages(data);
-                            })
-                            .catch(err => console.error("Polling error:", err));
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            RenderWorkMessages(data);
+                        })
+                        .catch(err => console.error("Load Error:", err));
+                }
+
+                setInterval(function () {
+                    let endpoint = "";
+                    let bodyData = { email: email, password: password };
+
+                    if (currentChatFriendId) {
+                        endpoint = "/getfriendmessages";
+                        bodyData.friendId = currentChatFriendId;
+                    } else if (currentListingId) {
+                        endpoint = "/getworkmessages";
+                        bodyData.listing_id = currentListingId;
+                    } else {
+                        return;
                     }
-                }, 3000); // 3000ms = 3 seconds
+
+                    fetch(getServerBase() + endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(bodyData)
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (currentListingId) {
+                                RenderWorkMessages(data);
+                            } else {
+                                renderMessages(data);
+                            }
+                        })
+                        .catch(err => console.error("Polling error:", err));
+                }, 3000);
 
             </script>
     </body>
