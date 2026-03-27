@@ -44,17 +44,15 @@
             </div>
 
             <!-- 3. The Input Box (Inside the container) -->
-            <div class="messageBox">
+            <!-- Change 1: Change DIV to FORM and add onsubmit -->
+            <form class="messageBox" onsubmit="sendMessage(event, document.getElementById('messageInput').value)">
                 <div class="fileUploadWrapper">
                     <label for="file">
-                        <!-- SVG Icon -->
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 337 337">
                             <circle stroke-width="20" r="158.5" cy="168.5" cx="168.5"></circle>
                             <path stroke-linecap="round" stroke-width="25" d="M167.759 79V259"></path>
                             <path stroke-linecap="round" stroke-width="25" d="M79 167.138H259"></path>
                         </svg>
-
-                        <!-- TOOLTIP MUST BE INSIDE LABEL -->
                         <span class="tooltip">Add an image</span>
                     </label>
                     <input type="file" id="file" name="file" />
@@ -62,14 +60,15 @@
 
                 <input required placeholder="Message..." type="text" id="messageInput" />
 
-                <button id="sendButton" onclick="sendMessage(event, document.getElementById('messageInput').value)">
+                <!-- Change 2: Remove onclick from button (the form handles it now) -->
+                <button id="sendButton" type="submit">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 664 663">
                         <path stroke-linejoin="round" stroke-linecap="round" stroke-width="33.67"
                             d="M646.293 331.888L17.7538 17.6187L155.245 331.888M646.293 331.888L17.753 646.157L155.245 331.888M646.293 331.888L318.735 330.228L155.245 331.888">
                         </path>
                     </svg>
                 </button>
-            </div>
+            </form>
             <!-- Search/Select Windows (Hidden by default) -->
             <div class="chat-bar" id="add-friend-modal" style="display:none;">
                 <form id="chat-form">
@@ -249,39 +248,67 @@
                 }
                 function sendMessage(event, message) {
                     event.preventDefault();
-                    if (!message.trim() || !currentChatFriendId) return;
 
-                    fetch(getServerBase() + "/sendfriendmessage", {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
+                    // 1. Guard: Only stop if message is empty OR if BOTH IDs are missing
+                    if (!message.trim() || (!currentChatFriendId && !currentListingId)) {
+                        console.error("Missing message or recipient");
+                        return;
+                    }
+
+                    let api;
+                    let payload; // Use a local variable name that isn't 'body' to avoid confusion
+
+                    if (currentListingId !== null) {
+                        // Work/Listing Chat
+                        api = "/sendMessage";
+                        payload = {
+                            email: email,
+                            password: password,
+                            listing_id: currentListingId, // Fixed key name to match backend
+                            message: message
+                        };
+                    } else if (currentChatFriendId !== null) {
+                        // Direct Friend Chat
+                        api = "/sendfriendmessage";
+                        payload = {
                             email: email,
                             password: password,
                             friendId: currentChatFriendId,
                             message: message
-                        })
+                        };
+                    }
+
+                    fetch(getServerBase() + api, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload) // Removed the extra {} around payload
                     })
                         .then(res => res.json())
                         .then(data => {
-                            document.getElementById('messageInput').value = "";
-                            const display = document.getElementById('messages-display');
+                            if (data.success) {
+                                document.getElementById('messageInput').value = "";
+                                const display = document.getElementById('messages-display');
 
-                            // THIS IS WHAT DISPLAYS IT BEFORE THE POLLING RUNS:
-                            const msgDiv = document.createElement('div');
-                            msgDiv.className = 'message sent'; // Adds the CSS class
+                                // UI Update
+                                const msgDiv = document.createElement('div');
+                                msgDiv.className = 'message sent';
 
-                            const p = document.createElement('p');
-                            p.textContent = message; // Sets your text
+                                const p = document.createElement('p');
+                                p.textContent = message;
 
-                            const span = document.createElement('span');
-                            span.className = 'time-right';
-                            span.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                                const span = document.createElement('span');
+                                span.className = 'time-right';
+                                span.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-                            msgDiv.appendChild(p);
-                            msgDiv.appendChild(span);
-                            display.appendChild(msgDiv); // Puts it on the screen immediately
-                            display.scrollTop = display.scrollHeight;
-                        });
+                                msgDiv.appendChild(p);
+                                msgDiv.appendChild(span);
+                                display.appendChild(msgDiv);
+                                display.scrollTop = display.scrollHeight;
+                            } else {
+                                console.error("Server returned success: false", data);
+                            }
+                        })
+                        .catch(err => console.error("Fetch error:", err));
                 }
 
 
