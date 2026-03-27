@@ -220,7 +220,7 @@ async function getListing(body) {
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
         const userId = userRows[0].id;
         const listing = "SELECT id,title,description,age,location,price WHERE id = ? AND user_id = ?;";
-        const res = await conn.query(insertQuery, [body.listingId,userId]);
+        const res = await conn.query(insertQuery, [body.listingId, userId]);
         return { success: true, listing: res, userExist: true };
     } catch (err) {
         return { success: false, userExist: false };
@@ -328,16 +328,34 @@ async function sendMessage(body) {
         conn = await pool.getConnection();
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
         const hashedPassword = hashPassword(body.password + saltResult[0].salt);
-        const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
-        const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
-        const selectQuery = "SELECT user_id FROM Listings WHERE id = ?;";
-        const res = await conn.query(selectQuery, [body.listing_id]);
-        const recieverId = res[0].user_id;
-        const insertQuery = "INSERT INTO listingMessages (sender_id,receiver_id,listing_id,message_text) VALUES (?,?,?,?)";
-        await conn.query(insertQuery, [userRows[0].id, recieverId, body.listing_id, body.message]);
-        return { success: true, messages: res };
+        const userRows = await conn.query("SELECT id FROM Users WHERE email = ? AND password = ?;", [body.email, hashedPassword]);
+        const myId = userRows[0].id;
+
+        // 1. Find the owner of the listing
+        const listingRes = await conn.query("SELECT user_id FROM Listings WHERE id = ?;", [body.listing_id]);
+        const ownerId = listingRes[0].user_id;
+
+        let receiverId;
+
+        if (myId === ownerId) {
+            // 2. If I am the OWNER, send to the person who messaged me
+            // We look for the most recent message on this listing that wasn't from me
+            const lastMsg = await conn.query(
+                "SELECT sender_id FROM listingMessages WHERE listing_id = ? AND sender_id != ? ORDER BY created_at DESC LIMIT 1",
+                [body.listing_id, myId]
+            );
+            receiverId = lastMsg.length > 0 ? lastMsg[0].sender_id : myId;
+        } else {
+            // 3. If I am the BUYER, send to the owner
+            receiverId = ownerId;
+        }
+
+        const insertQuery = "INSERT INTO listingMessages (sender_id, receiver_id, listing_id, message_text) VALUES (?,?,?,?)";
+        await conn.query(insertQuery, [myId, receiverId, body.listing_id, body.message]);
+        return { success: true };
     } catch (err) {
-        return { success: false, userExist: false };
+        console.error(err);
+        return { success: false };
     } finally {
         if (conn) conn.release();
     }
