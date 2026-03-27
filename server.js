@@ -451,7 +451,7 @@ async function getworkmessages(body) {
         // 3. Label messages so frontend knows how to style them
         const cleanMessages = dbRows.map(row => ({
             message_text: row.message_text,
-            is_me: Number(row.sender_id) === myId, 
+            is_me: Number(row.sender_id) === myId,
             created_at: row.created_at
         }));
 
@@ -502,35 +502,71 @@ async function getFriends(body) {
 }
 
 
+async function getfriendmessages(body) {
+    let conn;
+    try {
+        conn = await pool.getConnection();
+
+        // 1. Authenticate with forced String salt to prevent hash mismatches
+        let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
+        if (!saltResult || saltResult.length === 0) return { success: false, userExist: false };
+
+        const salt = String(saltResult[0].salt);
+        const hashedPassword = hashPassword(body.password + salt);
+        const userRows = await conn.query("SELECT id FROM Users WHERE email = ? AND password = ?;", [body.email, hashedPassword]);
+
+        if (userRows.length === 0) return { success: false, userExist: false };
+
+        const myId = Number(userRows[0].id);
+        const friendId = Number(body.friendId);
+
+        // 2. Fetch Messages
+        const query = `
+            SELECT message_text, sender_id, created_at 
+            FROM DirectMessages 
+            WHERE (sender_id = ? AND receiver_id = ?) 
+               OR (sender_id = ? AND receiver_id = ?) 
+            ORDER BY created_at ASC`;
+
+        const dbRows = await conn.query(query, [myId, friendId, friendId, myId]);
+
+        // 3. Map with is_me flag
+        const cleanMessages = dbRows.map(row => ({
+            message_text: row.message_text,
+            is_me: Number(row.sender_id) === myId,
+            created_at: row.created_at
+        }));
+
+        return { success: true, messages: cleanMessages, userExist: true };
+    } catch (err) {
+        console.error("DATABASE ERROR:", err);
+        return { success: false, userExist: true };
+    } finally {
+        if (conn) conn.release();
+    }
+}
+
 async function sendfriendmessage(body) {
     let conn;
     try {
         conn = await pool.getConnection();
 
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
-        if (saltResult.length === 0) {
-            return { success: false, userExist: false };
-        }
+        if (!saltResult || saltResult.length === 0) return { success: false, userExist: false };
 
-        const hashedPassword = hashPassword(body.password + saltResult[0].salt);
+        const salt = String(saltResult[0].salt);
+        const hashedPassword = hashPassword(body.password + salt);
         const userRows = await conn.query("SELECT id FROM Users WHERE email = ? AND password = ?;", [body.email, hashedPassword]);
 
-        if (userRows.length === 0) {
-            return { success: false, userExist: false };
-        }
+        if (userRows.length === 0) return { success: false, userExist: false };
 
-        const SenderId = userRows[0].id;
-
+        const senderId = userRows[0].id;
         const insertQuery = "INSERT INTO DirectMessages (sender_id, receiver_id, message_text) VALUES (?,?,?)";
-        // Note: Using 'dbResult' to avoid confusion with Express 'res'
-        const dbResult = await conn.query(insertQuery, [SenderId, body.friendId, body.message]);
+        const dbResult = await conn.query(insertQuery, [senderId, body.friendId, body.message]);
 
-        // Return a consistent structure
         return { success: true, userExist: true, data: dbResult };
-
     } catch (err) {
         console.error("Database Error:", err);
-        // Crucial: return userExist: true here if the crash happened AFTER the login check
         return { success: false, userExist: true, error: err.message };
     } finally {
         if (conn) conn.release();

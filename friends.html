@@ -199,15 +199,16 @@
                     const display = document.getElementById('messages-display');
                     const headerHTML = display.querySelector('.chat-header')?.outerHTML || '';
 
+                    // If the server returns an error object instead of an array, this defaults to []
                     const msgArray = Array.isArray(messages) ? messages : (messages.messages || []);
 
-                    // Create a temporary container to prevent flickering during the loop
                     let newContent = headerHTML;
 
                     for (let i = 0; i < msgArray.length; i++) {
                         const msg = msgArray[i];
-                        // Use Number() to ensure we are comparing numbers to numbers
-                        const type = (Number(msg.sender_id) === Number(currentChatFriendId)) ? 'received' : 'sent';
+
+                        // Use the is_me flag provided by the server
+                        const type = msg.is_me ? 'sent' : 'received';
 
                         newContent += `
             <div class="message ${type}">
@@ -217,11 +218,9 @@
         `;
                     }
 
-                    // Update the display once
                     display.innerHTML = newContent;
                     display.scrollTop = display.scrollHeight;
                 }
-
                 function RenderWorkMessages(messages) {
                     const display = document.getElementById('messages-display');
                     const headerHTML = display.querySelector('.chat-header')?.outerHTML || '';
@@ -267,12 +266,12 @@
                             document.getElementById('messageInput').value = "";
                             const display = document.getElementById('messages-display');
 
+                            // THIS IS WHAT DISPLAYS IT BEFORE THE POLLING RUNS:
                             const msgDiv = document.createElement('div');
-                            // CHANGED 'outgoing' to 'sent' to match your CSS
-                            msgDiv.className = 'message sent';
+                            msgDiv.className = 'message sent'; // Adds the CSS class
 
                             const p = document.createElement('p');
-                            p.textContent = message;
+                            p.textContent = message; // Sets your text
 
                             const span = document.createElement('span');
                             span.className = 'time-right';
@@ -280,7 +279,7 @@
 
                             msgDiv.appendChild(p);
                             msgDiv.appendChild(span);
-                            display.appendChild(msgDiv);
+                            display.appendChild(msgDiv); // Puts it on the screen immediately
                             display.scrollTop = display.scrollHeight;
                         });
                 }
