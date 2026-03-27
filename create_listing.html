@@ -98,7 +98,7 @@
         var currentImageIndex = 0;
         let edit = 0
         let listingId = -1
-
+        let myListing=-1
         function getServerBase()
         {
             const protocol = window.location.protocol;
@@ -113,13 +113,12 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ email: email, password: password, })
+                body: JSON.stringify({ email: email, password: password, listingId:listingId})
             })
                 .then(response => response.json())
                 .then((data) =>
                 {
-                    my_listings = data
-                    drawMyListings(my_listings)
+                    myListing=data
                 })
         }
 
@@ -131,7 +130,7 @@
             edit = Number(urlParams.get('edit'))
             listingId = Number(urlParams.get('id'))
 
-            if (edit == '1')
+            if (edit == 1)
             {
                 getListingDetails()
             }
