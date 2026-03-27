@@ -226,7 +226,7 @@
     }
 
     function editListing(listingId) {
-        goToDifferentScreen(`info?id=${listingId}`);
+         window.location.href = `${getServerBase()}/createListing?edit=1&id=${listingId}`
     }
 
 

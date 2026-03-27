@@ -568,6 +568,7 @@ async function getinfolistings(body) {
     }
 }
 
+// Get Routes
 app.get('/', (req, res) => {
     res.sendFile('intro.html');
 });
@@ -584,6 +585,24 @@ app.get('/createListing', (req, res) => {
     res.sendFile('create_listing.html');
 });
 
+app.get('/editListing', (req, res) => {
+    res.sendFile('create_listing.html');
+});
+
+
+
+app.get('/home', (req, res) => {
+    res.sendFile('index.html');
+});
+app.get('/login', (req, res) => {
+    res.sendFile('login.html');
+});
+app.get('/signup', (req, res) => {
+    res.sendFile('login.html');
+});
+
+// PoST Routes
+
 app.post('/createListing', async (req, res) => {
     try {
         const result = await createListing(req.body);
@@ -598,17 +617,6 @@ app.post('/createListing', async (req, res) => {
         res.status(400).send({ message: "Error creating listing" });
     }
 });
-
-app.get('/home', (req, res) => {
-    res.sendFile('index.html');
-});
-app.get('/login', (req, res) => {
-    res.sendFile('login.html');
-});
-app.get('/signup', (req, res) => {
-    res.sendFile('login.html');
-});
-
 app.post('/signupauth', async (req, res) => {
     try {
         const result = await registerUser(req.body);
