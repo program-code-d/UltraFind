@@ -95,10 +95,11 @@
         var email;
         var password;
         var selectedImages = []; // Store file objects
+        var serverImages = []; // Store server image filenames
         var currentImageIndex = 0;
         let edit = 0
         let listingId = -1
-        let myListing=-1
+        let myListing = -1
         function getServerBase()
         {
             const protocol = window.location.protocol;
@@ -113,15 +114,33 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ email: email, password: password, listingId:listingId})
+                body: JSON.stringify({ email: email, password: password, listingId: listingId })
             })
                 .then(response => response.json())
                 .then((data) =>
                 {
-                    myListing=data
+                    myListing = data
+                    displayMyListingData()
                 })
         }
-
+        function displayMyListingData()
+        {
+            document.getElementById('listing-name').value = myListing.title
+            document.getElementById('listing-price').value = myListing.price
+            document.getElementById('listing-description').value = myListing.description
+            document.getElementById('listing-location').value = myListing.location
+            document.getElementById('age').value = myListing.age
+            
+            // Load images from server
+            if (myListing.image && myListing.image.length > 0) {
+                serverImages = myListing.image.map(img => img.file_path);
+                currentImageIndex = 0;
+                updateCarousel();
+                displayImageGallery();
+            }
+            
+            updatePreview();
+        }
         function main()
         {
             const urlParams = new URLSearchParams(window.location.search);
@@ -129,7 +148,8 @@
 
             edit = Number(urlParams.get('edit'))
             listingId = Number(urlParams.get('id'))
-
+            email = localStorage.getItem('email');
+            password = localStorage.getItem('password');
             if (edit == 1)
             {
                 getListingDetails()
@@ -163,6 +183,7 @@
             const gallery = document.getElementById('imageGallery');
             gallery.innerHTML = '';
 
+            // Display selected local images
             selectedImages.forEach((file, index) =>
             {
                 const thumbnail = document.createElement('div');
@@ -178,7 +199,23 @@
                 gallery.appendChild(thumbnail);
             });
 
-            if (selectedImages.length > 0)
+            // Display server images (when editing)
+            serverImages.forEach((imageName, index) =>
+            {
+                const thumbnail = document.createElement('div');
+                thumbnail.className = 'image-thumbnail';
+                thumbnail.style.backgroundImage = `url(${getServerBase()}/images/${imageName})`;
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-thumbnail';
+                deleteBtn.innerHTML = '✕';
+                deleteBtn.onclick = () => removeServerImage(index);
+
+                thumbnail.appendChild(deleteBtn);
+                gallery.appendChild(thumbnail);
+            });
+
+            if (selectedImages.length > 0 || serverImages.length > 0)
             {
                 currentImageIndex = 0;
                 updateCarousel();
@@ -196,9 +233,18 @@
             updatePreview();
         }
 
+        function removeServerImage(index)
+        {
+            serverImages.splice(index, 1);
+            displayImageGallery();
+            updatePreview();
+        }
+
         function updateCarousel()
         {
-            if (selectedImages.length === 0)
+            const totalImages = selectedImages.length + serverImages.length;
+            
+            if (totalImages === 0)
             {
                 document.getElementById('carouselImageDisplay').innerHTML = '';
                 document.getElementById('imageCounter').innerHTML = '';
@@ -207,29 +253,40 @@
                 return;
             }
 
-            const currentFile = selectedImages[currentImageIndex];
-            document.getElementById('carouselImageDisplay').style.backgroundImage = `url(${URL.createObjectURL(currentFile)})`;
-            document.getElementById('imageCounter').innerHTML = `${currentImageIndex + 1} / ${selectedImages.length}`;
+            let imageUrl;
+            if (currentImageIndex < selectedImages.length) {
+                // Local file
+                imageUrl = URL.createObjectURL(selectedImages[currentImageIndex]);
+            } else {
+                // Server image
+                const serverIndex = currentImageIndex - selectedImages.length;
+                imageUrl = getServerBase() + '/images/' + serverImages[serverIndex];
+            }
+            
+            document.getElementById('carouselImageDisplay').style.backgroundImage = `url(${imageUrl})`;
+            document.getElementById('imageCounter').innerHTML = `${currentImageIndex + 1} / ${totalImages}`;
 
             // Show/hide arrows
-            document.getElementById('prevBtn').style.display = selectedImages.length > 1 ? 'block' : 'none';
-            document.getElementById('nextBtn').style.display = selectedImages.length > 1 ? 'block' : 'none';
+            document.getElementById('prevBtn').style.display = totalImages > 1 ? 'block' : 'none';
+            document.getElementById('nextBtn').style.display = totalImages > 1 ? 'block' : 'none';
         }
 
         function previousImage()
         {
-            if (selectedImages.length > 0)
+            const totalImages = selectedImages.length + serverImages.length;
+            if (totalImages > 0)
             {
-                currentImageIndex = (currentImageIndex - 1 + selectedImages.length) % selectedImages.length;
+                currentImageIndex = (currentImageIndex - 1 + totalImages) % totalImages;
                 updateCarousel();
             }
         }
 
         function nextImage()
         {
-            if (selectedImages.length > 0)
+            const totalImages = selectedImages.length + serverImages.length;
+            if (totalImages > 0)
             {
-                currentImageIndex = (currentImageIndex + 1) % selectedImages.length;
+                currentImageIndex = (currentImageIndex + 1) % totalImages;
                 updateCarousel();
             }
         }
@@ -244,8 +301,7 @@
             const ageInput = document.getElementById('age');
 
             // 2. Get credentials from localStorage
-            const email = localStorage.getItem('email');
-            const password = localStorage.getItem('password');
+
 
             // 3. Basic Validation: Ensure required fields aren't empty
             if (!listingName.value || !listingPrice.value || !listingDescription.value || !listingLocation.value)
