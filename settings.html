@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Settings</title>
+    <link rel="stylesheet" href="CSS files/navbar.css">
+    <link rel="stylesheet" href="CSS files/index.css">
+    <style>
+        /* Specific styles for the settings form to match the "listing-card" look */
+        .settings-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            margin: 40px auto;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .form-group input {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .save-btn {
+            background-color: #28a745;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+        }
+
+        .logout-btn {
+            background-color: #dc3545;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body onload="main()">
+
+    <div id="navbar-container"></div>
+
+    <div class="main-container">
+        <div class="settings-card">
+            <h1 style="text-align: center;">Account Settings</h1>
+
+            <form onsubmit="updateProfile(event)">
+                <div class="form-group">
+                    <label>First Name</label>
+                    <input type="text" id="first_name">
+                </div>
+                <div class="form-group">
+                    <label>Last Name</label>
+                    <input type="text" id="last_name">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="email">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="password">
+                </div>
+                <div class="form-group">
+                    <label>Location</label>
+                    <input type="text" id="location">
+                </div>
+                <div class="form-group">
+                    <label>Age</label>
+                    <input type="number" id="age">
+                </div>
+
+                <button type="submit" class="save-btn">Save Changes</button>
+            </form>
+
+            <button onclick="logout()" class="save-btn logout-btn">Logout</button>
+        </div>
+    </div>
+</body>
+<script>
+    // 1. Give these unique names so they don't clash with the Input IDs
+    const savedEmail = localStorage.getItem('email');
+    const savedPassword = localStorage.getItem('password');
+
+    // 2. Get the actual Input Elements
+    const inputFirstName = document.getElementById('first_name');
+    const inputLastName = document.getElementById('last_name');
+    const inputEmail = document.getElementById('email');
+    const inputPassword = document.getElementById('password');
+    const inputLocation = document.getElementById('location');
+    const inputAge = document.getElementById('age');
+
+    function main() {
+        if (!savedEmail || !savedPassword) {
+            alert("Not logged in");
+            return;
+        }
+
+        fetch(getServerBase() + "/getuserdata", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email: savedEmail,
+                password: savedPassword
+            })
+        })
+            .then(res => res.json())
+            .then(data => {
+                // 3. Check if we actually got data back
+                if (data.success && data.userdata && data.userdata.length > 0) {
+
+                    // 4. Access the FIRST row of the results array [0]
+                    const user = data.userdata[0];
+
+                    // 5. Assign the values from the DATABASE to the INPUTS
+                    inputFirstName.value = user.first_name || "";
+                    inputLastName.value = user.last_name || "";
+                    inputEmail.value = user.email || "";
+                    inputPassword.value = savedPassword; // Use the password from localStorage
+                    inputLocation.value = user.location || "";
+                    inputAge.value = user.age || "";
+                } else {
+                    console.error("User not found in database.");
+                }
+            })
+            .catch(err => console.error("Load Error:", err));
+    }
+
+    function updateProfile(event) {
+        event.preventDefault();
+        inputFirstName = document.getElementById('first_name');
+        inputLastName = document.getElementById('last_name');
+        inputEmail = document.getElementById('email');
+        inputPassword = document.getElementById('password');
+        inputLocation = document.getElementById('location');
+        inputAge = document.getElementById('age');
+
+        fetch(getServerBase() + "/updateuserdata", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email: savedEmail,
+                password: savedPassword
+            })
+        })
+            .then(res => res.json())
+            .then(data => {
+                // 3. Check if we actually got data back
+                if (data.success && data.userdata && data.userdata.length > 0) {
+
+                    // 4. Access the FIRST row of the results array [0]
+                    const user = data.userdata[0];
+
+                    // 5. Assign the values from the DATABASE to the INPUTS
+                    inputFirstName.value = user.first_name || "";
+                    inputLastName.value = user.last_name || "";
+                    inputEmail.value = user.email || "";
+                    inputPassword.value = savedPassword; // Use the password from localStorage
+                    inputLocation.value = user.location || "";
+                    inputAge.value = user.age || "";
+                } else {
+                    console.error("User not found in database.");
+                }
+            })
+            .catch(err => console.error("Load Error:", err));
+
+    }
+
+    function getServerBase() {
+        return `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
+    }
+
+    // Basic logout function to clear data
+    function logout() {
+        localStorage.clear();
+        window.location.href = "/login";
+    }
+</script>
+
+</html>
