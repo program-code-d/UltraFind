@@ -487,6 +487,49 @@ async function getuserdata(body) {
     }
 }
 
+async function updateuserdata(body) {
+    let conn;
+    try {
+        conn = await pool.getConnection();
+        
+        // 1. Get the current salt
+        let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.currentEmail]);
+        if (saltResult.length === 0) return { success: false, userExist: false };
+        
+        // 2. Wrap salt in String() to prevent BigInt "n" errors
+        const currentSalt = String(saltResult[0].salt); 
+        const currentHashedPassword = hashPassword(body.currentPassword + currentSalt);
+        
+        const userRows = await conn.query("SELECT id FROM Users WHERE email = ? AND password = ?;", [body.currentEmail, currentHashedPassword]);
+        
+        if (userRows.length === 0) return { success: false, userExist: true, message: "Invalid current password" };
+        const userId = userRows[0].id;
+
+        // 3. Generate New Salt
+        let newSalt = Math.trunc((Math.random() * (10099999 - 0) + 0) * 78 - 12.2);
+        const newHashedPassword = hashPassword(body.newPassword + newSalt);
+
+        const updateQuery = "UPDATE Users SET email = ? , first_name = ? , last_name = ? , password = ? , salt = ? , location = ? , age = ? WHERE id=?";
+        await conn.query(updateQuery, [
+            body.newEmail, 
+            body.first_name, 
+            body.last_name, 
+            newHashedPassword, 
+            newSalt, 
+            body.location, 
+            body.age, 
+            userId
+        ]);
+
+        return { success: true, userExist: true };
+    } catch (err) {
+        console.error(err);
+        return { success: false, userExist: false };
+    } finally {
+        if (conn) conn.release();
+    }
+}
+
 async function getworkpeople(body) {
     let conn;
     try {
@@ -913,6 +956,20 @@ app.post('/getuserdata', async (req, res) => {
 });
 
 
+app.post('/updateuserdata', async (req, res) => {
+    try {
+        const result = await updateuserdata(req.body);
+        if (result && !result.userExist) {
+            return res.send({ message: "failed" });
+        }
+        if (result && result.success) {
+            res.send(result);
+        }
+    } catch (err) {
+        res.status(400).send(err.message);
+    }
+});
+
 
 
 
@@ -958,6 +1015,7 @@ app.post('/searchListings', async (req, res) => {
         res.status(400).send(err.message);
     }
 });
+
 
 
 app.post('/getMyListings', async (req, res) => {

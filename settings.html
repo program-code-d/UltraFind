@@ -95,99 +95,88 @@
     </div>
 </body>
 <script>
-    // 1. Give these unique names so they don't clash with the Input IDs
-    const savedEmail = localStorage.getItem('email');
-    const savedPassword = localStorage.getItem('password');
-
-    // 2. Get the actual Input Elements
-    const inputFirstName = document.getElementById('first_name');
-    const inputLastName = document.getElementById('last_name');
-    const inputEmail = document.getElementById('email');
-    const inputPassword = document.getElementById('password');
-    const inputLocation = document.getElementById('location');
-    const inputAge = document.getElementById('age');
+    // DO NOT store savedEmail/Password here as constants 
+    // because they won't update after you save changes.
 
     function main() {
-        if (!savedEmail || !savedPassword) {
+        const email = localStorage.getItem('email');
+        const password = localStorage.getItem('password');
+
+        if (!email || !password) {
             alert("Not logged in");
+            window.location.href = "/login";
             return;
         }
 
         fetch(getServerBase() + "/getuserdata", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                email: savedEmail,
-                password: savedPassword
-            })
+            body: JSON.stringify({ email, password })
         })
-            .then(res => res.json())
-            .then(data => {
-                // 3. Check if we actually got data back
-                if (data.success && data.userdata && data.userdata.length > 0) {
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.userdata && data.userdata.length > 0) {
+                const user = data.userdata[0];
 
-                    // 4. Access the FIRST row of the results array [0]
-                    const user = data.userdata[0];
-
-                    // 5. Assign the values from the DATABASE to the INPUTS
-                    inputFirstName.value = user.first_name || "";
-                    inputLastName.value = user.last_name || "";
-                    inputEmail.value = user.email || "";
-                    inputPassword.value = savedPassword; // Use the password from localStorage
-                    inputLocation.value = user.location || "";
-                    inputAge.value = user.age || "";
-                } else {
-                    console.error("User not found in database.");
-                }
-            })
-            .catch(err => console.error("Load Error:", err));
+                // Get elements inside the function to ensure they exist
+                document.getElementById('first_name').value = user.first_name || "";
+                document.getElementById('last_name').value = user.last_name || "";
+                document.getElementById('email').value = user.email || "";
+                document.getElementById('password').value = password; 
+                document.getElementById('location').value = user.location || "";
+                document.getElementById('age').value = user.age || "";
+            }
+        })
+        .catch(err => console.error("Load Error:", err));
     }
 
     function updateProfile(event) {
         event.preventDefault();
-        inputFirstName = document.getElementById('first_name');
-        inputLastName = document.getElementById('last_name');
-        inputEmail = document.getElementById('email');
-        inputPassword = document.getElementById('password');
-        inputLocation = document.getElementById('location');
-        inputAge = document.getElementById('age');
+
+        // Always get current auth data from localStorage at the MOMENT of clicking
+        const currentEmailAuth = localStorage.getItem('email');
+        const currentPasswordAuth = localStorage.getItem('password');
+
+        const newEmail = document.getElementById('email').value;
+        const newPassword = document.getElementById('password').value;
+
+        const payload = {
+            currentEmail: currentEmailAuth,
+            currentPassword: currentPasswordAuth,
+            first_name: document.getElementById('first_name').value,
+            last_name: document.getElementById('last_name').value,
+            newEmail: newEmail,
+            newPassword: newPassword,
+            location: document.getElementById('location').value,
+            age: document.getElementById('age').value
+        };
 
         fetch(getServerBase() + "/updateuserdata", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                email: savedEmail,
-                password: savedPassword
-            })
+            body: JSON.stringify(payload)
         })
-            .then(res => res.json())
-            .then(data => {
-                // 3. Check if we actually got data back
-                if (data.success && data.userdata && data.userdata.length > 0) {
-
-                    // 4. Access the FIRST row of the results array [0]
-                    const user = data.userdata[0];
-
-                    // 5. Assign the values from the DATABASE to the INPUTS
-                    inputFirstName.value = user.first_name || "";
-                    inputLastName.value = user.last_name || "";
-                    inputEmail.value = user.email || "";
-                    inputPassword.value = savedPassword; // Use the password from localStorage
-                    inputLocation.value = user.location || "";
-                    inputAge.value = user.age || "";
-                } else {
-                    console.error("User not found in database.");
-                }
-            })
-            .catch(err => console.error("Load Error:", err));
-
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert("Profile Updated!");
+                // Update localStorage so the NEXT update or refresh works
+                localStorage.setItem('email', newEmail);
+                localStorage.setItem('password', newPassword);
+                
+                // Refresh the page to ensure all variables are reset
+                window.location.reload();
+            } else {
+                alert("Update failed: " + (data.message || "Invalid credentials"));
+            }
+        })
+        .catch(err => console.error("Update Error:", err));
     }
 
     function getServerBase() {
         return `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
     }
 
-    // Basic logout function to clear data
     function logout() {
         localStorage.clear();
         window.location.href = "/login";
