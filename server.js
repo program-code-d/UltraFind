@@ -1,15 +1,13 @@
 const app = require('fastify')({
     logger: false,
-    bodyLimit: 524288000 // Increased to 500MB to allow for video uploads
+    bodyLimit: 524288000 
 });
 const crypto = require("crypto");
 const mariadb = require('mariadb');
 const path = require('path');
 const fs = require('fs');
 const { pipeline } = require('stream/promises');
-const sharp = require('sharp'); // Added for Image Compression
-const ffmpeg = require('fluent-ffmpeg'); // Added for Video Compression
-
+const { spawn } = require('child_process'); 
 
 const PORT = 8080;
 const pool = mariadb.createPool({
@@ -241,15 +239,29 @@ async function getListings(body) {
     try {
         conn = await pool.getConnection();
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
-        const hashedPassword = hashPassword(body.password + saltResult[0].salt);
-        const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
-        const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
-        const insertQuery = "SELECT * FROM Listings WHERE title LIKE ? AND is_Active = true;";
+        const hashedPassword = hashPassword(body.password + String(saltResult[0].salt));
 
+        // This query fetches the listing AND finds the first image associated with it
+        const query = `
+            SELECT L.*, 
+            (SELECT file_path FROM ListingMedia WHERE listing_id = L.id LIMIT 1) as thumbnail 
+            FROM Listings L 
+            WHERE L.title LIKE ? AND L.is_active = true 
+            ORDER BY L.created_at DESC;
+        `;
 
-        const res = await conn.query(insertQuery, [`%${body.search}%`]);
-        return { success: true, listings: res, userExist: true };
+        const res = await conn.query(query, [`%${body.search}%`]);
+
+        // Convert BigInts to Numbers so JSON doesn't break
+        const cleanRes = res.map(row => {
+            const newRow = { ...row };
+            if (newRow.id) newRow.id = Number(newRow.id);
+            return newRow;
+        });
+
+        return { success: true, listings: cleanRes, userExist: true };
     } catch (err) {
+        console.error(err);
         return { success: false, userExist: false };
     } finally {
         if (conn) conn.release();
@@ -283,13 +295,36 @@ async function searchListings(body) {
     try {
         conn = await pool.getConnection();
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
-        const hashedPassword = hashPassword(body.password + saltResult[0].salt);
+        if (!saltResult.length) return { success: false, userExist: false };
+
+        const salt = String(saltResult[0].salt);
+        const hashedPassword = hashPassword(body.password + salt);
+
         const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
-        const insertQuery = "SELECT * FROM Listings WHERE title LIKE ? AND is_Active = true;";
-        const res = await conn.query(insertQuery, [`%${body.search}%`]);
-        return { success: true, listings: res, userExist: true };
+        if (!userRows.length) return { success: false, userExist: false };
+
+        // THE FIX: Added the subquery to grab the thumbnail
+        const searchQuery = `
+            SELECT L.*, 
+            (SELECT file_path FROM ListingMedia WHERE listing_id = L.id LIMIT 1) as thumbnail 
+            FROM Listings L 
+            WHERE L.title LIKE ? AND L.is_active = true 
+            ORDER BY L.created_at DESC;
+        `;
+
+        const res = await conn.query(searchQuery, [`%${body.search}%`]);
+
+        // Convert IDs to Numbers so JSON doesn't break
+        const cleanListings = res.map(item => ({
+            ...item,
+            id: Number(item.id),
+            price: Number(item.price)
+        }));
+
+        return { success: true, listings: cleanListings, userExist: true };
     } catch (err) {
+        console.error("Search Error:", err);
         return { success: false, userExist: false };
     } finally {
         if (conn) conn.release();
@@ -491,17 +526,17 @@ async function updateuserdata(body) {
     let conn;
     try {
         conn = await pool.getConnection();
-        
+
         // 1. Get the current salt
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.currentEmail]);
         if (saltResult.length === 0) return { success: false, userExist: false };
-        
+
         // 2. Wrap salt in String() to prevent BigInt "n" errors
-        const currentSalt = String(saltResult[0].salt); 
+        const currentSalt = String(saltResult[0].salt);
         const currentHashedPassword = hashPassword(body.currentPassword + currentSalt);
-        
+
         const userRows = await conn.query("SELECT id FROM Users WHERE email = ? AND password = ?;", [body.currentEmail, currentHashedPassword]);
-        
+
         if (userRows.length === 0) return { success: false, userExist: true, message: "Invalid current password" };
         const userId = userRows[0].id;
 
@@ -511,13 +546,13 @@ async function updateuserdata(body) {
 
         const updateQuery = "UPDATE Users SET email = ? , first_name = ? , last_name = ? , password = ? , salt = ? , location = ? , age = ? WHERE id=?";
         await conn.query(updateQuery, [
-            body.newEmail, 
-            body.first_name, 
-            body.last_name, 
-            newHashedPassword, 
-            newSalt, 
-            body.location, 
-            body.age, 
+            body.newEmail,
+            body.first_name,
+            body.last_name,
+            newHashedPassword,
+            newSalt,
+            body.location,
+            body.age,
             userId
         ]);
 
@@ -1084,92 +1119,75 @@ app.post('/switchFile', async (req, res) => {
 
 });
 
+
 app.post('/upload-listing', async (req, res) => {
     const parts = req.parts();
     const body = {};
-    const processingTasks = []; // We will store promises here to process in parallel
+    const processingTasks = [];
 
     try {
         for await (const part of parts) {
             if (part.file) {
                 const timestamp = Date.now();
-                const isVideo = part.mimetype.startsWith('video/');
-                const isImage = part.mimetype.startsWith('image/');
-
-                // We use .webp for images because AVIF effort 9 is too slow for production
-                // We use .mp4 (H.264) for videos because H.265 is too CPU intensive
-                const extension = isVideo ? '.mp4' : (isImage ? '.webp' : path.extname(part.filename));
+                // We keep the original extension (like .mp4 or .jpg)
+                const extension = path.extname(part.filename);
                 const uniqueName = `${timestamp}-${Math.random().toString(36).substring(7)}${extension}`;
-                const savePath = path.join(__dirname, 'images', uniqueName);
 
-                if (isImage) {
-                    // FAST IMAGE COMPRESSION: WebP (Better support & 10x faster than AVIF effort 9)
-                    const processImage = async () => {
-                        const transformer = sharp()
-                            .webp({ quality: 75, effort: 2 }) // Effort 2 is the "Sweet Spot" for speed/size
-                            .rotate(); // Auto-rotate based on EXIF data
+                // Paths for the C++ file to use
+                const tempPath = path.join(__dirname, 'images', 'temp-' + uniqueName);
+                const finalPath = path.join(__dirname, 'images', uniqueName);
 
-                        await pipeline(part.file, transformer, fs.createWriteStream(savePath));
-                        return { name: uniqueName, type: 'image' };
-                    };
-                    processingTasks.push(processImage());
+                // 1. Save the incoming stream to a temporary file first
+                await pipeline(part.file, fs.createWriteStream(tempPath));
 
-                } else if (isVideo) {
-                    // FAST VIDEO COMPRESSION: H.264 (Universally supported & much faster)
-                    const tempPath = path.join(__dirname, 'images', 'temp-' + uniqueName);
+                // 2. Create a task to run the C++ Compressor
+                const processFile = async () => {
+                    return new Promise((resolve, reject) => {
+                        // This calls your C++ file directly
+                        const exePath = path.join(__dirname, 'compressor.exe');
+                        const compressor = spawn(exePath, [tempPath, finalPath]);
 
-                    // 1. Stream file to disk first (fast)
-                    await pipeline(part.file, fs.createWriteStream(tempPath));
-
-                    // 2. Queue the FFmpeg task
-                    const processVideo = async () => {
-                        return new Promise((resolve, reject) => {
-                            ffmpeg(tempPath)
-                                .vcodec('libx264') // H.264 is way faster than H.265 (libx265)
-                                .addOptions([
-                                    '-crf 28',            // Constant Rate Factor (23-28 is great for web)
-                                    '-preset superfast',  // Use 'superfast' or 'veryfast' for web uploads
-                                    '-movflags +faststart', // Allows video to play before fully downloaded
-                                    '-pix_fmt yuv420p'    // Ensures compatibility with all browsers
-                                ])
-                                .on('error', (err) => {
-                                    if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
-                                    reject(err);
-                                })
-                                .on('end', () => {
-                                    if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
-                                    resolve({ name: uniqueName, type: 'video' });
-                                })
-                                .save(savePath);
+                        compressor.on('error', (err) => {
+                            reject(new Error("Could not start compressor.exe: " + err.message));
                         });
-                    };
-                    processingTasks.push(processVideo());
 
-                } else {
-                    // Non-media files
-                    await pipeline(part.file, fs.createWriteStream(savePath));
-                    processingTasks.push(Promise.resolve({ name: uniqueName, type: 'other' }));
-                }
+                        compressor.on('close', (code) => {
+                            // 3. Delete the huge temp file now that compression is done
+                            if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+
+                            if (code === 0) {
+                                const type = part.mimetype.startsWith('video/') ? 'video' : 'image';
+                                resolve({ name: uniqueName, type: type });
+                            } else {
+                                reject(new Error(`C++ Compressor failed with exit code ${code}`));
+                            }
+                        });
+                    });
+                };
+
+                processingTasks.push(processFile());
             } else {
                 body[part.fieldname] = part.value;
             }
         }
 
-        // Wait for ALL images and videos to finish compressing simultaneously
+        // Wait for all files to be compressed by the C++ engine
         const mediaFiles = await Promise.all(processingTasks);
 
-        // Database logic
-        const result = await createListing(body, mediaFiles, req.is_new);
-        if (result && result.userExist === false) {
-            return res.send({ message: "failed" });
-        }
+        // 4. Send the data to your existing database function
+        // Note: Check if your frontend sends 'edit' as a field to determine is_new
+        const is_new = body.listingId ? 0 : 1;
+        const result = await createListing(body, mediaFiles, is_new, body.listingId);
+
         if (result && result.success) {
-            return res.send({ success: true, redirect: "/home" });
+            res.send({ success: true, redirect: "/home", listingId: result.listingId });
+        } else {
+            res.send({ success: false, message: result.message || "Database failed" });
         }
 
     } catch (err) {
-        console.error("UPLOAD ERROR:", err);
-        res.status(500).send({ success: false, message: "Compression failed: " + err.message });
+        console.error("CRITICAL UPLOAD ERROR:", err);
+        res.status(500).send({ success: false, error: err.message });
     }
 });
 

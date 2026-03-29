@@ -1,55 +1,36 @@
+/* =========================================
+   1. POST BUTTON (EXACTLY AS PROVIDED)
+   ========================================= */
 .clean-btn {
-    /* 1. Positioning */
     position: fixed;
-    /* Positions the button relative to the browser window */
     top: 80px;
-    /* Adjusted to be below the top navbar */
     right: 10px;
-    /* Places it 10px from the right edge */
     z-index: 999;
-    /* Below the navbar but above other content */
-
-    /* 2. Reset/Remove default styles */
     all: unset;
-    /* Modern way, well-supported except IE */
     box-sizing: border-box;
-    /* Ensures padding/border are included in width/height */
     vertical-align: top;
-    /* 3. Basic Styling */
     background-color: #757474;
-    /* A clean blue background */
     color: #ffffff;
-    /* White text color */
     padding: 10px 20px;
-    /* Ample padding for a good click area */
     border-radius: 5px;
-    /* Slightly rounded corners */
     cursor: pointer;
-    /* Changes cursor to a hand icon on hover */
     font-family: inherit;
-    /* Inherit font from the body */
     font-size: 16px;
     text-align: center;
     text-decoration: none;
-    /* Removes underlines if using <a> as a button */
     display: inline-block;
-    /* Allows for margin/padding as an inline element */
-    /* 4. Ensure keyboard accessibility */
     outline: revert;
-    /* Revert the outline to the browser's default for focus */
 }
 
-/* From Uiverse.io by satyamchaudharydev */
-/* From uiverse.io by @satyamchaudharydev */
-/* removing default style of button */
-
+/* =========================================
+   2. SEARCH BAR (EXACTLY AS PROVIDED)
+   ========================================= */
 .form button {
     border: none;
     background: none;
     color: #8b8ba7;
 }
 
-/* styling of whole input container */
 .form {
     --timing: 0.3s;
     --width-of-input: 200px;
@@ -70,7 +51,6 @@
     background: var(--input-bg, #fff);
 }
 
-/* styling of Input */
 .input {
     font-size: 0.9rem;
     background-color: transparent;
@@ -81,7 +61,6 @@
     border: none;
 }
 
-/* styling of animated border */
 .form:before {
     content: "";
     position: absolute;
@@ -96,7 +75,6 @@
     transition: transform var(--timing) ease;
 }
 
-/* Hover on Input */
 .form:focus-within {
     border-radius: var(--after-border-radius);
 }
@@ -105,13 +83,10 @@ input:focus {
     outline: none;
 }
 
-/* here is code of animated border */
 .form:focus-within:before {
     transform: scale(1);
 }
 
-/* styling of close button */
-/* == you can click the close button to remove text == */
 .reset {
     border: none;
     background: none;
@@ -119,38 +94,32 @@ input:focus {
     visibility: hidden;
 }
 
-/* close button shown when typing */
 input:not(:placeholder-shown)~.reset {
     opacity: 1;
     visibility: visible;
 }
 
-/* sizing svg icons */
 .form svg {
     width: 17px;
     margin-top: 3px;
 }
 
+/* =========================================
+   3. LAYOUT & CONTAINERS
+   ========================================= */
 .main-container {
     display: flex;
-    /* The magic wand */
     flex-direction: row;
-    /* Keeps them in a line */
     align-items: flex-start;
-    /* Aligns everything to the top */
     gap: 24px;
-    /* Spacing between the columns */
     padding: 20px;
     width: 98%;
     margin-top: 70px;
-    /* Space below fixed top navbar */
 }
 
 #navbar {
     width: 200px;
-    /* Fixed width for your nav */
     flex-shrink: 0;
-    /* Prevents the nav from getting squished */
     border: 3px solid black;
     padding: 15px;
     height: 80vh;
@@ -158,58 +127,50 @@ input:not(:placeholder-shown)~.reset {
 
 #listings {
     flex-grow: 1;
-    /* Tells listings to take up all available space */
     min-width: 0;
-    /* Prevents overflow bugs */
-}
-
-.action-area {
-    flex-shrink: 0;
-    /* Keeps the button area from shrinking */
-}
-
-#listings {
     display: flex;
     flex-wrap: wrap;
-    /* This makes listings wrap to the next line when out of room */
     gap: 18px;
 }
 
+/* =========================================
+   4. LISTING CARDS & IMAGE BOX
+   ========================================= */
 .listing-card {
     border: 1px solid black;
-
     padding: 15px;
     width: 18vw;
     min-width: 200px;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    background-color: white;
+}
+
+/* The specific box for the image */
+.listing-img-box {
+    width: 100%;
+    height: 150px; /* Fixed height so it doesn't take over the screen */
+    background-color: #f0f0f0;
+    margin-bottom: 10px;
+    overflow: hidden;
+    border: 1px solid #ddd;
+}
+
+.listing-img-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Ensures image fills the box without stretching */
+    display: block;
 }
 
 .listing-price-row {
     display: flex;
     justify-content: space-between;
-    /* Puts price on left, description on right */
     align-items: center;
-    /* Vertically centers them */
     margin-top: 10px;
 }
 
 .listing-price-row h2,
 .listing-price-row p {
     margin: 0;
-    /* Removes default browser spacing that ruins alignment */
-}
-
-.main-container {
-    display: flex;
-    /* The magic wand */
-    flex-direction: row;
-    /* Keeps them in a line */
-    align-items: flex-start;
-    /* Aligns everything to the top */
-    gap: 24px;
-    /* Spacing between the columns */
-    padding: 20px;
-    width: 98%;
 }
