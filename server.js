@@ -1011,10 +1011,6 @@ app.post('/loginauth', async (req, res) =>
     }
 });
 
-
-
-
-
 app.post('/getListings', async (req, res) =>
 {
     try
@@ -1034,7 +1030,7 @@ app.post('/getListings', async (req, res) =>
     }
 });
 
-app.post('/getuserdata', async (request, reply) =>
+app.post('/getuserdata', async (req, res) =>
 {
     try
     {
@@ -1045,15 +1041,13 @@ app.post('/getuserdata', async (request, reply) =>
         }
         if (result && result.success)
         {
-            res.send(result.userdata);
+            res.send(result);
         }
     } catch (err)
     {
         res.status(400).send(err.message);
     }
 });
-
-
 app.post('/getListing', async (req, res) =>
 {
     try

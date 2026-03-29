@@ -54,7 +54,7 @@
 </head>
 
 <body onload="main()">
-    
+
     <div id="navbar-container"></div>
 
     <div class="main-container">
@@ -94,45 +94,103 @@
         </div>
     </div>
 </body>
-
 <script>
-    let email = localStorage.getItem('email');
-    let password = localStorage.getItem('password');
-    let first_name = document.getElementById('first_name');
-    let last_name = document.getElementById('last_name');
-    let password1 = document.getElementById('password');
-    let location1 = document.getElementById('location');;
-    let age = document.getElementById('age');;
+    // 1. Give these unique names so they don't clash with the Input IDs
+    const savedEmail = localStorage.getItem('email');
+    const savedPassword = localStorage.getItem('password');
 
-    function main()
-    {
+    // 2. Get the actual Input Elements
+    const inputFirstName = document.getElementById('first_name');
+    const inputLastName = document.getElementById('last_name');
+    const inputEmail = document.getElementById('email');
+    const inputPassword = document.getElementById('password');
+    const inputLocation = document.getElementById('location');
+    const inputAge = document.getElementById('age');
+
+    function main() {
+        if (!savedEmail || !savedPassword) {
+            alert("Not logged in");
+            return;
+        }
+
         fetch(getServerBase() + "/getuserdata", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                email: email,
-                password: password
+                email: savedEmail,
+                password: savedPassword
             })
         })
             .then(res => res.json())
-            .then(data =>
-            {
-                email.value = data.email;
-                password1.value = data.password;
-                first_name.value = first_name;
-                last_name.value = last_name;
-                location1.value = data.location;
-                age.value = data.age;
+            .then(data => {
+                // 3. Check if we actually got data back
+                if (data.success && data.userdata && data.userdata.length > 0) {
+
+                    // 4. Access the FIRST row of the results array [0]
+                    const user = data.userdata[0];
+
+                    // 5. Assign the values from the DATABASE to the INPUTS
+                    inputFirstName.value = user.first_name || "";
+                    inputLastName.value = user.last_name || "";
+                    inputEmail.value = user.email || "";
+                    inputPassword.value = savedPassword; // Use the password from localStorage
+                    inputLocation.value = user.location || "";
+                    inputAge.value = user.age || "";
+                } else {
+                    console.error("User not found in database.");
+                }
             })
             .catch(err => console.error("Load Error:", err));
     }
 
-    function getServerBase()
-    {
-        const protocol = window.location.protocol; // 'http:' or 'https:'
-        const hostname = window.location.hostname;
-        const port = window.location.port ? ':' + window.location.port : '';
-        return `${protocol}//${hostname}${port}`;
+    function updateProfile(event) {
+        event.preventDefault();
+        inputFirstName = document.getElementById('first_name');
+        inputLastName = document.getElementById('last_name');
+        inputEmail = document.getElementById('email');
+        inputPassword = document.getElementById('password');
+        inputLocation = document.getElementById('location');
+        inputAge = document.getElementById('age');
+
+        fetch(getServerBase() + "/updateuserdata", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email: savedEmail,
+                password: savedPassword
+            })
+        })
+            .then(res => res.json())
+            .then(data => {
+                // 3. Check if we actually got data back
+                if (data.success && data.userdata && data.userdata.length > 0) {
+
+                    // 4. Access the FIRST row of the results array [0]
+                    const user = data.userdata[0];
+
+                    // 5. Assign the values from the DATABASE to the INPUTS
+                    inputFirstName.value = user.first_name || "";
+                    inputLastName.value = user.last_name || "";
+                    inputEmail.value = user.email || "";
+                    inputPassword.value = savedPassword; // Use the password from localStorage
+                    inputLocation.value = user.location || "";
+                    inputAge.value = user.age || "";
+                } else {
+                    console.error("User not found in database.");
+                }
+            })
+            .catch(err => console.error("Load Error:", err));
+
+    }
+
+    function getServerBase() {
+        return `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
+    }
+
+    // Basic logout function to clear data
+    function logout() {
+        localStorage.clear();
+        window.location.href = "/login";
     }
 </script>
 
