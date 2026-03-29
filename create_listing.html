@@ -59,7 +59,7 @@
                     oninput="updatePreview()">
             </div>
 
-            <button class="create-listing-btn" id="submit-button" onclick="createListing()">Submit Listing</button>
+            <button class="create-listing-btn" id="submit-button" onclick="createListing(1)">Submit Listing</button>
         </div>
 
         <div class="preview-container">
@@ -123,22 +123,25 @@
                     displayMyListingData()
                 })
         }
+    
         function displayMyListingData()
         {
+             document.getElementById('submit-button').onclick = () => createListing(0);
             document.getElementById('listing-name').value = myListing.title
             document.getElementById('listing-price').value = myListing.price
             document.getElementById('listing-description').value = myListing.description
             document.getElementById('listing-location').value = myListing.location
             document.getElementById('age').value = myListing.age
-            
+
             // Load images from server
-            if (myListing.image && myListing.image.length > 0) {
+            if (myListing.image && myListing.image.length > 0)
+            {
                 serverImages = myListing.image.map(img => img.file_path);
                 currentImageIndex = 0;
                 updateCarousel();
                 displayImageGallery();
             }
-            
+
             updatePreview();
         }
         function main()
@@ -243,7 +246,7 @@
         function updateCarousel()
         {
             const totalImages = selectedImages.length + serverImages.length;
-            
+
             if (totalImages === 0)
             {
                 document.getElementById('carouselImageDisplay').innerHTML = '';
@@ -254,15 +257,17 @@
             }
 
             let imageUrl;
-            if (currentImageIndex < selectedImages.length) {
+            if (currentImageIndex < selectedImages.length)
+            {
                 // Local file
                 imageUrl = URL.createObjectURL(selectedImages[currentImageIndex]);
-            } else {
+            } else
+            {
                 // Server image
                 const serverIndex = currentImageIndex - selectedImages.length;
                 imageUrl = getServerBase() + '/images/' + serverImages[serverIndex];
             }
-            
+
             document.getElementById('carouselImageDisplay').style.backgroundImage = `url(${imageUrl})`;
             document.getElementById('imageCounter').innerHTML = `${currentImageIndex + 1} / ${totalImages}`;
 
@@ -291,8 +296,9 @@
             }
         }
 
-        async function createListing()
+        async function createListing(is_new)
         {
+
             // 1. Get references to the input elements
             const listingName = document.getElementById('listing-name');
             const listingPrice = document.getElementById('listing-price');
@@ -340,9 +346,12 @@
             {
                 // 6. Send the single POST request to the backend
                 // Note: Do NOT set Content-Type header; fetch will set it automatically for FormData
+              
                 const response = await fetch(getServerBase() + "/upload-listing", {
                     method: 'POST',
-                    body: formData
+                    body: formData,
+                    is_new: is_new,
+                    listingId:listingId,
                 });
 
                 const data = await response.json();

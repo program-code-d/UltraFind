@@ -176,6 +176,7 @@
 
                 function startChatWithFriend(friendid, friendfirst, friendlast) {
                     currentChatFriendId = friendid;
+                    currentListingId = null;
                     const display = document.getElementById('messages-display');
                     display.innerHTML = `<div class="chat-header">Chatting with ${friendfirst} ${friendlast}</div>`;
 
@@ -256,7 +257,16 @@
                     }
 
                     let api;
-                    let payload; // Use a local variable name that isn't 'body' to avoid confusion
+                    let payload;
+                    document.getElementById('messageInput').value = ""; // Clear immediately
+
+                    // Add to UI immediately (Optimistic UI)
+                    const display = document.getElementById('messages-display');
+                    const msgDiv = document.createElement('div');
+                    msgDiv.className = 'message sent';
+                    msgDiv.innerHTML = `<p>${message}</p><span class="time-right">Just now</span>`;
+                    display.appendChild(msgDiv);
+                    display.scrollTop = display.scrollHeight; // Use a local variable name that isn't 'body' to avoid confusion
 
                     if (currentListingId !== null) {
                         // Work/Listing Chat
@@ -286,24 +296,6 @@
                         .then(res => res.json())
                         .then(data => {
                             if (data.success) {
-                                document.getElementById('messageInput').value = "";
-                                const display = document.getElementById('messages-display');
-
-                                // UI Update
-                                const msgDiv = document.createElement('div');
-                                msgDiv.className = 'message sent';
-
-                                const p = document.createElement('p');
-                                p.textContent = message;
-
-                                const span = document.createElement('span');
-                                span.className = 'time-right';
-                                span.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-                                msgDiv.appendChild(p);
-                                msgDiv.appendChild(span);
-                                display.appendChild(msgDiv);
-                                display.scrollTop = display.scrollHeight;
                             } else {
                                 console.error("Server returned success: false", data);
                             }

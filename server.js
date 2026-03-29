@@ -172,7 +172,7 @@ async function login(user)
     }
 }
 
-async function createListing(body, mediaFiles)
+async function createListing(body, mediaFiles, is_new, listingId)
 {
     let conn;
     try
@@ -187,30 +187,83 @@ async function createListing(body, mediaFiles)
 
         if (userRows.length > 0)
         {
-            const userId = userRows[0].id;
-            const price = Number(body.pay) || 0;
-            const age = Number(body.age) || 0;
-
-            const insertQuery = "INSERT INTO Listings (user_id, title, description, price, location, age, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)";
-            const res = await conn.query(insertQuery, [userId, body.name, body.description, price, body.location, age, true]);
-            const newListingId = res.insertId;
-
-            // Handle the media files (images or videos)
-            if (mediaFiles && mediaFiles.length > 0)
+            if (is_new == 1)
             {
-                for (const file of mediaFiles)
+                const userId = userRows[0].id;
+                const price = Number(body.pay) || 0;
+                const age = Number(body.age) || 0;
+
+                const insertQuery = "INSERT INTO Listings (user_id, title, description, price, location, age, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)";
+                const res = await conn.query(insertQuery, [userId, body.name, body.description, price, body.location, age, true]);
+                const newListingId = res.insertId;
+
+                // Handle the media files (images or videos)
+                if (mediaFiles && mediaFiles.length > 0)
                 {
-                    await conn.query(
-                        "INSERT INTO ListingMedia (listing_id, file_path, media_type) VALUES (?, ?, ?)",
-                        [newListingId, file.name, file.type]
-                    );
+                    for (const file of mediaFiles)
+                    {
+                        await conn.query(
+                            "INSERT INTO ListingMedia (listing_id, file_path, media_type) VALUES (?, ?, ?)",
+                            [newListingId, file.name, file.type]
+                        );
+                    }
+                }
+
+                return { success: true, redirect: "/home", listingId: newListingId };
+            }
+            else 
+            {
+                const userId = userRows[0].id;
+                const owner_id = await conn.query("SELECT user_id FROM listings WHERE id = ?", [listingId]);
+                if (owner_id == userId)
+                {
+                    const price = Number(body.pay) || 0;
+                    const age = Number(body.age) || 0;
+
+                    const insertQuery = "UPDATE Listings SET user_id = ?, title = ?, description = ?, price = ?, location = ?, age = ?, is_active = ? WHERE id = ?;"
+                    await conn.query(insertQuery, [userId, body.name, body.description, price, body.location, age, true, listingId]);
+
+
+                    // Handle the media files (images or videos)
+                    if (mediaFiles && mediaFiles.length > 0)
+                    {
+                        const slectQuery = "SELECT listing_id,file_path, FROM ListingMedia WHERE listing_id = ?;"
+                        const res = await conn.query(slectQuery, [listingId]);
+                        for (let i = 0; i < res.length; i++)
+                        {
+                            try {
+                                const filePath = path.join(__dirname, 'images', res[i].file_path);
+                                await fs.promises.unlink(filePath);
+                            } catch (err) {
+                                console.error(`Error deleting file ${res[i].file_path}:`, err);
+                            }
+                        }
+                        const deletQuery = "DELETE FROM ListingMedia WHERE listing_id = ?;"
+                        await conn.query(deletQuery, [listingId]);
+
+                        for (const file of mediaFiles)
+                        {
+
+
+                            await conn.query(
+                                "INSERT INTO ListingMedia (listing_id, file_path, media_type) VALUES (?, ?, ?)",
+                                [newListingId, file.name, file.type]
+                            );
+                        }
+                    }
+
+                    return { success: true, redirect: "/home", listingId: newListingId };
+                }
+                else
+                {
+                    return { success: false, message: "failed" };
                 }
             }
-            return { success: true, redirect: "/home", listingId: newListingId };
         } else
         {
             return { success: false, message: "failed" };
         }
+
     } catch (err)
     {
         console.error("DATABASE ERROR:", err);
@@ -258,9 +311,9 @@ async function getListing(body)
         const userId = userRows[0].id;
         const listing = "SELECT id,title,description,age,location,price FROM Listings WHERE id = ? AND user_id = ?;";
         const res = await conn.query(listing, [body.listingId, userId]);
-        const image = "SELECT file_path FROM ListingsMedia WHERE listing_id = ?;";
+        const image = "SELECT file_path FROM ListingMedia WHERE listing_id = ?;";
         const imageRes = await conn.query(image, [body.listingId]);
-        res[0].image=imageRes
+        res[0].image = imageRes
         return { success: true, listing: res[0], userExist: true };
     } catch (err)
     {
@@ -392,17 +445,37 @@ async function sendMessage(body)
         conn = await pool.getConnection();
         let saltResult = await conn.query("SELECT salt FROM Users WHERE email = ?", [body.email]);
         const hashedPassword = hashPassword(body.password + saltResult[0].salt);
-        const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
-        const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
-        const selectQuery = "SELECT user_id FROM Listings WHERE id = ?;";
-        const res = await conn.query(selectQuery, [body.listing_id]);
-        const recieverId = res[0].user_id;
-        const insertQuery = "INSERT INTO listingMessages (sender_id,receiver_id,listing_id,message_text) VALUES (?,?,?,?)";
-        await conn.query(insertQuery, [userRows[0].id, recieverId, body.listing_id, body.message]);
-        return { success: true, messages: res };
+        const userRows = await conn.query("SELECT id FROM Users WHERE email = ? AND password = ?;", [body.email, hashedPassword]);
+        const myId = userRows[0].id;
+
+        // 1. Find the owner of the listing
+        const listingRes = await conn.query("SELECT user_id FROM Listings WHERE id = ?;", [body.listing_id]);
+        const ownerId = listingRes[0].user_id;
+
+        let receiverId;
+
+        if (myId === ownerId)
+        {
+            // 2. If I am the OWNER, send to the person who messaged me
+            // We look for the most recent message on this listing that wasn't from me
+            const lastMsg = await conn.query(
+                "SELECT sender_id FROM listingMessages WHERE listing_id = ? AND sender_id != ? ORDER BY created_at DESC LIMIT 1",
+                [body.listing_id, myId]
+            );
+            receiverId = lastMsg.length > 0 ? lastMsg[0].sender_id : myId;
+        } else
+        {
+            // 3. If I am the BUYER, send to the owner
+            receiverId = ownerId;
+        }
+
+        const insertQuery = "INSERT INTO listingMessages (sender_id, receiver_id, listing_id, message_text) VALUES (?,?,?,?)";
+        await conn.query(insertQuery, [myId, receiverId, body.listing_id, body.message]);
+        return { success: true };
     } catch (err)
     {
-        return { success: false, userExist: false };
+        console.error(err);
+        return { success: false };
     } finally
     {
         if (conn) conn.release();
@@ -1207,7 +1280,7 @@ app.post('/upload-listing', async (req, res) =>
         const mediaFiles = await Promise.all(processingTasks);
 
         // Database logic
-        const result = await createListing(body, mediaFiles);
+        const result = await createListing(body, mediaFiles, req.is_new);
         if (result && result.userExist === false)
         {
             return res.send({ message: "failed" });
