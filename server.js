@@ -149,7 +149,7 @@ async function login(user) {
     }
 }
 
-async function createListing(body, mediaFiles, is_new, listingId) {
+async function createListing(body, mediaFiles = [], is_new = null, listingId = null) {
     let conn;
     try {
         conn = await pool.getConnection();
@@ -159,6 +159,8 @@ async function createListing(body, mediaFiles, is_new, listingId) {
         const salt = String(saltResult[0].salt);
         const hashedPassword = hashPassword(body.password + salt);
         const userRows = await conn.query("SELECT id FROM Users WHERE email = ? AND password = ?", [body.email, hashedPassword]);
+        is_new = Number(is_new ?? body.is_new);
+        listingId = Number(listingId ?? body.listingId);
 
         if (userRows.length > 0) {
             if (is_new == 1) {
@@ -185,7 +187,7 @@ async function createListing(body, mediaFiles, is_new, listingId) {
             else {
                 const userId = userRows[0].id;
                 const owner_id = await conn.query("SELECT user_id FROM listings WHERE id = ?", [listingId]);
-                if (owner_id == userId) {
+                if (owner_id[0].user_id == userId) {
                     const price = Number(body.pay) || 0;
                     const age = Number(body.age) || 0;
 
@@ -213,12 +215,12 @@ async function createListing(body, mediaFiles, is_new, listingId) {
 
                             await conn.query(
                                 "INSERT INTO ListingMedia (listing_id, file_path, media_type) VALUES (?, ?, ?)",
-                                [newListingId, file.name, file.type]
+                                [listingId, file.name, file.type]
                             );
                         }
                     }
 
-                    return { success: true, redirect: "/home", listingId: newListingId };
+                    return { success: true, redirect: "/home", listingId: listingId };
                 }
                 else {
                     return { success: false, message: "failed" };
@@ -1159,7 +1161,7 @@ app.post('/upload-listing', async (req, res) => {
         const mediaFiles = await Promise.all(processingTasks);
 
         // Database logic
-        const result = await createListing(body, mediaFiles, req.is_new);
+        const result = await createListing(body, mediaFiles, body.is_new, body.listingId);
         if (result && result.userExist === false) {
             return res.send({ message: "failed" });
         }

@@ -347,11 +347,12 @@
                 // 6. Send the single POST request to the backend
                 // Note: Do NOT set Content-Type header; fetch will set it automatically for FormData
               
+                formData.append('is_new', is_new);
+                formData.append('listingId', listingId);
+
                 const response = await fetch(getServerBase() + "/upload-listing", {
                     method: 'POST',
                     body: formData,
-                    is_new: is_new,
-                    listingId:listingId,
                 });
 
                 const data = await response.json();
