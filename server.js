@@ -157,18 +157,18 @@ async function createListing(body, mediaFiles = [], is_new = null, listingId = n
         const salt = String(saltResult[0].salt);
         const hashedPassword = hashPassword(body.password + salt);
         const userRows = await conn.query("SELECT id FROM Users WHERE email = ? AND password = ?", [body.email, hashedPassword]);
-        is_new = Number(is_new ?? body.is_new);
+        const isNewFlag = Number(is_new);
         listingId = Number(listingId ?? body.listingId);
 
         if (userRows.length > 0) {
-            if (is_new == 1) {
+            if (isNewFlag === 1) {
                 const userId = userRows[0].id;
                 const price = Number(body.pay) || 0;
                 const age = Number(body.age) || 0;
 
                 const insertQuery = "INSERT INTO Listings (user_id, title, description, price, location, age, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)";
                 const res = await conn.query(insertQuery, [userId, body.name, body.description, price, body.location, age, true]);
-                const newListingId = res.insertId;
+                const newListingId = Number(res.insertId); // FIX: Convert BigInt to Number
 
                 // Handle the media files (images or videos)
                 if (mediaFiles && mediaFiles.length > 0) {
@@ -184,8 +184,8 @@ async function createListing(body, mediaFiles = [], is_new = null, listingId = n
             }
             else {
                 const userId = userRows[0].id;
-                const owner_id = await conn.query("SELECT user_id FROM listings WHERE id = ?", [listingId]);
-                if (owner_id[0].user_id == userId) {
+                const owner_id = await conn.query("SELECT user_id FROM Listings WHERE id = ?", [listingId]);
+                if (owner_id.length > 0 && owner_id[0].user_id == userId) {
                     const price = Number(body.pay) || 0;
                     const age = Number(body.age) || 0;
 
@@ -195,12 +195,12 @@ async function createListing(body, mediaFiles = [], is_new = null, listingId = n
 
                     // Handle the media files (images or videos)
                     if (mediaFiles && mediaFiles.length > 0) {
-                        const slectQuery = "SELECT listing_id,file_path, FROM ListingMedia WHERE listing_id = ?;"
-                        const res = await conn.query(slectQuery, [listingId]);
+                        const selectQuery = "SELECT listing_id, file_path FROM ListingMedia WHERE listing_id = ?;"
+                        const res = await conn.query(selectQuery, [listingId]);
                         for (let i = 0; i < res.length; i++) {
                             try {
                                 const filePath = path.join(__dirname, 'images', res[i].file_path);
-                                await fs.promises.unlink(filePath);
+                                if (fs.existsSync(filePath)) await fs.promises.unlink(filePath);
                             } catch (err) {
                                 console.error(`Error deleting file ${res[i].file_path}:`, err);
                             }
@@ -1128,16 +1128,23 @@ app.post('/upload-listing', async (req, res) => {
     const processingTasks = [];
 
     try {
+        const imagesDir = path.join(__dirname, 'images');
+        if (!fs.existsSync(imagesDir)) {
+            fs.mkdirSync(imagesDir, { recursive: true });
+        }
+
         for await (const part of parts) {
             if (part.file) {
                 const timestamp = Date.now();
-                // We keep the original extension (like .mp4 or .jpg)
-                const extension = path.extname(part.filename);
-                const uniqueName = `${timestamp}-${Math.random().toString(36).substring(7)}${extension}`;
+                const originalExt = path.extname(part.filename);
+                const isImage = part.mimetype.startsWith('image/');
+                const finalExt = isImage ? '.webp' : originalExt;
+                const uniqueBase = `${timestamp}-${Math.random().toString(36).substring(7)}`;
+                const uniqueName = uniqueBase + finalExt;
 
                 // Paths for the C++ file to use
-                const tempPath = path.join(__dirname, 'images', 'temp-' + uniqueName);
-                const finalPath = path.join(__dirname, 'images', uniqueName);
+                const tempPath = path.join(imagesDir, 'temp-' + uniqueBase + originalExt);
+                const finalPath = path.join(imagesDir, uniqueName);
 
                 // 1. Save the incoming stream to a temporary file first
                 await pipeline(part.file, fs.createWriteStream(tempPath));
@@ -1147,6 +1154,10 @@ app.post('/upload-listing', async (req, res) => {
                     return new Promise((resolve, reject) => {
                         // This calls your C++ file directly
                         const exePath = path.join(__dirname, 'compressor.exe');
+                        if (!fs.existsSync(exePath)) {
+                            return reject(new Error("compressor.exe not found at " + exePath));
+                        }
+
                         const compressor = spawn(exePath, [tempPath, finalPath]);
 
                         compressor.on('error', (err) => {
@@ -1158,7 +1169,7 @@ app.post('/upload-listing', async (req, res) => {
                             if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
 
                             if (code === 0) {
-                                const type = part.mimetype.startsWith('video/') ? 'video' : 'image';
+                                const type = isImage ? 'image' : 'video';
                                 resolve({ name: uniqueName, type: type });
                             } else {
                                 reject(new Error(`C++ Compressor failed with exit code ${code}`));
@@ -1177,8 +1188,8 @@ app.post('/upload-listing', async (req, res) => {
         const mediaFiles = await Promise.all(processingTasks);
 
         // 4. Send the data to your existing database function
-        // Note: Check if your frontend sends 'edit' as a field to determine is_new
-        const is_new = body.listingId ? 0 : 1;
+        // Prioritize explicit is_new from frontend, otherwise infer from valid listingId
+        const is_new = body.is_new ?? (body.listingId && body.listingId !== 'null' && body.listingId !== 'undefined' && body.listingId !== '' ? 0 : 1);
         const result = await createListing(body, mediaFiles, is_new, body.listingId);
 
         if (result && result.success) {
