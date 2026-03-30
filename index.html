@@ -49,23 +49,29 @@
 
 
     function draw_listings() {
-        let listings_div = ``
-        let l = 0
+        let listings_div = ``;
+        let l = 0;
 
         while (l < listings.length) {
+            // Use the thumbnail from the database, or a placeholder if empty
+            let imgSrc = listings[l].thumbnail ? `/images/${listings[l].thumbnail}` : 'placeholder.jpg';
+
             listings_div += `
-               <div onclick="goToInfoListing(${listings[l].id})" id="${l}" class="listing-card">
-                  <div style="text-align: center;"><h1>${listings[l].title}</h1></div>
-                    <div style="display: flex; align-items: baseline; gap: 10px; justify-content: center;">
-                    <h2 style="margin: 0;">$${listings[l].price}</h2>
-                   <p style="margin: 0;">${listings[l].description}</p>
-                  </div>
+            <div onclick="goToInfoListing(${listings[l].id})" id="${l}" class="listing-card">
+                <div class="listing-img-box">
+                    <img src="${imgSrc}" loading="lazy">
                 </div>
-`
-            l++
+                <div style="text-align: center;"><h1>${listings[l].title}</h1></div>
+                <div class="listing-price-row">
+                    <h2>$${listings[l].price}</h2>
+                    <p>${listings[l].description}</p>
+                </div>
+            </div>
+        `;
+            l++;
         }
 
-        document.getElementById("listings").innerHTML = listings_div
+        document.getElementById("listings").innerHTML = listings_div;
     }
 
     function goToInfoListing(id) {
@@ -83,9 +89,12 @@
         })
             .then(response => response.json())
             .then((data) => {
+                // data is now the array of listings including thumbnails
                 listings = data;
-                draw_listings()
+                // We call draw_listings() which uses the new .thumbnail property
+                draw_listings();
             })
+            .catch(err => console.error("Search failed:", err));
     }
 
     function injectNavbar() {
