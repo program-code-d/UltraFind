@@ -627,7 +627,7 @@ async function getworkmessages(body) {
             SELECT message_text, sender_id, created_at 
             FROM listingMessages 
             WHERE listing_id = ? 
-              AND (sender_id = ? OR receiver_id = ?)
+            AND (sender_id = ? OR receiver_id = ?)
             ORDER BY created_at ASC`;
 
         const dbRows = await conn.query(query, [body.listing_id, myId, myId]);
