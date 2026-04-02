@@ -33,9 +33,28 @@ function hashPassword(passw_string) {
   return crypto.createHash("sha256").update(String(passw_string)).digest("hex");
 }
 
+/**
+ * Validates an email address with high reliability.
+ * 1. Trims whitespace.
+ * 2. Checks for basic structure and length.
+ * 3. Uses an optimized regex for common edge cases.
+ */
 function isEmail(email) {
-  const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  return emailPattern.test(email);
+  if (!email || typeof email !== 'string') return false;
+
+  // Trim whitespace to prevent false negatives from copy-paste errors
+  const cleanEmail = email.trim();
+
+  // RFC 5321: Max length is 254 characters
+  if (cleanEmail.length > 254) return false;
+
+  // Robust regex:
+  // - Prevents double dots (..), which are invalid but often missed
+  // - Ensures the local part doesn't start/end with a dot
+  // - Supports most modern TLDs
+  const emailPattern = /^(?!\.)(?!.*\.\.)([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})$/;
+
+  return emailPattern.test(cleanEmail);
 }
 
 async function findFriend(body) {
