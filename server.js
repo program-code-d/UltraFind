@@ -6,6 +6,7 @@ const crypto = require("crypto");
 const mariadb = require('mariadb');
 const path = require('path');
 const fs = require('fs');
+const jwt = require('jsonwebtoken');
 const { pipeline } = require('stream/promises');
 const { spawn } = require('child_process'); 
 
@@ -971,7 +972,7 @@ app.post('/loginauth', async (req, res) => {
             return res.send({ message: "failed" });
         }
         if (result && result.success) {
-            return res.send({ success: true, redirect: "/home" });
+            return res.send({ success: true,token:result.token , redirect: "/home" });
         }
     } catch (err) {
         res.status(400).send(err.message);
