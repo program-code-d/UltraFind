@@ -1,189 +1,145 @@
+/* Base Styles & Reset */
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #f0f2f5; /* FB Neutral background */
+    color: #050505;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.34;
+}
+
 .listing-container {
-    max-width: 1000px;
-    margin: 20px auto;
-    font-family: 'Segoe UI', sans-serif;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    padding: 20px;
-    background-color: #f8f9fa;
+    gap: 16px;
 }
 
 /* Header Section */
 .top-info {
     display: flex;
-    align-items: center;
-    gap: 20px;
+    align-items: flex-start;
+    gap: 16px;
+    background: white;
+    padding: 16px;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .top-info .close-btn {
-    background: none;
+    background: #e4e6eb;
     border: none;
-    font-size: 2.5rem;
-    color: #333;
+    font-size: 24px;
+    color: #050505;
     cursor: pointer;
-    padding: 0;
-    min-width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: transform 0.2s;
+    transition: background 0.2s;
+    padding: 0;
+    margin-right: 8px;
 }
 
 .top-info .close-btn:hover {
-    transform: scale(1.2);
-    color: #f31b1b;
+    background: #d8dadf;
+    transform: none; /* Removed "vibe" scale animation */
 }
 
 .title-section {
     flex: 1;
-    text-align: right;
 }
 
 .title-section h1 {
-    margin: 0;
-    padding: 0;
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 0 4px 0;
 }
 
 .title-section h3 {
-    margin: 5px 0 0 0;
-    padding: 0;
+    font-size: 15px;
+    font-weight: normal;
+    color: #65676b;
+    margin: 0;
 }
 
-/* The "Meat" of the layout: Image + Sidebar */
+/* Layout: Image Left, Sidebar Right */
 .main-content {
-    display: flex;
-    flex-direction: row; /* Side by side */
-    gap: 20px;
+    display: grid;
+    grid-template-columns: 1fr 360px; /* Standard FB Marketplace ratio */
+    gap: 16px;
+    align-items: start;
 }
 
-.image {
-    flex: 2; /* Takes up more space */
-    background: #ccc;
-    border-radius: 12px;
-    min-height: 400px;
+/* Image Section */
+.image-section {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
+.carousel-container img {
+    display: block;
+    width: 100%;
+    object-fit: contain;
+    background-color: #000; /* Letterbox effect for different aspect ratios */
+}
+
+.carousel-btn {
+    transition: opacity 0.2s;
+    opacity: 0.8;
+}
+
+.carousel-btn:hover {
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.8) !important;
+}
+
+/* Sidebar Styling */
 .Age-pay-location {
-    flex: 1; /* Sidebar style */
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 16px;
+    position: sticky; /* Keep price/message visible */
+    top: 20px;
 }
 
-.Age-pay-location h1 { font-size: 1.5rem; margin-bottom: 5px; }
-.Age-pay-location h3 { font-size: 0.9rem; color: #666; margin-top: -10px; margin-bottom: 10px; }
-
-/* Sidebar Cards */
-.price, .age, .location-map, .seller-info {
+.price, .age, .location-map, .message, .Description-repeats {
     background: white;
-    padding: 15px;
-    border-radius: 12px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    padding: 16px;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .price {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #3b82f6; /* Blue like the screeny */
+    font-size: 28px;
+    font-weight: 700;
+    color: #050505;
 }
 
-/* Bottom Sections */
-.Description-repeats {
-    background: white;
-    padding: 20px;
-    border-radius: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+.age {
+    font-size: 15px;
+    font-weight: 600;
+    color: #65676b;
 }
 
-.repeats {
-    font-weight: bold;
-    color: #444;
-}
-.message{
-     background: white;
-    padding: 15px;
-    border-radius: 12px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-}
-/* Responsive: Stack everything on mobile */
-@media (max-width: 768px) {
-    .main-content {
-        flex-direction: column;
-    }
-}button {
-  font-family: inherit;
-  font-size: 20px;
-  background: rgb(8, 97, 242);
-  color: white;
-  padding: 0.7em 1em;
-  padding-left: 10em;
-  display: flex;
-  align-items: center;
-  border: none;
-  border-radius: 16px;
-  overflow: hidden;
-  transition: all 0.2s;
-  cursor: pointer;
+.location-map strong {
+    display: block;
+    font-size: 17px;
+    margin-bottom: 12px;
 }
 
-button span {
-  display: block;
-  margin-left: 0.3em;
-  transition: all 0.3s ease-in-out;
-}
-
-button svg {
-  display: block;
-  transform-origin: center center;
-  transition: transform 0.3s ease-in-out;
-}
-
-button:hover .svg-wrapper {
-  animation: fly-1 0.6s ease-in-out infinite alternate;
-}
-
-button:hover svg {
-  transform: translateX(1.2em) rotate(45deg) scale(1.1);
-}
-
-button:hover span {
-  transform: translateX(5em);
-}
-
-button:active {
-  transform: scale(0.95);
-}
-
-@keyframes fly-1 {
-  from {
-    transform: translateY(0.1em);
-  }
-
-  to {
-    transform: translateY(-0.1em);
-  }
-}
-/* The Message Sidebar Card */
-.message {
-    background: white;
-    padding: 15px;
-    border-radius: 12px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-/* FB Input Pill */
+/* Messenger-style Input Area */
 .fb-message-box {
     background-color: #f0f2f5;
     border-radius: 20px;
-    padding: 10px 16px;
-    border: 1px solid #dddfe2;
+    padding: 8px 12px;
+    margin-bottom: 12px;
 }
 
 .fb-textarea {
@@ -194,42 +150,91 @@ button:active {
     font-family: inherit;
     font-size: 15px;
     resize: none;
-    overflow: hidden;
+    color: #050505;
 }
 
-/* Modern Send Button */
+/* Professional Buttons */
 .send-btn {
     width: 100%;
-    background: #0861f2;
+    background-color: #1877f2;
     color: white;
-    padding: 12px;
+    padding: 10px;
     border: none;
-    border-radius: 10px;
-    display: flex;
-    justify-content: center; /* Centers everything */
-    align-items: center;
-    cursor: pointer;
+    border-radius: 6px;
+    font-size: 15px;
     font-weight: 600;
-    transition: all 0.2s;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: filter 0.2s;
 }
 
-.send-btn .svg-wrapper {
-    transition: transform 0.3s ease;
-}
-
-.send-btn span {
-    margin-left: 8px;
-}
-
-/* Hover Animation: Tilt the plane and darken button */
 .send-btn:hover {
-    background: #0756d6;
-}
-
-.send-btn:hover .svg-wrapper {
-    transform: translateX(3px) rotate(-15deg);
+    filter: brightness(0.9);
 }
 
 .send-btn:active {
-    transform: scale(0.97);
+    transform: scale(0.98);
+}
+
+/* Generic button override (fixing the 10em padding from previous code) */
+button {
+    font-family: inherit;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+/* Description Section */
+.Description-repeats {
+    grid-column: 1; /* Stays under the image */
+}
+
+.description strong {
+    display: block;
+    font-size: 17px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #65676b;
+}
+
+.description {
+    font-size: 15px;
+    color: #050505;
+    white-space: pre-wrap; /* Maintains line breaks from data */
+}
+
+/* Map Placeholder Styling */
+.location-map div {
+    border: 1px solid #dddfe2;
+    color: #65676b;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 900px) {
+    .main-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .Age-pay-location {
+        position: static;
+    }
+
+    .Description-repeats {
+        grid-column: auto;
+        order: 3;
+    }
+    
+    .top-info {
+        flex-direction: row;
+        text-align: left;
+    }
+    
+    .title-section {
+        text-align: left;
+    }
 }
