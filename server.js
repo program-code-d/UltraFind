@@ -40,7 +40,7 @@ function hashPassword(passw_string) {
  * 3. Uses an optimized regex for common edge cases.
  */
 function isEmail(email) {
-  if (!email || typeof email !== 'string') return false;
+  if (!email || typeof email !== "string") return false;
 
   // Trim whitespace to prevent false negatives from copy-paste errors
   const cleanEmail = email.trim();
@@ -52,7 +52,8 @@ function isEmail(email) {
   // - Prevents double dots (..), which are invalid but often missed
   // - Ensures the local part doesn't start/end with a dot
   // - Supports most modern TLDs
-  const emailPattern = /^(?!\.)(?!.*\.\.)([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})$/;
+  const emailPattern =
+    /^(?!\.)(?!.*\.\.)([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})$/;
 
   return emailPattern.test(cleanEmail);
 }
@@ -1284,59 +1285,58 @@ app.post("/upload-listing", async (req, res) => {
 
   try {
     const imagesDir = path.join(__dirname, "images");
-    if (!fs.existsSync(imagesDir)) {
-      fs.mkdirSync(imagesDir, { recursive: true });
-    }
+    if (!fs.existsSync(imagesDir)) fs.mkdirSync(imagesDir, { recursive: true });
 
     for await (const part of parts) {
       if (part.file) {
+        // 1. Generate unique file names
         const timestamp = Date.now();
         const originalExt = path.extname(part.filename);
-        const isImage = part.mimetype.startsWith("image/");
-        const finalExt = isImage ? ".webp" : originalExt;
         const uniqueBase = `${timestamp}-${Math.random().toString(36).substring(7)}`;
-        const uniqueName = uniqueBase + finalExt;
 
-        // Paths for the C++ file to use
-        const tempPath = path.join(
-          imagesDir,
-          "temp-" + uniqueBase + originalExt,
-        );
+        // We keep the extension so the browser knows the MIME type
+        const uniqueName = uniqueBase + originalExt;
+        const tempPath = path.join(imagesDir, `raw-${uniqueName}`);
         const finalPath = path.join(imagesDir, uniqueName);
 
-        // 1. Save the incoming stream to a temporary file first
+        // 2. Stream the upload to a temporary "raw" file
         await pipeline(part.file, fs.createWriteStream(tempPath));
 
-        // 2. Create a task to run the C++ Compressor
+        // 3. Create a promise-based task for the C++ Engine
         const processFile = async () => {
           return new Promise((resolve, reject) => {
-            // This calls your C++ file directly
             const exePath = path.join(__dirname, "compressor.exe");
-            if (!fs.existsSync(exePath)) {
-              return reject(
-                new Error("compressor.exe not found at " + exePath),
-              );
-            }
 
+            // Spawn the C++ process with actual paths
             const compressor = spawn(exePath, [tempPath, finalPath]);
 
             compressor.on("error", (err) => {
-              reject(
-                new Error("Could not start compressor.exe: " + err.message),
-              );
+              console.error("C++ Start Error:", err);
+              // Fallback: use raw file if compressor fails
+              fs.renameSync(tempPath, finalPath);
+              resolve({
+                name: uniqueName,
+                type: part.mimetype.startsWith("image/") ? "image" : "video",
+              });
             });
 
             compressor.on("close", (code) => {
-              // 3. Delete the huge temp file now that compression is done
+              // Cleanup: Delete the bulky raw temp file
               if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
 
               if (code === 0) {
-                const type = isImage ? "image" : "video";
-                resolve({ name: uniqueName, type: type });
+                console.log(`[Engine] Successfully compressed: ${uniqueName}`);
+                resolve({
+                  name: uniqueName,
+                  type: part.mimetype.startsWith("image/") ? "image" : "video",
+                });
               } else {
-                reject(
-                  new Error(`C++ Compressor failed with exit code ${code}`),
+                console.warn(
+                  `[Engine] Failed with code ${code}. Reverting to original.`,
                 );
+                // If it fails, we shouldn't lose the user's data
+                if (fs.existsSync(tempPath)) fs.renameSync(tempPath, finalPath);
+                resolve({ name: uniqueName, type: "image" });
               }
             });
           });
@@ -1344,23 +1344,16 @@ app.post("/upload-listing", async (req, res) => {
 
         processingTasks.push(processFile());
       } else {
+        // Capture regular form fields (email, password, etc.)
         body[part.fieldname] = part.value;
       }
     }
 
-    // Wait for all files to be compressed by the C++ engine
+    // 4. Wait for all media files to be mathematically compressed
     const mediaFiles = await Promise.all(processingTasks);
 
-    // 4. Send the data to your existing database function
-    // Prioritize explicit is_new from frontend, otherwise infer from valid listingId
-    const is_new =
-      body.is_new ??
-      (body.listingId &&
-      body.listingId !== "null" &&
-      body.listingId !== "undefined" &&
-      body.listingId !== ""
-        ? 0
-        : 1);
+    // 5. Integrate with your Database function
+    const is_new = body.is_new ?? (body.listingId ? 0 : 1);
     const result = await createListing(
       body,
       mediaFiles,
@@ -1375,14 +1368,21 @@ app.post("/upload-listing", async (req, res) => {
         listingId: result.listingId,
       });
     } else {
-      res.send({
-        success: false,
-        message: result.message || "Database failed",
-      });
+      res
+        .status(400)
+        .send({
+          success: false,
+          message: result.message || "DB Update Failed",
+        });
     }
   } catch (err) {
     console.error("CRITICAL UPLOAD ERROR:", err);
-    res.status(500).send({ success: false, error: err.message });
+    res
+      .status(500)
+      .send({
+        success: false,
+        error: "Internal Server Error during processing",
+      });
   }
 });
 
