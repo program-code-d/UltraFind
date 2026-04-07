@@ -1024,7 +1024,6 @@ app.get("/home", (req, res) => {
 app.get("/login", (req, res) => {
   res.sendFile("login.html");
 });
-<<<<<<< HEAD
 app.get("/calender", (req, res) =>
 {
     res.sendFile("calender.html");
@@ -1032,10 +1031,6 @@ app.get("/calender", (req, res) =>
 app.get("/signup", (req, res) =>
 {
     res.sendFile("login.html");
-=======
-app.get("/signup", (req, res) => {
-  res.sendFile("login.html");
->>>>>>> f9fb5facf5eaeb33a343850f447c7e6db4c14aba
 });
 
 // PoST Routes
@@ -1299,16 +1294,20 @@ app.post("/switchFile", async (req, res) => {
   }
 });
 
-app.post("/upload-listing", async (req, res) => {
-  const parts = req.parts();
-  const body = {};
-  const processingTasks = [];
+app.post("/upload-listing", async (req, res) =>
+{
+    const parts = req.parts();
+    const body = {};
+    const processingTasks = [];
 
-  try {
-    const imagesDir = path.join(__dirname, "images");
-    if (!fs.existsSync(imagesDir)) fs.mkdirSync(imagesDir, { recursive: true });
+    try
+    {
+        const imagesDir = path.join(__dirname, "images");
+        if (!fs.existsSync(imagesDir))
+        {
+            fs.mkdirSync(imagesDir, { recursive: true });
+        }
 
-<<<<<<< HEAD
         for await (const part of parts)
         {
             if (part.filename)
@@ -1319,103 +1318,106 @@ app.post("/upload-listing", async (req, res) => {
                 const finalExt = isImage ? ".webp" : originalExt;
                 const uniqueBase = `${timestamp}-${Math.random().toString(36).substring(7)}`;
                 const uniqueName = uniqueBase + finalExt;
-=======
-    for await (const part of parts) {
-      if (part.file) {
-        // 1. Generate unique file names
-        const timestamp = Date.now();
-        const originalExt = path.extname(part.filename);
-        const uniqueBase = `${timestamp}-${Math.random().toString(36).substring(7)}`;
->>>>>>> f9fb5facf5eaeb33a343850f447c7e6db4c14aba
 
-        // We keep the extension so the browser knows the MIME type
-        const uniqueName = uniqueBase + originalExt;
-        const tempPath = path.join(imagesDir, `raw-${uniqueName}`);
-        const finalPath = path.join(imagesDir, uniqueName);
-
-        // 2. Stream the upload to a temporary "raw" file
-        await pipeline(part.file, fs.createWriteStream(tempPath));
-
-        // 3. Create a promise-based task for the C++ Engine
-        const processFile = async () => {
-          return new Promise((resolve, reject) => {
-            const exePath = path.join(__dirname, "compressor.exe");
-
-            // Spawn the C++ process with actual paths
-            const compressor = spawn(exePath, [tempPath, finalPath]);
-
-            compressor.on("error", (err) => {
-              console.error("C++ Start Error:", err);
-              // Fallback: use raw file if compressor fails
-              fs.renameSync(tempPath, finalPath);
-              resolve({
-                name: uniqueName,
-                type: part.mimetype.startsWith("image/") ? "image" : "video",
-              });
-            });
-
-            compressor.on("close", (code) => {
-              // Cleanup: Delete the bulky raw temp file
-              if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
-
-              if (code === 0) {
-                console.log(`[Engine] Successfully compressed: ${uniqueName}`);
-                resolve({
-                  name: uniqueName,
-                  type: part.mimetype.startsWith("image/") ? "image" : "video",
-                });
-              } else {
-                console.warn(
-                  `[Engine] Failed with code ${code}. Reverting to original.`,
+                // Paths for the C++ file to use
+                const tempPath = path.join(
+                    imagesDir,
+                    "temp-" + uniqueBase + originalExt,
                 );
-                // If it fails, we shouldn't lose the user's data
-                if (fs.existsSync(tempPath)) fs.renameSync(tempPath, finalPath);
-                resolve({ name: uniqueName, type: "image" });
-              }
+                const finalPath = path.join(imagesDir, uniqueName);
+
+                // 1. Save the incoming stream to a temporary file first
+                await pipeline(part.file, fs.createWriteStream(tempPath));
+
+                // 2. Create a task to run the C++ Compressor
+                const processFile = async () =>
+                {
+                    return new Promise((resolve, reject) =>
+                    {
+                        // This calls your C++ file directly
+                        const exePath = path.join(__dirname, "compressor.exe");
+                        if (!fs.existsSync(exePath))
+                        {
+                            return reject(
+                                new Error("compressor.exe not found at " + exePath),
+                            );
+                        }
+
+                        const compressor = spawn(exePath, [tempPath, finalPath]);
+
+                        compressor.on("error", (err) =>
+                        {
+                            reject(
+                                new Error("Could not start compressor.exe: " + err.message),
+                            );
+                        });
+
+                        compressor.on("close", (code) =>
+                        {
+                            // 3. Delete the huge temp file now that compression is done
+                            if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+
+                            if (code === 0)
+                            {
+                                const type = isImage ? "image" : "video";
+                                resolve({ name: uniqueName, type: type });
+                            } else
+                            {
+                                reject(
+                                    new Error(`C++ Compressor failed with exit code ${code}`),
+                                );
+                            }
+                        });
+                    });
+                };
+
+                processingTasks.push(processFile());
+            } else
+            {
+                body[part.fieldname] = part.value;
+            }
+        }
+
+        // Wait for all files to be compressed by the C++ engine
+        const mediaFiles = await Promise.all(processingTasks);
+
+        // 4. Send the data to your existing database function
+        // Prioritize explicit is_new from frontend, otherwise infer from valid listingId
+        const is_new =
+            body.is_new ??
+            (body.listingId &&
+                body.listingId !== "null" &&
+                body.listingId !== "undefined" &&
+                body.listingId !== ""
+                ? 0
+                : 1);
+        const result = await createListing(
+            body,
+            mediaFiles,
+            is_new,
+            body.listingId,
+        );
+
+        if (result && result.success)
+        {
+            res.send({
+                success: true,
+                redirect: "/home",
+                listingId: result.listingId,
             });
-          });
-        };
-
-        processingTasks.push(processFile());
-      } else {
-        // Capture regular form fields (email, password, etc.)
-        body[part.fieldname] = part.value;
-      }
+        } else
+        {
+            res.send({
+                success: false,
+                message: result.message || "Database failed",
+            });
+        }
+    } catch (err)
+    {
+        console.error("CRITICAL UPLOAD ERROR:", err);
+        res.status(500).send({ success: false, error: err.message });
     }
-
-    // 4. Wait for all media files to be mathematically compressed
-    const mediaFiles = await Promise.all(processingTasks);
-
-    // 5. Integrate with your Database function
-    const is_new = body.is_new ?? (body.listingId ? 0 : 1);
-    const result = await createListing(
-      body,
-      mediaFiles,
-      is_new,
-      body.listingId,
-    );
-
-    if (result && result.success) {
-      res.send({
-        success: true,
-        redirect: "/home",
-        listingId: result.listingId,
-      });
-    } else {
-      res.status(400).send({
-        success: false,
-        message: result.message || "DB Update Failed",
-      });
-    }
-  } catch (err) {
-    console.error("CRITICAL UPLOAD ERROR:", err);
-    res.status(500).send({
-      success: false,
-      error: "Internal Server Error during processing",
-    });
-  }
 });
-
 app.post("/getNavbar", async (req, res) => {
   try {
     const result = await getNavbar(req.body);
