@@ -1,42 +1,82 @@
-<!DOCTYPE html>
-<html lang="en">
-
+<!doctype html>
+<html class="no-js" lang="">
+ 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calendar</title>
-    <link rel="stylesheet" href="CSS files/navbar.css">
-    <link rel="stylesheet" href="CSS files/calender.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@schedule-x/theme-default@2.1.0/dist/index.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    
+    .calendar {
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+    }
+  </style>
+  
+  <!-- Do not change the order of these dependencies, since some of them depend on others -->
+  <script src="https://cdn.jsdelivr.net/npm/preact@10.23.2/dist/preact.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/preact@10.23.2/hooks/dist/hooks.umd.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@preact/signals-core@1.8.0/dist/signals-core.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@preact/signals@1.3.0/dist/signals.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/preact@10.23.2/jsx-runtime/dist/jsxRuntime.umd.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/preact@10.23.2/compat/dist/compat.umd.js"></script>
+ 
+  <script src="https://cdn.jsdelivr.net/npm/@schedule-x/calendar@2.2.0/dist/core.umd.js"></script>
+ 
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@schedule-x/theme-default@2.2.0/dist/index.css">
 </head>
-
+ 
 <body>
-    <script src="navbar.js"></script>
-
-    <div id="calendar" style="height: 600px; width: 100%;"></div>
-
-    <script src="https://cdn.jsdelivr.net/npm/@schedule-x/calendar@2.1.0/dist/index.global.js"></script>
-
-    <script src="https://cdn.jsdelivr.net/npm/@schedule-x/view-month-grid@2.1.0/dist/index.global.js"></script>
-    <script>
-        const { createCalendar } = window.SXCalendar;
-        const { createViewMonthGrid } = window.SXViewMonthGrid;
-
-        const calendar = createCalendar({
-            views: [createViewMonthGrid()],
-            events: [
-                {
-                    id: 1,
-                    title: 'Mowing Lawns',
-                    start: '2026-04-07 10:00', // Set to today so it shows up!
-                    end: '2026-04-07 11:00',
-                },
-            ],
-        });
-
-        const el = document.getElementById('calendar');
-        calendar.render(el);
-    </script>
+  <div class="calendar"></div>
+ 
+  <script>
+    const { createCalendar, viewMonthGrid, viewWeek } = window.SXCalendar;
+    let events=[
+        {
+          id: '1',
+          title: 'Event 1',
+          start: '2026-04-07 09:00',
+          end: '2026-04-07 10:00'
+        },
+      ]
+ 
+    const calendar = createCalendar({
+      views: [viewMonthGrid, viewWeek],
+      events: events,
+      defaultView: viewMonthGrid.name,
+    })
+ 
+    calendar.render(document.querySelector('.calendar'))
+    
+    // Auto-resize on window resize
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimeout)
+      resizeTimeout = setTimeout(() => {
+        calendar.render(document.querySelector('.calendar'))
+      }, 250)
+    })
+    
+    // Auto-resize on orientation change
+    window.addEventListener('orientationchange', () => {
+      setTimeout(() => {
+        calendar.render(document.querySelector('.calendar'))
+      }, 100)
+    })
+  </script>
 </body>
-
+ 
 </html>
