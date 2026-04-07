@@ -1156,6 +1156,10 @@ app.get("/login", (req, res) =>
 {
     res.sendFile("login.html");
 });
+app.get("/calender", (req, res) =>
+{
+    res.sendFile("calender.html");
+});
 app.get("/signup", (req, res) =>
 {
     res.sendFile("login.html");
@@ -1523,7 +1527,7 @@ app.post("/upload-listing", async (req, res) =>
 
         for await (const part of parts)
         {
-            if (part.file)
+            if (part.filename)
             {
                 const timestamp = Date.now();
                 const originalExt = path.extname(part.filename);

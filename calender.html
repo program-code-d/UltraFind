@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar</title>
+    <link rel="stylesheet" href="CSS files/navbar.css">
+    <link rel="stylesheet" href="CSS files/calender.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@schedule-x/theme-default@2.1.0/dist/index.css">
+</head>
+
+<body>
+    <script src="navbar.js"></script>
+
+    <div id="calendar" style="height: 600px; width: 100%;"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@schedule-x/calendar@2.1.0/dist/index.global.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/@schedule-x/view-month-grid@2.1.0/dist/index.global.js"></script>
+    <script>
+        const { createCalendar } = window.SXCalendar;
+        const { createViewMonthGrid } = window.SXViewMonthGrid;
+
+        const calendar = createCalendar({
+            views: [createViewMonthGrid()],
+            events: [
+                {
+                    id: 1,
+                    title: 'Mowing Lawns',
+                    start: '2026-04-07 10:00', // Set to today so it shows up!
+                    end: '2026-04-07 11:00',
+                },
+            ],
+        });
+
+        const el = document.getElementById('calendar');
+        calendar.render(el);
+    </script>
+</body>
+
+</html>
