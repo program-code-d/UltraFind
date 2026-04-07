@@ -15,7 +15,6 @@ DROP TABLE IF EXISTS Friends;
 
 DROP TABLE IF EXISTS ListingMedia;
 
--- Adding your old table name just in case it's still there
 SET
     FOREIGN_KEY_CHECKS = 1;
 
@@ -42,8 +41,12 @@ CREATE TABLE
         location TEXT,
         price DECIMAL(10, 2),
         is_active BOOLEAN NOT NULL DEFAULT TRUE,
+        done_date DATE,
+        -- Added assigned_to column and FK constraint
+        assigned_to INT UNSIGNED NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES Users (id) ON DELETE CASCADE
+        CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES Users (id) ON DELETE CASCADE,
+        CONSTRAINT fk_assigned_user FOREIGN KEY (assigned_to) REFERENCES Users (id) ON DELETE SET NULL
     );
 
 CREATE TABLE
@@ -55,7 +58,6 @@ CREATE TABLE
         CONSTRAINT fk_media_listing FOREIGN KEY (listing_id) REFERENCES Listings (id) ON DELETE CASCADE
     );
 
--- 1. This table ONLY handles the "Add Friend" connection
 CREATE TABLE
     Friendships (
         id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -65,10 +67,9 @@ CREATE TABLE
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT fk_friend_user FOREIGN KEY (user_id) REFERENCES Users (id) ON DELETE CASCADE,
         CONSTRAINT fk_friend_friend FOREIGN KEY (friend_id) REFERENCES Users (id) ON DELETE CASCADE,
-        UNIQUE KEY unique_friendship (user_id, friend_id) -- Prevents duplicate friend rows
+        UNIQUE KEY unique_friendship (user_id, friend_id)
     );
 
--- 2. This table ONLY handles the actual text messages between friends
 CREATE TABLE
     DirectMessages (
         id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
