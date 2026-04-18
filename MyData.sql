@@ -38,15 +38,15 @@ CREATE TABLE
         title VARCHAR(255) NOT NULL,
         description TEXT,
         age TINYINT UNSIGNED,
-        location TEXT,
+        location VARCHAR(255), -- Changed from TEXT to VARCHAR for indexing
         price DECIMAL(10, 2),
         is_active BOOLEAN NOT NULL DEFAULT TRUE,
         done_date DATE,
-        -- Added assigned_to column and FK constraint
         assigned_to INT UNSIGNED NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES Users (id) ON DELETE CASCADE,
-        CONSTRAINT fk_assigned_user FOREIGN KEY (assigned_to) REFERENCES Users (id) ON DELETE SET NULL
+        CONSTRAINT fk_assigned_user FOREIGN KEY (assigned_to) REFERENCES Users (id) ON DELETE SET NULL,
+        INDEX idx_active_listings (is_active)
     );
 
 CREATE TABLE
