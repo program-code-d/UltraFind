@@ -42,6 +42,7 @@ CREATE TABLE
         price DECIMAL(10, 2),
         is_active BOOLEAN NOT NULL DEFAULT TRUE,
         done_date DATE,
+        assigned_status ENUM ('pending', 'accepted', 'declined','canceled','not_assigned') DEFAULT 'not_assigned',
         assigned_to INT UNSIGNED NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES Users (id) ON DELETE CASCADE,
