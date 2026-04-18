@@ -124,6 +124,15 @@
                     </div>`
         }
     }
+    function doShowAssignButton(listing)
+    {
+        if (listing.assigned_to == null)
+        {
+            return `   <div class="menu-item" onclick="showAssignListing(${listing.id})">
+                        <span><svg class="icon"><use href="icons.svg#assign-user"></use></svg></span>Assign
+                    </div>`
+        }
+    }
     function drawMyListings(myListings)
     {
         let htmlContent = "";
@@ -166,6 +175,7 @@
                     <div class="menu-item" onclick="editListing(${item.id})">
                         <span><svg class="icon"><use href="icons.svg#pencil"></use></svg></span>Edit
                     </div>
+                    ${doShowAssignButton(item)}
                    ${getStatusAndDisplay(item)}
                     <div class="menu-item delete" onclick="deleteListing(${item.id})">
                         <span><svg class="icon"><use href="icons.svg#trash"></use></svg></span> Delete
@@ -176,6 +186,126 @@
 
         document.getElementById("manage-listings-container").innerHTML = htmlContent;
         attachMenuEventListeners();
+    }
+    function showAssignListing(listing)
+    {
+        // Fetch people who messaged about this listing
+        fetch(getServerBase() + "/getListingMessagers", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+                email: email, 
+                password: password, 
+                listing_id: listing 
+            })
+        })
+            .then(response => response.json())
+            .then((data) =>
+            {
+                if (data.success)
+                {
+                    openAssignPopup(listing, data.messagers);
+                }
+                else
+                {
+                    alert("Failed to fetch messagers");
+                }
+            })
+            .catch(error =>                                                                          
+            {
+                console.error("Error:", error);
+                alert("Error fetching messagers");
+            });
+    }
+
+    function openAssignPopup(listingId, messagers)
+    {
+        // Create overlay
+        const overlay = document.createElement('div');
+        overlay.id = 'assign-popup-overlay';
+        overlay.className = 'assign-popup-overlay';
+        
+        // Create popup container
+        const popup = document.createElement('div');
+        popup.className = 'assign-popup';
+        
+        let messagersList = '';
+        if (messagers.length === 0)
+        {
+            messagersList = '<p style="text-align: center; color: #999;">No one has messaged about this listing yet.</p>';
+        }
+        else
+        {
+            messagers.forEach(messager =>
+            {
+                messagersList += `
+                    <div class="messager-item" onclick="assign(${listingId}, ${messager.id}, this)">
+                        <div class="messager-info">
+                            <div class="messager-name">${messager.first_name} ${messager.last_name}</div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        
+        popup.innerHTML = `
+            <div class="assign-popup-header">
+                <h2>Assign Listing</h2>
+                <button class="close-btn" onclick="closeAssignPopup()">&times;</button>
+            </div>
+            <div class="assign-popup-content">
+                <p>Select a person to assign this listing to:</p>
+                <div class="messagers-list"> 
+                    ${messagersList}
+                </div>
+            </div>
+        `;
+        
+        overlay.appendChild(popup);
+        overlay.onclick = function(event)
+        {
+            if (event.target === overlay)
+            {
+                closeAssignPopup();
+            }
+        };
+        
+        document.body.appendChild(overlay);
+    }
+
+    function closeAssignPopup()
+    {
+        const overlay = document.getElementById('assign-popup-overlay');
+        if (overlay)
+        {
+            overlay.remove();
+        }
+    }
+
+    function assign(listing, userId)
+    {
+          fetch(getServerBase() + "/assign", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email: email, password: password, listing_id: listing, assignee_id:userId })
+        })
+            .then(response => response.text())
+            .then((data) =>
+            {
+                if (data == `{"message":"failed"}`)
+                {
+                    window.location.href = `${getServerBase()}/login`
+                }
+                const item = my_listings.find(item => item.id === listing)
+                if (item) item.assigned_to = JSON.parse(data)
+                drawMyListings(my_listings)
+            })
+        closeAssignPopup();
+        // TODO: Implement actual assignment
     }
     function deactivateListing(listing)
     {

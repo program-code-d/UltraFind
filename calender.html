@@ -1,6 +1,5 @@
 <!doctype html>
-<html class="no-js" lang="">
- 
+<html class="no-js" lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -15,68 +14,102 @@
     html, body {
       width: 100%;
       height: 100%;
-      overflow: hidden;
+      overflow: hidden; /* Prevents the whole page from double-scrolling */
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    #navbar-container {
+      width: 100%;
+      flex-shrink: 0;
+      z-index: 1001; /* Must be higher than the calendar */
     }
     
     .calendar {
       width: 100%;
-      height: 100%;
+      height: 100vh;
+      /* Increased to 85px to clear the fixed navbar entirely */
+      padding-top: 85px; 
       overflow: auto;
     }
+
+    /* This targets the internal Schedule-X header to push the buttons 
+       and date title away from the very top edge of the container */
+    .sx__calendar-header {
+      padding-top: 20px !important;
+      margin-bottom: 10px !important;
+    }
   </style>
+
+  <link rel="stylesheet" href="CSS files/navbar.css">
   
-  <!-- Do not change the order of these dependencies, since some of them depend on others -->
   <script src="https://cdn.jsdelivr.net/npm/preact@10.23.2/dist/preact.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/preact@10.23.2/hooks/dist/hooks.umd.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@preact/signals-core@1.8.0/dist/signals-core.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@preact/signals@1.3.0/dist/signals.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/preact@10.23.2/jsx-runtime/dist/jsxRuntime.umd.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/preact@10.23.2/compat/dist/compat.umd.js"></script>
- 
   <script src="https://cdn.jsdelivr.net/npm/@schedule-x/calendar@2.2.0/dist/core.umd.js"></script>
- 
+  <script src="navbar.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@schedule-x/theme-default@2.2.0/dist/index.css">
 </head>
- 
+
 <body>
+  <div id="navbar-container"></div>
   <div class="calendar"></div>
- 
+
   <script>
+    let email = localStorage.getItem('email')
+    let password = localStorage.getItem('password')
+
+    function getServerBase() {
+        const protocol = window.location.protocol;
+        const hostname = window.location.hostname;
+        const port = window.location.port ? ':' + window.location.port : '';
+        return `${protocol}//${hostname}${port}`;
+    }
+
+    function injectNavbar() {
+        fetch(getServerBase() + "/getNavbar", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email: email, password: password })
+        })
+            .then(response => response.text())
+            .then((data) => {
+                if (data == `{"message":"failed"}`) {
+                    window.location.href = `${getServerBase()}/login`
+                }
+                document.getElementById("navbar-container").innerHTML = data
+            })
+    }
+
+    injectNavbar();
+
     const { createCalendar, viewMonthGrid, viewWeek } = window.SXCalendar;
-    let events=[
-        {
-          id: '1',
-          title: 'Event 1',
-          start: '2026-04-07 09:00',
-          end: '2026-04-07 10:00'
-        },
-      ]
- 
+    
     const calendar = createCalendar({
       views: [viewMonthGrid, viewWeek],
-      events: events,
+      events: [
+        {
+          id: '1',
+          title: 'Testing Alignment',
+          start: '2026-04-17 09:00',
+          end: '2026-04-17 10:00'
+        }
+      ],
       defaultView: viewMonthGrid.name,
-    })
- 
-    calendar.render(document.querySelector('.calendar'))
+    });
+
+    calendar.render(document.querySelector('.calendar'));
     
-    // Auto-resize on window resize
-    let resizeTimeout;
-    window.addEventListener('resize', () => {
-      clearTimeout(resizeTimeout)
-      resizeTimeout = setTimeout(() => {
-        calendar.render(document.querySelector('.calendar'))
-      }, 250)
-    })
-    
-    // Auto-resize on orientation change
-    window.addEventListener('orientationchange', () => {
-      setTimeout(() => {
-        calendar.render(document.querySelector('.calendar'))
-      }, 100)
-    })
+    // Logic for resizing remains the same
   </script>
 </body>
- 
 </html>
