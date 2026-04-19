@@ -59,6 +59,12 @@
                     oninput="updatePreview()">
             </div>
 
+            <div class="form-group">
+                <label for="due-date">Due Date:</label>
+                <input id="due-date" type="date" class="input-style"
+                    oninput="updatePreview()">
+            </div>
+
             <button class="create-listing-btn" id="submit-button" onclick="createListing(1)">Submit Listing</button>
         </div>
 
@@ -132,6 +138,10 @@
             document.getElementById('listing-description').value = myListing.description
             document.getElementById('listing-location').value = myListing.location
             document.getElementById('age').value = myListing.age
+            if (myListing.done_date)
+            {
+                document.getElementById('due-date').value = myListing.done_date
+            }
 
             // Load images from server
             if (myListing.image && myListing.image.length > 0)
@@ -327,6 +337,7 @@
             formData.append('description', listingDescription.value);
             formData.append('location', listingLocation.value);
             formData.append('age', ageInput.value);
+            formData.append('done_date', document.getElementById('due-date').value || null);
 
             // 5. Add all selected images from your 'selectedImages' array
             if (selectedImages.length === 0)

@@ -238,9 +238,10 @@ async function createListing(
                 const userId = userRows[0].id;
                 const price = Number(body.pay) || 0;
                 const age = Number(body.age) || 0;
+                const doneDate = body.done_date || null;
 
                 const insertQuery =
-                    "INSERT INTO Listings (user_id, title, description, price, location, age, is_active, assigned_to) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                    "INSERT INTO Listings (user_id, title, description, price, location, age, is_active, assigned_to, assigned_status, done_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                 const res = await conn.query(insertQuery, [
                     userId,
                     body.name,
@@ -249,7 +250,9 @@ async function createListing(
                     body.location,
                     age,
                     true,
-                    null
+                    null,
+                    'not_assigned',
+                    doneDate
                 ]);
                 const newListingId = Number(res.insertId); // FIX: Convert BigInt to Number
 
@@ -277,9 +280,10 @@ async function createListing(
                 {
                     const price = Number(body.pay) || 0;
                     const age = Number(body.age) || 0;
+                    const doneDate = body.done_date || null;
 
                     const insertQuery =
-                        "UPDATE Listings SET user_id = ?, title = ?, description = ?, price = ?, location = ?, age = ?, is_active = ? WHERE id = ?;";
+                        "UPDATE Listings SET user_id = ?, title = ?, description = ?, price = ?, location = ?, age = ?, is_active = ?, done_date = ? WHERE id = ?;";
                     await conn.query(insertQuery, [
                         userId,
                         body.name,
@@ -288,6 +292,7 @@ async function createListing(
                         body.location,
                         age,
                         true,
+                        doneDate,
                         listingId,
                     ]);
 
@@ -479,9 +484,52 @@ async function getMyListings(body)
         const hashedPassword = hashPassword(body.password + saltResult[0].salt);
         const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
-        const insertQuery = "SELECT * FROM Listings WHERE user_id = ?;";
+        const insertQuery = `
+            SELECT L.*, 
+                   CONCAT(U.first_name, ' ', U.last_name) as assigned_user_name
+            FROM Listings L
+            LEFT JOIN Users U ON L.assigned_to = U.id
+            WHERE L.user_id = ?
+        `;
         const res = await conn.query(insertQuery, [userRows[0].id]);
+
+        
+
         return { success: true, listings: res, userExist: true };
+    } catch (err)
+    {
+        return { success: false, userExist: false };
+    } finally
+    {
+        if (conn) conn.release();
+    }
+}
+
+async function getMyAssignments(body)
+{
+    let conn;
+    try
+    {
+        conn = await pool.getConnection();
+        let saltResult = await conn.query(
+            "SELECT salt FROM Users WHERE email = ?",
+            [body.email],
+        );
+        const hashedPassword = hashPassword(body.password + saltResult[0].salt);
+        const loginQuery = "SELECT id FROM Users WHERE email = ? AND password = ?;";
+        const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
+        const userId = userRows[0].id;
+        
+        const query = `
+            SELECT L.*, 
+                   CONCAT(U.first_name, ' ', U.last_name) as owner_name
+            FROM Listings L
+            JOIN Users U ON L.user_id = U.id
+            WHERE L.assigned_to = ?
+            ORDER BY L.created_at DESC
+        `;
+        const res = await conn.query(query, [userId]);
+        return { success: true, assignments: res, userExist: true };
     } catch (err)
     {
         return { success: false, userExist: false };
@@ -533,8 +581,15 @@ async function assign(body)
         const userRows = await conn.query(loginQuery, [body.email, hashedPassword]);
 
         const insertQuery = "UPDATE Listings SET assigned_to = ? WHERE id = ?;";
-        await conn.query(insertQuery, [body.assignee_id,body.listing_id]);
-        return { success: true, is_active: false, userExist: true };
+        await conn.query(insertQuery, [body.assignee_id, body.listing_id]);
+
+        const insertQuery2 = "UPDATE Listings SET assigned_status = ? WHERE id = ?;";
+        await conn.query(insertQuery2, ["pending", body.listing_id]);
+
+        const nameQuery = "SELECT first_name, last_name FROM Users WHERE id = ?;";
+        const name = await conn.query(nameQuery, [body.assignee_id]);
+
+        return { success: true, assignee_name: `${name.first_name} ${name.last_name}`, assigned_status: "pending", userExist: true };
     } catch (err)
     {
         return { success: false, userExist: false };
@@ -600,6 +655,12 @@ async function getNavbar(body)
                             </div>
                              <div class="nav-item" onclick="goToDifferentScreen('calender')">
                                 <span><svg class="icon"><use href="icons.svg#calendar"></use></svg></span>
+                            </div>
+                              <div class="nav-item" onclick="goToDifferentScreen('assignments')">
+                                <span><svg class="icon"><use href="icons.svg#invite-colleagues"></use></svg></span>
+                            </div>
+                              <div class="nav-item" onclick="goToDifferentScreen('settings')">
+                                <span><svg class="icon"><use href="icons.svg#settings"></use></svg></span>
                             </div>
                              </div>
                             </div>
@@ -1213,7 +1274,10 @@ app.get("/signup", (req, res) =>
 {
     res.sendFile("login.html");
 });
-
+app.get("/settings", (req, res) =>
+{
+    res.sendFile("settings.html");
+});
 // PoST Routes
 
 app.post("/createListing", async (req, res) =>
@@ -1502,6 +1566,25 @@ app.post("/getMyListings", async (req, res) =>
     }
 });
 
+app.post("/getMyAssignments", async (req, res) =>
+{
+    try
+    {
+        const result = await getMyAssignments(req.body);
+        if (result && !result.userExist)
+        {
+            return res.send({ message: "failed" });
+        }
+        if (result && result.success)
+        {
+            res.send(result.assignments);
+        }
+    } catch (err)
+    {
+        res.status(400).send(err.message);
+    }
+});
+
 app.post("/deactivateListing", async (req, res) =>
 {
     try
@@ -1532,7 +1615,7 @@ app.post("/assign", async (req, res) =>
         }
         if (result && result.success)
         {
-            res.send(result.assigned_to);
+            res.send(result);
         }
     } catch (err)
     {
@@ -1857,7 +1940,7 @@ app.post("/getListingMessagers", async (req, res) =>
     {
         let conn;
         conn = await pool.getConnection();
-        
+
         // Authenticate user
         let saltResult = await conn.query(
             "SELECT salt FROM Users WHERE email = ?",
@@ -1874,7 +1957,7 @@ app.post("/getListingMessagers", async (req, res) =>
             "SELECT id FROM Users WHERE email = ? AND password = ?",
             [req.body.email, hashedPassword],
         );
-        
+
         if (userRows.length === 0)
         {
             conn.release();

@@ -96,6 +96,7 @@ let email;
                 <div class="Age-pay-location">
                     <div class="price">$${listing_info.price}</div>
                     <div class="age">${listing_info.age}+ Age Requirement</div>
+                    ${listing_info.done_date ? `<div class="due-date"><strong>Due Date:</strong> ${new Date(listing_info.done_date).toLocaleDateString()}</div>` : ''}
                     <div class="location-map">
                         <strong>Visual Location</strong>
                         <div style="height:150px; background:#e5e7eb; margin-top:10px; display:flex; align-items:center; justify-content:center; border-radius:8px;">${listing_info.location}</div>

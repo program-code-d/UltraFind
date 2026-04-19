@@ -109,6 +109,22 @@
             return "INACTIVE"
         }
     }
+    function getStatusColor(status)
+    {
+        switch(status)
+        {
+            case 'pending':
+                return '#ff9800'; // Orange
+            case 'accepted':
+                return '#4caf50'; // Green
+            case 'declined':
+                return '#f44336'; // Red
+            case 'canceled':
+                return '#f44336'; // Red
+            default:
+                return '#999'; // Gray
+        }
+    }
     function getStatusAndDisplay(listing)
     {
         if (listing.is_active == true)
@@ -130,6 +146,12 @@
         {
             return `   <div class="menu-item" onclick="showAssignListing(${listing.id})">
                         <span><svg class="icon"><use href="icons.svg#assign-user"></use></svg></span>Assign
+                    </div>`
+        }
+        else
+        {
+            return `   <div class="menu-item" onclick="showAssignListing(${listing.id})">
+                        <span><svg class="icon"><use href="icons.svg#assign-user"></use></svg></span>Change Assignment
                     </div>`
         }
     }
@@ -156,12 +178,18 @@
                         <h1>${item.title}</h1>
                         <div class="card-price">$${item.price}/hr</div>
                         <p class="card-desc">${item.description}</p>
+                        ${item.assigned_to ? `
+                        <div class="assigned-box" style="background: #f5f5f5; padding: 10px; border-radius: 6px; margin: 10px 0; font-size: 0.85rem;">
+                            <div style="color: #666; margin-bottom: 5px;"><strong>Assigned To:</strong> ${item.assigned_user_name}</div>
+                            <div style="color: #666;"><strong>Status:</strong> <span style="text-transform: capitalize; color: ${getStatusColor(item.assigned_status || 'not_assigned')}; font-weight: bold;">${item.assigned_status || 'not_assigned'}</span></div>
+                        </div>
+                        ` : ''}
                         <span style="font-size: 0.75rem; color: #9c27b0; font-weight: bold;">
                                 ${getActiveText(item)}
                             </span>
                         <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
                             <span style="font-size: 0.75rem; color: #999; font-weight: 600; text-transform: uppercase;">
-                                ${item.location} • Due: Date
+                                ${item.location} • Due: ${item.done_date ? new Date(item.done_date).toLocaleDateString() : 'N/A'}
                             </span>
                         </div>
                     </div>
