@@ -1,0 +1,16 @@
+# Visual Studio temporary files
+.vs/
+Compressor/.vs/
+/x64/
+/Debug/
+/Release/
+
+# Executables
+*.exe
+*.vsidx
+
+# Local Node modules
+node_modules/
+
+# Uploaded images
+images/

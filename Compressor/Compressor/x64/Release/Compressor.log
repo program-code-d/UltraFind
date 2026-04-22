@@ -1,0 +1,6 @@
+﻿  Compressor.cpp
+  Generating code
+  Compiler switch has changed, fall back to full compilation.
+  All 5 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  Compressor.vcxproj -> C:\Programming projects in vs code+3d model(fusion360)\UltraFind\Compressor\x64\Release\Compressor.exe
