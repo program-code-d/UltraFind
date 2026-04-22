@@ -646,21 +646,27 @@ async function getNavbar(body)
                              <div class="navbar-links">
                                  <div class="nav-item" onclick="goToDifferentScreen('home')">
                                  <span><svg class="icon"><use href="icons.svg#house"></use></svg></span>
+                                 <div class="nav-label">Home</div>
                              </div>
                              <div class="nav-item" onclick="goToDifferentScreen('friends')">
                                 <span><svg class="icon"><use href="icons.svg#user-friends"></use></svg></span>
+                                <div class="nav-label">Friends</div>
                             </div>
                             <div class="nav-item" onclick="goToDifferentScreen('manageListings')">
                                 <span><svg class="icon"><use href="icons.svg#folder"></use></svg></span>
+                                <div class="nav-label">Manage Listings</div>
                             </div>
                              <div class="nav-item" onclick="goToDifferentScreen('calender')">
                                 <span><svg class="icon"><use href="icons.svg#calendar"></use></svg></span>
+                                <div class="nav-label">Calendar</div>
                             </div>
                               <div class="nav-item" onclick="goToDifferentScreen('assignments')">
                                 <span><svg class="icon"><use href="icons.svg#invite-colleagues"></use></svg></span>
+                                <div class="nav-label">Assignments</div>
                             </div>
                               <div class="nav-item" onclick="goToDifferentScreen('settings')">
                                 <span><svg class="icon"><use href="icons.svg#settings"></use></svg></span>
+                                <div class="nav-label">Settings</div>
                             </div>
                              </div>
                             </div>

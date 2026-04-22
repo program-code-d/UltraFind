@@ -3,7 +3,7 @@
    ========================================= */
 .clean-btn {
     position: fixed;
-    top: 80px;
+    top: 78px;
     right: 10px;
     z-index: 999;
     all: unset;
@@ -114,7 +114,7 @@ input:not(:placeholder-shown)~.reset {
     gap: 24px;
     padding: 20px;
     width: 98%;
-    margin-top: 70px;
+    margin-top: 78px;
 }
 
 #navbar {

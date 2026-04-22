@@ -15,6 +15,7 @@ body {
     display: flex;
     flex-direction: row;
     gap: 40px; 
+    margin-top: 58px; /* Snug fit accounting for body padding */
     max-width: 1400px;
     margin: 0 auto;
     align-items: flex-start;

@@ -4,10 +4,10 @@
 
 /* 1. Main Content Container - Adjust for top navbar */
 .main-content {
-    margin-top: 70px; /* Space below fixed top navbar */
+    margin-top: 78px; /* Space below fixed top navbar */
     
     width: 100%;
-    min-height: calc(100vh - 70px);
+    min-height: calc(100vh - 78px);
 }
 
 /* 2. Listings Container */
