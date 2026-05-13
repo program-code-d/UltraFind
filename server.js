@@ -3,7 +3,6 @@ const app = require("fastify")({
   bodyLimit: 524288000,
 });
 const crypto = require("crypto");
-const mariadb = require("mariadb");
 const path = require("path");
 const fs = require("fs");
 const jwt = require("jsonwebtoken");
@@ -12,13 +11,18 @@ const { spawn } = require("child_process");
 const sharp = require("sharp"); // Top of server.js
 
 const PORT = process.env.PORT || 8080;
-const pool = mariadb.createPool({
-  host: "localhost",
-  user: "root",
-  password: "chicken55441",
-  database: "test",
-  connectionLimit: 50,
-});
+let pool;
+
+async function initializeMariaDB() {
+  const mariadb = await import("mariadb");
+  pool = mariadb.createPool({
+    host: "localhost",
+    user: "root",
+    password: "chicken55441",
+    database: "test",
+    connectionLimit: 50,
+  });
+}
 
 async function setup() {
   await app.register(require("@fastify/middie"));
@@ -1637,8 +1641,9 @@ app.post("/getListingMessagers", async (req, res) => {
 });
 
 const start = async () => {
-  await setup();
   try {
+    await initializeMariaDB();
+    await setup();
     await app.listen({ port: PORT, host: "0.0.0.0" });
     console.log(`[Find Server] Running on http://localhost:${PORT}`);
   } catch (err) {

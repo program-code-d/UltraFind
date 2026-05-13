@@ -22,8 +22,8 @@ until mariadb -u root -e "status" > /dev/null 2>&1; do\n\
   echo "Waiting for MariaDB..."\n\
   sleep 2\n\
 done\n\
-mariadb -e "CREATE DATABASE IF NOT EXISTS test;"\n\
-mariadb -e "ALTER USER '"'root'"'@'"'localhost'"' IDENTIFIED BY '"'chicken55441'"'; FLUSH PRIVILEGES;"\n\
+mariadb -u root -e "CREATE DATABASE IF NOT EXISTS test;"\n\
+mariadb -u root -e "ALTER USER '"'"'root'"'"'@'"'"'localhost'"'"' IDENTIFIED BY '"'"'chicken55441'"'"'; FLUSH PRIVILEGES;"\n\
 exec npm start' > start.sh && chmod +x start.sh
 
 EXPOSE 8080
