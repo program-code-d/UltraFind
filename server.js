@@ -1194,6 +1194,10 @@ app.post("/createListing", async (req, res) => {
 });
 app.post("/signupauth", async (req, res) => {
   try {
+    if (!pool) {
+      console.error("Database pool not initialized!");
+      return res.status(500).send({ success: false, error: "Database not ready" });
+    }
     const result = await registerUser(req.body);
     if (
       (result && result.emailExist != undefined && result.emailExist) ||
@@ -1206,7 +1210,7 @@ app.post("/signupauth", async (req, res) => {
       return res.send({ success: true, redirect: "/home" });
     }
   } catch (err) {
-    console.error(err);
+    console.error("Signup error:", err.message || err);
     res.status(400).send({ success: false, error: err.message || "Signup error" });
   }
 });
@@ -1654,12 +1658,18 @@ app.post("/getListingMessagers", async (req, res) => {
 
 const start = async () => {
   try {
+    console.log("Initializing MariaDB connection pool...");
     await initializeMariaDB();
+    console.log("MariaDB pool initialized successfully!");
+    
+    console.log("Setting up Fastify app...");
     await setup();
+    console.log("Fastify app setup complete!");
+    
     await app.listen({ port: PORT, host: "0.0.0.0" });
-    console.log(`[Find Server] Running on http://localhost:${PORT}`);
+    console.log(`[Find Server] Running on http://0.0.0.0:${PORT}`);
   } catch (err) {
-    console.error(err);
+    console.error("Startup error:", err);
     process.exit(1);
   }
 };
