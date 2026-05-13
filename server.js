@@ -11,7 +11,7 @@ const { pipeline } = require("stream/promises");
 const { spawn } = require("child_process");
 const sharp = require("sharp"); // Top of server.js
 
-const PORT = 8080;
+const PORT = process.env.PORT || 8080;
 const pool = mariadb.createPool({
   host: "localhost",
   user: "root",
