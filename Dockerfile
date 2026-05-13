@@ -17,13 +17,23 @@ COPY . .
 
 # Create a robust startup script
 RUN echo '#!/bin/bash\n\
+set -e\n\
+echo "Starting MariaDB..."\n\
 service mariadb start\n\
-until mariadb -u root -e "status" > /dev/null 2>&1; do\n\
-  echo "Waiting for MariaDB..."\n\
+echo "Waiting for MariaDB to be ready..."\n\
+for i in {1..30}; do\n\
+  if mariadb -u root -e "SELECT 1" > /dev/null 2>&1; then\n\
+    echo "MariaDB is ready!"\n\
+    break\n\
+  fi\n\
+  echo "Attempt $i/30 - MariaDB not ready yet, waiting..."\n\
   sleep 2\n\
 done\n\
+echo "Setting up database..."\n\
 mariadb -u root -e "CREATE DATABASE IF NOT EXISTS test;"\n\
-mariadb -u root -e "ALTER USER '"'"'root'"'"'@'"'"'localhost'"'"' IDENTIFIED BY '"'"'chicken55441'"'"'; FLUSH PRIVILEGES;"\n\
+mariadb -u root -e "CREATE USER IF NOT EXISTS '"'"'appuser'"'"'@'"'"'localhost'"'"' IDENTIFIED BY '"'"'chicken55441'"'"';"\n\
+mariadb -u root -e "GRANT ALL PRIVILEGES ON test.* TO '"'"'appuser'"'"'@'"'"'localhost'"'"'; FLUSH PRIVILEGES;"\n\
+echo "Database setup complete!"\n\
 exec npm start' > start.sh && chmod +x start.sh
 
 EXPOSE 8080

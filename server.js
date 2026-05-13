@@ -17,7 +17,7 @@ async function initializeMariaDB() {
   const mariadb = await import("mariadb");
   pool = mariadb.createPool({
     host: "localhost",
-    user: "root",
+    user: "appuser",
     password: "chicken55441",
     database: "test",
     connectionLimit: 50,
