@@ -1206,7 +1206,8 @@ app.post("/signupauth", async (req, res) => {
       return res.send({ success: true, redirect: "/home" });
     }
   } catch (err) {
-    res.status(400).send(err.message);
+    console.error(err);
+    res.status(400).send({ success: false, error: err.message || "Signup error" });
   }
 });
 
@@ -1217,7 +1218,8 @@ app.post("/sendMessage", async (req, res) => {
       res.send({ success: true });
     }
   } catch (err) {
-    res.status(400).send(err.message);
+    console.error(err);
+    res.status(400).send({ success: false, error: err.message || "Message error" });
   }
 });
 
@@ -1232,7 +1234,8 @@ app.post("/getfriends", async (req, res) => {
     }
     res.send({ success: false });
   } catch (err) {
-    res.status(400).send(err.message);
+    console.error(err);
+    res.status(400).send({ success: false, error: err.message || "Friends error" });
   }
 });
 
@@ -1248,7 +1251,8 @@ app.post("/getworkpeople", async (req, res) => {
     }
     res.send({ success: false });
   } catch (err) {
-    res.status(400).send(err.message);
+    console.error(err);
+    res.status(400).send({ success: false, error: err.message || "Work people error" });
   }
 });
 
@@ -1263,7 +1267,8 @@ app.post("/addfriend", async (req, res) => {
     }
     res.send({ success: false });
   } catch (err) {
-    res.status(400).send(err.message);
+    console.error(err);
+    res.status(400).send({ success: false, error: err.message || "Add friend error" });
   }
 });
 
@@ -1277,7 +1282,8 @@ app.post("/getInfoListing", async (req, res) => {
       res.send(result.listing);
     }
   } catch (err) {
-    res.status(400).send(err.message);
+    console.error(err);
+    res.status(400).send({ success: false, error: err.message || "Listing error" });
   }
 });
 
@@ -1298,13 +1304,8 @@ app.post("/loginauth", async (req, res) => {
       });
     }
   } catch (err) {
-    res.status(400).send(err.message);
-  }
-  if (result && !result.userExist) {
-    return res.send({ message: "failed" });
-  }
-  if (result && result.success) {
-    return res.send({ success: true, redirect: "/home" });
+    console.error(err);
+    res.status(400).send({ success: false, error: err.message || "Login error" });
   }
 });
 
@@ -1318,7 +1319,8 @@ app.post("/getuserdata", async (req, res) => {
       res.send(result);
     }
   } catch (err) {
-    res.status(400).send(err.message);
+    console.error(err);
+    res.status(400).send({ success: false, error: err.message || "User data error" });
   }
 });
 
@@ -1332,7 +1334,8 @@ app.post("/updateuserdata", async (req, res) => {
       res.send(result);
     }
   } catch (err) {
-    res.status(400).send(err.message);
+    console.error(err);
+    res.status(400).send({ success: false, error: err.message || "Update user error" });
   }
 });
 
@@ -1346,7 +1349,8 @@ app.post("/getListings", async (req, res) => {
       res.send(result.listings);
     }
   } catch (err) {
-    res.status(400).send(err.message);
+    console.error(err);
+    res.status(400).send({ success: false, error: err.message || "Get listings error" });
   }
 });
 
@@ -1360,7 +1364,8 @@ app.post("/getListing", async (req, res) => {
       res.send(result.listing);
     }
   } catch (err) {
-    res.status(400).send(err.message);
+    console.error(err);
+    res.status(400).send({ success: false, error: err.message || "Get listing error" });
   }
 });
 
@@ -1374,7 +1379,8 @@ app.post("/searchListings", async (req, res) => {
       res.send(result.listings);
     }
   } catch (err) {
-    res.status(400).send(err.message);
+    console.error(err);
+    res.status(400).send({ success: false, error: err.message || "Search error" });
   }
 });
 
@@ -1388,7 +1394,8 @@ app.post("/getMyListings", async (req, res) => {
       res.send(result.listings);
     }
   } catch (err) {
-    res.status(400).send(err.message);
+    console.error(err);
+    res.status(400).send({ success: false, error: err.message || "My listings error" });
   }
 });
 
@@ -1402,7 +1409,8 @@ app.post("/getMyAssignments", async (req, res) => {
       res.send(result.assignments);
     }
   } catch (err) {
-    res.status(400).send(err.message);
+    console.error(err);
+    res.status(400).send({ success: false, error: err.message || "Assignments error" });
   }
 });
 
@@ -1416,7 +1424,8 @@ app.post("/deactivateListing", async (req, res) => {
       res.send(result.is_active);
     }
   } catch (err) {
-    res.status(400).send(err.message);
+    console.error(err);
+    res.status(400).send({ success: false, error: err.message || "Deactivate error" });
   }
 });
 
@@ -1430,7 +1439,8 @@ app.post("/assign", async (req, res) => {
       res.send(result);
     }
   } catch (err) {
-    res.status(400).send(err.message);
+    console.error(err);
+    res.status(400).send({ success: false, error: err.message || "Assign error" });
   }
 });
 
@@ -1444,7 +1454,8 @@ app.post("/activateListing", async (req, res) => {
       res.send(result.is_active);
     }
   } catch (err) {
-    res.status(400).send(err.message);
+    console.error(err);
+    res.status(400).send({ success: false, error: err.message || "Activate error" });
   }
 });
 
@@ -1461,7 +1472,7 @@ app.post("/switchFile", async (req, res) => {
     return res.status(400).send({ message: "unknown error" });
   } catch (err) {
     console.error("switchFile endpoint error:", err);
-    res.status(500).send({ error: err.message });
+    res.status(500).send({ success: false, error: err.message || "Switch file error" });
   }
 });
 
@@ -1475,7 +1486,8 @@ app.post("/getNavbar", async (req, res) => {
       res.send(result.navbar);
     }
   } catch (err) {
-    res.status(400).send(err.message);
+    console.error(err);
+    res.status(400).send({ success: false, error: err.message || "Navbar error" });
   }
 });
 
