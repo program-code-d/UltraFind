@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manage Child</title>
+    <link rel="stylesheet" href="CSS files/navbar.css">
+    <link rel="stylesheet" href="CSS files/index.css">
+    <link rel="stylesheet" href="CSS files/manage_child.css">
+</head>
+<body onload="main()">
+    <div id="navbar-container"></div>
+    
+    <div class="main-container">
+        <div class="manage-container">
+            <h1>Manage Child Accounts</h1>
+            
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('requests')">Pending Requests</button>
+                <button class="tab-btn" onclick="switchTab('children')">My Children</button>
+            </div>
+            
+            <div id="requests" class="tab-content active">
+                <div id="requests-list">Loading...</div>
+            </div>
+            
+            <div id="children" class="tab-content">
+                <div id="children-list">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="navbar.js"></script>
+    <script>
+        let email = localStorage.getItem('email');
+        let password = localStorage.getItem('password');
+
+        function main() {
+            injectNavbar();
+            loadRequests();
+            loadChildren();
+        }
+
+        function getServerBase() {
+            const protocol = window.location.protocol;
+            const hostname = window.location.hostname;
+            const port = window.location.port ? ':' + window.location.port : '';
+            return `${protocol}//${hostname}${port}`;
+        }
+
+        function injectNavbar() {
+            fetch(getServerBase() + "/getNavbar", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email, password: password })
+            })
+            .then(response => response.text())
+            .then((data) => {
+                if (data == `{"message":"failed"}`) {
+                    window.location.href = `${getServerBase()}/login`;
+                }
+                document.getElementById("navbar-container").innerHTML = data;
+            });
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        function loadRequests() {
+            fetch(getServerBase() + "/getParentRequests", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email, password: password })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    let html = "";
+                    if (data.requests.length === 0) {
+                        html = "<p>No pending requests.</p>";
+                    } else {
+                        data.requests.forEach(req => {
+                            html += `
+                            <div class="child-card">
+                                <div class="child-card-header">
+                                    <div>
+                                        <strong class="child-name">${req.first_name} ${req.last_name}</strong><br>
+                                        <small>${req.email}</small>
+                                    </div>
+                                    <div class="btn-group">
+                                        <button class="btn-accept" onclick="respondRequest(${req.id}, 'accept')">Accept</button>
+                                        <button class="btn-reject" onclick="respondRequest(${req.id}, 'reject')">Reject</button>
+                                    </div>
+                                </div>
+                            </div>`;
+                        });
+                    }
+                    document.getElementById("requests-list").innerHTML = html;
+                }
+            });
+        }
+
+        function loadChildren() {
+            fetch(getServerBase() + "/getManagedChildren", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email, password: password })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    let html = "";
+                    if (data.children.length === 0) {
+                        html = "<p>No linked children yet.</p>";
+                    } else {
+                        data.children.forEach(child => {
+                            html += `
+                            <div class="child-card">
+                                <div class="child-card-header">
+                                    <div>
+                                        <strong class="child-name">${child.first_name} ${child.last_name}</strong><br>
+                                        <small>${child.email}</small>
+                                    </div>
+                                    <div class="btn-group">
+                                        <button class="btn-view" onclick="toggleActivity(${child.id})">View Activity</button>
+                                    </div>
+                                </div>
+                                <div id="activity-${child.id}" class="activity-box">Loading activity...</div>
+                            </div>`;
+                        });
+                    }
+                    document.getElementById("children-list").innerHTML = html;
+                }
+            });
+        }
+
+        function respondRequest(childId, action) {
+            fetch(getServerBase() + "/respondChildRequest", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email, password: password, child_id: childId, action: action })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    loadRequests();
+                    loadChildren();
+                } else {
+                    alert("Error processing request");
+                }
+            });
+        }
+
+        function toggleActivity(childId) {
+            let box = document.getElementById(`activity-${childId}`);
+            if (box.style.display === "block") {
+                box.style.display = "none";
+                return;
+            }
+            box.style.display = "block";
+            
+            fetch(getServerBase() + "/getChildActivity", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email, password: password, child_id: childId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    let activityHtml = "<strong>Listings Created:</strong><ul>";
+                    if (data.listings.length === 0) activityHtml += "<li>None</li>";
+                    data.listings.forEach(l => activityHtml += `<li>${l.title} - $${l.price}</li>`);
+                    activityHtml += "</ul><strong>Jobs Assigned:</strong><ul>";
+                    if (data.assignments.length === 0) activityHtml += "<li>None</li>";
+                    data.assignments.forEach(a => activityHtml += `<li>${a.title}</li>`);
+                    activityHtml += "</ul>";
+                    
+                    box.innerHTML = activityHtml;
+                }
+            });
+        }
+    </script>
+</body>
+</html>
