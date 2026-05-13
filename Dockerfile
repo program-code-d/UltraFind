@@ -29,8 +29,10 @@ for i in {1..30}; do\n\
   echo "Attempt $i/30 - MariaDB not ready yet, waiting..."\n\
   sleep 2\n\
 done\n\
-echo "Setting up database..."\n\
-mariadb -u root < /usr/src/app/MyData.sql\n\
+echo "Creating test database..."\n\
+mariadb -u root -e "CREATE DATABASE IF NOT EXISTS test;"\n\
+echo "Importing schema..."\n\
+mariadb -u root test < /usr/src/app/MyData.sql\n\
 echo "Creating app user..."\n\
 mariadb -u root -e "CREATE USER IF NOT EXISTS '"'"'appuser'"'"'@'"'"'localhost'"'"' IDENTIFIED BY '"'"'chicken55441'"'"';"\n\
 mariadb -u root -e "GRANT ALL PRIVILEGES ON test.* TO '"'"'appuser'"'"'@'"'"'localhost'"'"'; FLUSH PRIVILEGES;"\n\
